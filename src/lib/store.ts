@@ -28,6 +28,7 @@ type View =
   | 'analytics'
   | 'cms-page'
   | 'help'
+  | 'my-services'
 
 interface AppState {
   user: User | null

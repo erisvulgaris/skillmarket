@@ -4,12 +4,14 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
-import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3, LifeBuoy, FileText } from 'lucide-react'
+import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3, LifeBuoy, FileText, Grid3x3, Check } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { api } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
+import { clsx } from 'clsx'
+import { motion } from 'framer-motion'
 
 export function ProfileView() {
   const { user, setView, refreshUser } = useApp()
@@ -66,6 +68,9 @@ export function ProfileView() {
         <StatBox value={user.wallet?.lifetimeSpent || 0} label="Spent" />
       </div>
 
+      {/* Profile completion meter */}
+      <ProfileCompletion user={user} onEdit={() => setView('settings')} />
+
       {/* Admin entry */}
       {user.role === 'admin' && (
         <Button onClick={() => setView('admin')} className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 text-white">
@@ -76,6 +81,7 @@ export function ProfileView() {
       {/* Menu */}
       <div className="space-y-2">
         <MenuItem icon={<Plus className="h-4 w-4" />} label="Create a Service" onClick={() => setView('create-service')} />
+        <MenuItem icon={<Grid3x3 className="h-4 w-4" />} label="My Services" onClick={() => setView('my-services')} />
         <MenuItem icon={<BarChart3 className="h-4 w-4" />} label="Seller Analytics" onClick={() => setView('analytics')} />
         <MenuItem icon={<Package className="h-4 w-4" />} label="My Orders" onClick={() => setView('orders')} />
         <MenuItem icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
@@ -119,5 +125,57 @@ function MenuItem({ icon, label, onClick, badge }: { icon: React.ReactNode; labe
       {badge && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{badge}</span>}
       <ChevronRight className="h-4 w-4 text-muted-foreground" />
     </button>
+  )
+}
+
+function ProfileCompletion({ user, onEdit }: { user: any; onEdit: () => void }) {
+  const checks = [
+    { label: 'Display name', done: !!user.profile?.displayName },
+    { label: 'Bio', done: !!user.profile?.bio },
+    { label: 'Avatar', done: !!user.profile?.avatarUrl },
+    { label: 'Location', done: !!user.profile?.location },
+    { label: 'Skills', done: (user.profile?.skills?.length || 0) > 0 },
+    { label: 'Languages', done: (user.profile?.languages?.length || 0) > 0 },
+  ]
+  const completed = checks.filter((c) => c.done).length
+  const pct = Math.round((completed / checks.length) * 100)
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold">Profile Completion</p>
+          <p className="text-[10px] text-muted-foreground">{pct === 100 ? 'Your profile is complete!' : 'Complete your profile to attract more buyers'}</p>
+        </div>
+        <span className={clsx('text-2xl font-bold', pct === 100 ? 'text-emerald-500' : 'text-primary')}>{pct}%</span>
+      </div>
+      {/* Progress bar */}
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className={clsx('h-full rounded-full progress-fill', pct === 100 ? 'bg-emerald-500' : 'bg-primary')}
+        />
+      </div>
+      {/* Checklist */}
+      {pct < 100 && (
+        <div className="grid grid-cols-2 gap-1.5">
+          {checks.map((c) => (
+            <div key={c.label} className="flex items-center gap-1.5 text-xs">
+              <div className={clsx('h-3.5 w-3.5 rounded-full flex items-center justify-center', c.done ? 'bg-emerald-500 text-white' : 'bg-muted')}>
+                {c.done && <Check className="h-2.5 w-2.5" />}
+              </div>
+              <span className={clsx(c.done ? 'text-muted-foreground line-through' : 'text-foreground')}>{c.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {pct < 100 && (
+        <Button onClick={onEdit} variant="outline" size="sm" className="w-full rounded-xl text-xs">
+          Complete Profile
+        </Button>
+      )}
+    </Card>
   )
 }
