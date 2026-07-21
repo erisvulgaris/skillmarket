@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
@@ -30,6 +30,8 @@ export function CreateServiceView() {
   const [tagInput, setTagInput] = useState('')
   const [skillInput, setSkillInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     api.get<{ categories: Category[] }>('/api/marketplace/categories').then((d) => setCategories(d.categories)).catch(() => {})
@@ -159,35 +161,68 @@ export function CreateServiceView() {
           </div>
 
           <div className="space-y-2">
-            <Label>Image URLs</Label>
-            <Input
-              placeholder="Paste image URL and press Enter"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  const v = (e.target as HTMLInputElement).value.trim()
-                  if (v && form.images.length < 8) {
-                    setForm({ ...form, images: [...form.images, v] })
-                    ;(e.target as HTMLInputElement).value = ''
+            <Label>Service Images ({form.images.length}/8)</Label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={fileInputRef}
+              onChange={async (e) => {
+                const files = Array.from(e.target.files || [])
+                for (const file of files) {
+                  if (form.images.length >= 8) break
+                  const fd = new FormData()
+                  fd.append('file', file)
+                  try {
+                    setUploading(true)
+                    const res = await fetch('/api/uploads', { method: 'POST', body: fd, credentials: 'include' })
+                    const json = await res.json()
+                    if (json.success) {
+                      setForm((prev) => ({ ...prev, images: [...prev.images, json.data.url] }))
+                    } else {
+                      toast.error(json.error || 'Upload failed')
+                    }
+                  } catch (err: any) {
+                    toast.error(err.message || 'Upload failed')
+                  } finally {
+                    setUploading(false)
                   }
                 }
+                if (fileInputRef.current) fileInputRef.current.value = ''
               }}
+              className="hidden"
             />
-            <div className="grid grid-cols-3 gap-2">
-              {form.images.map((img, i) => (
-                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                  <img src={img} alt="" className="h-full w-full object-cover" />
-                  <button onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })} className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              {form.images.length < 8 && (
-                <div className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading || form.images.length >= 8}
+              className="w-full aspect-[3/1] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition disabled:opacity-50"
+            >
+              {uploading ? (
+                <>
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs">Uploading…</span>
+                </>
+              ) : (
+                <>
                   <ImageIcon className="h-6 w-6" />
-                </div>
+                  <span className="text-xs font-medium">Tap to upload images</span>
+                  <span className="text-[10px]">PNG, JPG, WebP up to 5MB</span>
+                </>
               )}
-            </div>
+            </button>
+            {form.images.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <button onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })} className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
 

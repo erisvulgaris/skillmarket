@@ -3,14 +3,122 @@
 ## Project Overview
 A production-ready, mobile-first P2P digital service marketplace PWA powered by an internal virtual currency called **SkillCredits**. Built with Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui, Prisma (SQLite), and a socket.io mini-service for real-time messaging.
 
-## Current Project Status
-**Phase 1 — Core Foundation Complete**
+---
+
+## Phase 2 — Round 2 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 1 was stable. This round focused on: QA testing, fixing bugs found during QA, adding missing infrastructure (file uploads, rate limiting, saved services API), building remaining admin UI panels, adding new features (seller profiles, dispute flow), and improving styling/polish.
+
+### Goals for This Round
+1. ✅ QA test the full app with agent-browser
+2. ✅ Fix bugs found during QA
+3. ✅ Add file upload endpoint
+4. ✅ Add saved services API + fix SavedView
+5. ✅ Wire file uploads into create-service & messaging
+6. ✅ Add rate limiting middleware
+7. ✅ Build remaining admin UI (disputes, reports, settings, feature-flags, CMS, broadcast)
+8. ✅ Improve styling (animations, skeletons, micro-interactions)
+9. ✅ Add new features (seller profile, dispute flow, report service)
+
+### Completed Modifications
+
+#### Bug Fixes
+1. **Review submission 500 error** — `db.review.findUnique({ where: { orderId } })` failed because `orderId` is not a `@unique` field. Fixed by using `findFirst` instead.
+2. **SavedView showing all services** — no dedicated saved-list endpoint existed. Created `/api/saved` endpoint and rewrote SavedView to use it.
+3. **Order detail chat button** — referenced non-existent `order.conversationId`. Already fixed in Phase 1; verified working this round.
+
+#### New API Endpoints
+- `GET /api/saved` — list user's saved services with full service + seller data
+- `POST /api/uploads` — file upload with validation (5MB max, type whitelist), saves to `/public/uploads/`, audit logged
+- `GET /api/profiles/[username]` — public seller profile with stats (completed orders, repeat customers, active listings, lifetime earned), services, reviews
+- `POST /api/orders/[id]/dispute` — file a dispute on an order (creates Dispute record, updates order status to 'disputed', notifies respondent + admins)
+- `POST /api/services/[id]/report` — report a service (creates Report, notifies admins)
+
+#### Rate Limiting (`src/lib/rate-limit.ts`)
+- In-memory token bucket rate limiter with preset configurations:
+  - `strictLimit` (10/min) — auth login & register
+  - `transferLimit` (20/min) — wallet transfers, purchases, uploads
+  - `messageLimit` (60/min) — messaging
+  - `apiLimit` (120/min) — general
+- Applied to: login, register, wallet transfer, message send, file upload
+- Returns 429 with Retry-After header when exceeded
+
+#### File Uploads
+- Created `/api/uploads` endpoint with:
+  - FormData file upload
+  - 5MB size limit
+  - Type whitelist (images, PDF, text, audio, video, zip)
+  - Saves to `public/uploads/` with timestamped random filenames
+  - Full audit logging
+- Wired into CreateServiceView — replaced URL input with proper file picker (multi-image upload, preview grid, remove buttons, upload progress spinner)
+- Wired into ConversationView — paperclip button now opens file picker, uploads file, sends as image/file message
+
+#### New Frontend Views
+1. **SellerProfileView** — full seller profile page with:
+   - Cover + avatar with gradient
+   - Verified badge, bio, location, languages, response time
+   - Stats grid (completed orders, repeat buyers, active listings)
+   - Lifetime earned card
+   - Skills tags
+   - Active listings list
+   - Reviews with ratings
+   - Message + View Services actions
+2. **DisputeView** — dispute filing form with:
+   - Reason selection (5 preset reasons)
+   - Additional details textarea
+   - "What happens next" info card
+   - Success confirmation screen
+
+#### Admin Panel Expansion
+Rewrote AdminView with 11 tabs (was 5):
+- Dashboard, Users, Wallets, Services (existing, preserved)
+- **Disputes** (new) — list disputes, resolve for claimant/respondent
+- **Reports** (new) — list reports, resolve/dismiss
+- **Flags** (new) — feature flag toggles with animated switches
+- **Settings** (new) — editable platform settings with inline save
+- **CMS** (new) — list CMS pages with publish status
+- **Broadcast** (new) — send platform-wide notifications (info/warning/maintenance types)
+- Audit (existing, preserved)
+
+#### Styling Improvements
+- Added 8 new CSS animations: staggerIn, skeleton-shimmer, press-card, fab-shadow, gradient-text, lift-on-hover, online-dot pulse, slideUp, fadeScale, ticker
+- Staggered list animations on marketplace service grid
+- Number ticker animation on wallet balance
+- Enhanced wallet balance card: larger balance number, reserved escrow indicator, uppercase tracking label
+- Bottom nav redesign: floating center "+" (create service) FAB with gradient + shadow, animated active dot with layoutId
+- Recently viewed section on marketplace (localStorage tracked)
+- Improved empty states with icons
+- Service detail: report service link, seller profile link
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Full order lifecycle tested: pending → accepted → delivered → completed → reviewed (201)
+- ✅ File upload API works (image saved to /uploads/, audit logged)
+- ✅ Seller profile view renders with stats, services, reviews
+- ✅ Dispute flow: file dispute → order marked disputed → admin notified
+- ✅ Saved services: save → appears in saved list → remove works
+- ✅ Rate limiting applied to sensitive endpoints
+- ✅ All 11 admin tabs functional (dashboard, users, wallets, services, disputes, reports, flags, settings, cms, broadcast, audit)
+- ✅ Marketplace recently viewed section works
+- ✅ Bottom nav floating create button works
+
+### Bugs Found & Fixed This Round
+1. Review `findUnique` on non-unique field → changed to `findFirst`
+2. SavedView had no API → created `/api/saved` endpoint
+3. No file upload support → created `/api/uploads` + wired into create-service and messaging
+
+---
+
+## Phase 1 — Core Foundation (Previous Round)
 
 ### Architecture
-- Single-page app at `/` (per constraints) with client-side view routing via Zustand store
+- Single-page app at `/` with client-side view routing via Zustand store
 - All backend logic via `/api/*` REST routes
-- Real-time messaging via socket.io mini-service on port 3003 (started separately)
-- Prisma + SQLite with a fully normalized schema (30+ models) ready for PostgreSQL migration
+- Real-time messaging via socket.io mini-service on port 3003
+- Prisma + SQLite with 33 fully-normalized models (portable to PostgreSQL)
 - Double-entry ledger wallet engine with atomic transactions
 - PWA: manifest.json + service worker
 
@@ -21,55 +129,18 @@ OrderAttachment, OrderActivity, Conversation, ConversationMember, Message, Revie
 Notification, Announcement, AnnouncementAck, Report, Dispute, DisputeEvidence,
 SupportTicket, SupportTicketNote, ReferralReward, AuditLog, FeatureFlag, Setting, CmsPage.
 
-All models use cuid() PKs, createdAt/updatedAt, and soft-delete where appropriate.
-
 ### Auth
 - Session-based with httpOnly JWT cookies (jose) + DB session records
 - bcryptjs password + transaction PIN hashing
 - Referral code auto-generation, referral reward on signup (50 SC)
 
 ### Wallet Engine (`src/lib/wallet.ts`)
-- Double-entry ledger (debit/credit entries, conservation enforced)
-- Atomic transfers with balance checks, frozen-wallet checks, PIN verification
+- Double-entry bookkeeping (debit/credit entries, conservation enforced)
+- Atomic P2P transfers with PIN verification, frozen-wallet checks
 - Escrow flow for orders (available → reserved → released/refunded)
 - Credit purchases with idempotency keys
 - Admin adjustments with audit logging
 - Referral rewards
-
-### API Routes
-- Auth: register, login, logout, me
-- Wallet: balance, transactions, buy, transfer (with recipient preview), QR, export CSV
-- Marketplace: categories, services (sort/filter/pagination), search (users/services/categories)
-- Services: detail, create, reviews, save/unsave
-- Orders: list/create, detail + actions (accept, deliver, complete, cancel)
-- Messages: conversations list, conversation messages + send
-- Notifications: list, mark read
-- Referrals: stats + rewards
-- QR: dynamic generation (user/service/wallet)
-- Admin: dashboard, users (view/suspend/verify/ban/reset-pin), wallets (view/freeze/adjust),
-  services (feature/hide/remove), orders, audit, feature-flags, settings, notifications (broadcast),
-  reports, disputes, cms
-
-### Frontend Views (all mobile-first, premium 2026 UI)
-- AuthScreen (login/register with glassmorphism, animated gradients)
-- MarketplaceView (hero, categories, featured carousel, trending tabs, service grid)
-- WalletView (gradient balance card, quick actions, lifetime stats, filterable transactions)
-- ServiceDetailView (image header, seller card, description, tags, FAQs, reviews, sticky CTA)
-- OrdersView (tabs: all/buying/selling, status badges)
-- OrderDetailView (timeline, status banner, accept/deliver/complete/cancel actions, review form)
-- MessagesView (conversation list)
-- ConversationView (real-time socket.io chat, typing indicator, read receipts, optimistic UI)
-- ProfileView (QR code, stats, menu, admin entry)
-- AdminView (dashboard with charts, user/wallet/service/audit management)
-- CreateServiceView (full form with tags, skills, images, FAQs)
-- TransferView (recipient lookup + verification, PIN, success receipt; receive via QR)
-- BuyCreditsView (6 packages, bonus credits, simulated gateway)
-- ReferralsView (code, share, stats, referral list, how-it-works)
-- NotificationsView (typed icons, mark read/all)
-- SavedView, SearchView (global search with recent searches)
-
-### Mini Services
-- `mini-services/chat-service/` — socket.io on port 3003, presence, typing, real-time delivery
 
 ### Seed Data
 Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, categories, feature flags, settings, CMS pages.
@@ -77,45 +148,25 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 - Buyer: buyer@example.com / password123 (PIN 1234)
 - Seller: maya@example.com / password123 (PIN 1234)
 
-## Verification Results
-- ✅ Lint passes (0 errors)
-- ✅ Dev server starts on port 3000
-- ✅ Chat service starts on port 3003
-- ✅ Database seeded (admin, 5 sellers, 1 buyer, 8 services, categories, flags, settings, CMS)
-- ✅ Auth screen renders with glassmorphism + animated gradients
-- ✅ Login as buyer works (5,000 SC balance shown)
-- ✅ Marketplace renders: hero, categories, featured carousel, trending tabs, service grid
-- ✅ Service detail renders: image header, seller card, description, FAQs, sticky CTA
-- ✅ Order creation works (escrow deducted, reserved balance increased)
-- ✅ Order detail renders with timeline, status banner, action buttons
-- ✅ Wallet view: gradient balance card, lifetime stats, transaction list with filters
-- ✅ Wallet transfer API works (recipient preview + PIN-verified transfer with receipt)
-- ✅ Double-entry ledger balances (available + reserved = total)
-- ✅ Admin dashboard: 7 users, 105k credits sold, 8 services, 1 order, daily charts, activity feed
-- ✅ Admin user/wallet/service/audit management tabs functional
-
-### Bugs Found & Fixed During Verification
-1. **Nested Prisma transaction timeout** — `escrowForOrder` opened its own `$transaction` inside the order creation transaction, causing a 5s timeout. Fixed by inlining escrow logic into the order transaction.
-2. **Order detail crash** — the `/api/orders/:id` query didn't include the `seller` relation, causing `counterparty.username` to throw. Fixed by adding `seller: { include: { profile: true } }`.
-3. **Missing auth-screen.tsx** — initial write failed because the views directory didn't exist. Re-created.
-4. **Transaction timeout** — increased Prisma transaction timeout to 15s as a safety net.
-5. **Order-detail chat button** — referenced non-existent `order.conversationId`. Fixed to look up conversation by orderId.
+---
 
 ## Unresolved Issues / Risks / Next Steps
-1. **No file upload endpoint yet** — image URLs must be pasted manually in create-service; should add `/api/uploads` with local storage.
-2. **Saved services** — no dedicated saved-list API endpoint; SavedView is approximated.
-3. **Voice notes / file messages** — UI buttons exist but upload not wired.
-4. **2FA** — fields exist in schema but not implemented in flow.
-5. **Email notifications** — only in-app notifications; no email transport.
-6. **Rate limiting** — not yet implemented on API routes.
-7. **Fraud detection** — dashboard shows counts but no automated rules engine.
-8. **Admin: disputes/reports/CMS/feature-flags/settings UI** — API exists but only dashboard/users/wallets/services/audit have UI.
-9. **Tests** — no automated tests written yet.
-10. **PostgreSQL migration** — schema is portable; update `datasource` provider when ready.
+1. **2FA** — fields exist in schema but not implemented in auth flow.
+2. **Email notifications** — only in-app notifications; no email transport.
+3. **Fraud detection** — dashboard shows counts but no automated rules engine.
+4. **Tests** — no automated tests written yet (wallet integrity, transfers, escrow).
+5. **Voice notes** — UI for voice messages not implemented (file upload supports audio but no recorder UI).
+6. **QR scanner** — QR generation works but scanning/importing QR codes to initiate transfers not implemented.
+7. **PostgreSQL migration** — schema is portable; update `datasource` provider when ready.
+8. **Admin: order detail view** — admin can't view order timelines from admin panel (only from user side).
+9. **Admin: wallet adjust UI** — the adjust endpoint exists but the UI input for credit adjustments is not in the wallets tab.
+10. **Search filters** — categoryId filter from marketplace doesn't apply in search view.
 
 ### Priority Recommendations for Next Phase
-- Add file upload endpoint + wire into create-service & messaging
-- Implement remaining admin UI (disputes, reports, CMS, settings, feature-flags panels)
-- Add rate limiting middleware
-- Add automated tests for wallet integrity (transfers, escrow, double-entry balance)
-- Polish: skeleton loading states on all views, pull-to-refresh, optimistic updates
+- Implement 2FA flow (TOTP with qr enrollment)
+- Add automated tests for wallet integrity (double-entry balance conservation)
+- Build QR scanner for receiving transfers
+- Add voice note recorder in messaging
+- Wire admin wallet credit adjustment UI
+- Add email notification transport (Resend/SendGrid)
+- Implement fraud detection rules (velocity checks, multiple devices)

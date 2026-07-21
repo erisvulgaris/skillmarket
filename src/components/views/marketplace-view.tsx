@@ -20,6 +20,21 @@ export function MarketplaceView() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'trending' | 'newest' | 'popular' | 'featured'>('trending')
+  const [recentlyViewed, setRecentlyViewed] = useState<Service[]>([])
+
+  useEffect(() => {
+    try {
+      const ids: string[] = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]')
+      if (ids.length > 0) {
+        // Fetch each — lightweight; could be a single endpoint
+        Promise.all(ids.slice(0, 6).map((id) => api.get<{ service: Service }>(`/api/services/${id}`).catch(() => null)))
+          .then((results) => {
+            const valid = results.filter(Boolean).map((r: any) => r.service) as Service[]
+            setRecentlyViewed(valid)
+          })
+      }
+    } catch {}
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -111,6 +126,18 @@ export function MarketplaceView() {
         </div>
       )}
 
+      {/* Recently viewed */}
+      {recentlyViewed.length > 0 && (
+        <div className="space-y-3">
+          <SectionHeader icon={<Clock className="h-4 w-4 text-muted-foreground" />} title="Recently Viewed" />
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+            {recentlyViewed.map((s) => (
+              <ServiceCardHorizontal key={s.id} service={s} onClick={() => setView('service-detail', { id: s.id })} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-muted rounded-2xl">
         {([
@@ -136,8 +163,10 @@ export function MarketplaceView() {
       <div className="grid grid-cols-2 gap-3">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <ServiceCardSkeleton key={i} />)
-          : services.map((s) => (
-              <ServiceCard key={s.id} service={s} onClick={() => setView('service-detail', { id: s.id })} />
+          : services.map((s, i) => (
+              <div key={s.id} className="stagger-item" style={{ animationDelay: `${i * 40}ms` }}>
+                <ServiceCard service={s} onClick={() => setView('service-detail', { id: s.id })} />
+              </div>
             ))}
       </div>
 

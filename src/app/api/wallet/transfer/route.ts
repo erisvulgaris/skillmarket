@@ -2,6 +2,7 @@ import { getCurrentUser, verifyPin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { transferCredits } from '@/lib/wallet'
 import { ok, err, handleError, validateBody } from '@/lib/api'
+import { transferLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -11,7 +12,7 @@ const schema = z.object({
   pin: z.string().length(4),
 })
 
-export async function POST(req: Request) {
+export const POST = transferLimit(async function POST(req: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
 // Preview recipient before transfer
 export async function GET(req: Request) {

@@ -19,13 +19,15 @@ import { ReferralsView } from '@/components/views/referrals-view'
 import { NotificationsView } from '@/components/views/notifications-view'
 import { TransferView } from '@/components/views/transfer-view'
 import { BuyCreditsView } from '@/components/views/buy-credits-view'
+import { SellerProfileView } from '@/components/views/seller-profile-view'
+import { DisputeView } from '@/components/views/dispute-view'
 import { AnimatePresence } from 'framer-motion'
 import { motion } from 'framer-motion'
 
 export function AppShell() {
   const { view, user } = useApp()
 
-  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service']
+  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute']
   const isFullScreen = fullScreenViews.includes(view)
 
   return (
@@ -58,6 +60,8 @@ export function AppShell() {
             {view === 'notifications' && <NotificationsView />}
             {view === 'transfer' && <TransferView />}
             {view === 'buy-credits' && <BuyCreditsView />}
+            {view === 'seller-profile' && <SellerProfileView />}
+            {view === 'dispute' && <DisputeView />}
           </motion.div>
         </AnimatePresence>
       </main>

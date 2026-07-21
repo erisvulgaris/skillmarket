@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { verifyPassword, createSession, setSessionCookie } from '@/lib/auth'
 import { ok, err, handleError, validateBody, getClientIp, getUserAgent } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { strictLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -9,7 +10,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 })
 
-export async function POST(req: Request) {
+export const POST = strictLimit(async function POST(req: Request) {
   try {
     const { data, error } = await validateBody(loginSchema, req)
     if (error) return err(error, 422)
@@ -44,4 +45,4 @@ export async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})

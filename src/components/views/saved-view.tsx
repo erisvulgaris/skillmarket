@@ -7,25 +7,22 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkillCredits } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
-import { Bookmark, Search as SearchIcon, X, User as UserIcon } from 'lucide-react'
+import { Bookmark, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
 export function SavedView() {
   const { setView } = useApp()
-  const [saved, setSaved] = useState<Service[]>([])
+  const [saved, setSaved] = useState<{ id: string; service: Service }[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Note: saved services fetched via marketplace with a flag; here we fetch user's saved via a dedicated endpoint
-  // Since we don't have a saved list endpoint, we approximate by fetching services and filtering client-side is not ideal.
-  // Instead we use a lightweight approach: fetch from a new endpoint. We'll reuse /api/marketplace/services with saved filter.
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      // We'll fetch all recent and filter by saved — but better: add a saved endpoint. For now, use a simple fetch.
-      const data = await api.get<{ items: Service[] }>('/api/marketplace/services?limit=50')
-      // We can't easily know which are saved without the save flag in listing. We'll just show recently viewed as a stand-in.
-      setSaved(data.items.slice(0, 8))
+      const data = await api.get<{ items: { id: string; service: Service }[] }>('/api/saved')
+      setSaved(data.items)
     } catch {
+      toast.error('Failed to load saved services')
     } finally {
       setLoading(false)
     }
@@ -33,35 +30,97 @@ export function SavedView() {
 
   useEffect(() => { load() }, [load])
 
+  const remove = async (saveId: string) => {
+    // Find the service to call unsave endpoint
+    const item = saved.find((s) => s.id === saveId)
+    if (!item) return
+    try {
+      await api.delete(`/api/services/${item.service.id}/save`)
+      setSaved((prev) => prev.filter((s) => s.id !== saveId))
+      toast.success('Removed from saved')
+    } catch {
+      toast.error('Failed to remove')
+    }
+  }
+
   return (
     <div className="px-4 pt-4 space-y-4">
       <div className="flex items-center gap-2">
         <Bookmark className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold">Saved Services</h1>
+        {saved.length > 0 && (
+          <span className="ml-auto text-xs text-muted-foreground">{saved.length} saved</span>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)
-          : saved.length === 0
-          ? <div className="col-span-2 text-center py-16">
-              <Bookmark className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">No saved services yet</p>
+      <div className="space-y-2">
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
+          </div>
+        ) : saved.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="inline-flex h-16 w-16 rounded-2xl bg-muted items-center justify-center mb-4">
+              <Bookmark className="h-8 w-8 text-muted-foreground/50" />
             </div>
-          : saved.map((s) => (
-              <button key={s.id} onClick={() => setView('service-detail', { id: s.id })} className="text-left active:scale-[0.98] transition">
-                <Card className="overflow-hidden p-0 gap-0">
-                  <div className="aspect-[4/3] bg-muted">
-                    {s.images[0] && <img src={s.images[0]} alt={s.title} className="h-full w-full object-cover" />}
-                  </div>
-                  <div className="p-3 space-y-1">
-                    <p className="text-xs font-semibold line-clamp-2">{s.title}</p>
-                    <Rating value={s.ratingAvg} count={s.ratingCount} size="sm" />
-                    <SkillCredits amount={s.price} size="sm" />
-                  </div>
-                </Card>
-              </button>
+            <p className="text-sm font-semibold text-muted-foreground">No saved services yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Bookmark services to find them here</p>
+            <button
+              onClick={() => setView('marketplace')}
+              className="mt-4 text-sm font-semibold text-primary"
+            >
+              Browse services →
+            </button>
+          </motion.div>
+        ) : (
+          <div className="space-y-2">
+            {saved.map(({ id, service }) => (
+              <motion.div
+                key={id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                className="relative"
+              >
+                <button
+                  onClick={() => setView('service-detail', { id: service.id })}
+                  className="w-full text-left active:scale-[0.99] transition"
+                >
+                  <Card className="p-2.5 flex items-center gap-3 pr-10">
+                    <div className="h-14 w-14 rounded-xl bg-muted overflow-hidden flex-shrink-0">
+                      {service.images[0] ? (
+                        <img src={service.images[0]} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-2xl">🎨</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold line-clamp-2">{service.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Rating value={service.ratingAvg} count={service.ratingCount} size="sm" />
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[10px] text-muted-foreground">@{service.seller.username}</span>
+                        <SkillCredits amount={service.price} size="sm" />
+                      </div>
+                    </div>
+                  </Card>
+                </button>
+                <button
+                  onClick={() => remove(id)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-muted hover:bg-destructive/10 hover:text-destructive flex items-center justify-center transition"
+                  aria-label="Remove"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
             ))}
+          </div>
+        )}
       </div>
     </div>
   )

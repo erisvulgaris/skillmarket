@@ -202,3 +202,91 @@
   from { opacity: 0; transform: translateX(100%); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Stagger animation for lists */
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  animation: staggerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Skeleton shimmer enhanced */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--muted) 80%, transparent) 0%,
+    color-mix(in oklch, var(--muted) 50%, transparent) 50%,
+    color-mix(in oklch, var(--muted) 80%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Press feedback for cards */
+.press-card {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s;
+}
+.press-card:active {
+  transform: scale(0.97);
+}
+
+/* Floating action button shadow */
+.fab-shadow {
+  box-shadow: 0 8px 24px -4px color-mix(in oklch, var(--primary) 40%, transparent),
+              0 4px 8px -2px color-mix(in oklch, var(--primary) 20%, transparent);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), color-mix(in oklch, var(--primary) 60%, var(--chart-3)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Card hover lift (desktop) */
+@media (hover: hover) {
+  .lift-on-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Online dot pulse */
+@keyframes onlinePulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 60%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 0%, transparent); }
+}
+.online-dot {
+  animation: onlinePulse 2s infinite;
+}
+
+/* Slide up entrance for bottom sheets */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Fade scale for modals */
+@keyframes fadeScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.fade-scale {
+  animation: fadeScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Number ticker */
+@keyframes ticker {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ticker {
+  animation: ticker 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}

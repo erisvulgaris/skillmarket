@@ -21,6 +21,8 @@ type View =
   | 'notifications'
   | 'transfer'
   | 'buy-credits'
+  | 'seller-profile'
+  | 'dispute'
 
 interface AppState {
   user: User | null

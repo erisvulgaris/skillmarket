@@ -271,6 +271,17 @@ export function OrderDetailView() {
               <XCircle className="h-4 w-4" />
             </Button>
           )}
+
+          {/* Dispute */}
+          {(order.status === 'in_progress' || order.status === 'delivered') && (
+            <Button
+              onClick={() => setView('dispute', { id: order.id })}
+              variant="outline"
+              className="rounded-2xl text-amber-600 border-amber-500/40"
+            >
+              <AlertTriangle className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

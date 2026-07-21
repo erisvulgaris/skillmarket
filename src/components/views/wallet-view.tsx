@@ -82,16 +82,24 @@ export function WalletView() {
         <div className="relative">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs opacity-80 font-medium">Available Balance</p>
+              <p className="text-xs opacity-80 font-medium uppercase tracking-wide">Available Balance</p>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-3xl font-black tabular-nums">{formatSC(wallet?.availableBalance || 0)}</span>
+                <span className="text-4xl font-black tabular-nums ticker">{formatSC(wallet?.availableBalance || 0)}</span>
                 <span className="text-sm opacity-80 font-medium">SC</span>
               </div>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
-              <WalletIcon className="h-5 w-5" />
+            <div className="h-12 w-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
+              <WalletIcon className="h-6 w-6" />
             </div>
           </div>
+
+          {/* Reserved indicator */}
+          {(wallet?.reservedBalance || 0) > 0 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur text-[10px] font-medium">
+              <Lock className="h-3 w-3" />
+              {formatSC(wallet.reservedBalance)} SC in escrow
+            </div>
+          )}
 
           {/* Quick actions */}
           <div className="grid grid-cols-4 gap-2 mt-5">

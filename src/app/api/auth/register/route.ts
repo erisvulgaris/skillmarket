@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { hashPassword, createSession, setSessionCookie, generateReferralCode, hashPin } from '@/lib/auth'
 import { ok, err, handleError, validateBody, getClientIp, getUserAgent } from '@/lib/api'
 import { writeAudit, pushNotification } from '@/lib/audit'
+import { strictLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -13,7 +14,7 @@ const registerSchema = z.object({
   displayName: z.string().optional(),
 })
 
-export async function POST(req: Request) {
+export const POST = strictLimit(async function POST(req: Request) {
   try {
     const { data, error } = await validateBody(registerSchema, req)
     if (error) return err(error, 422)
@@ -94,4 +95,4 @@ export async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})

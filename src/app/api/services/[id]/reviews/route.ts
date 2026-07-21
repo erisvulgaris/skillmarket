@@ -56,7 +56,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (order.serviceId !== id) return err('Order does not match service', 400)
     if (order.status !== 'completed') return err('CANNOT_REVIEW', 400)
 
-    const existing = await db.review.findUnique({ where: { orderId: order.id } })
+    const existing = await db.review.findFirst({ where: { orderId: order.id } })
     if (existing) return err('ALREADY_EXISTS', 409)
 
     const review = await db.$transaction(async (tx) => {

@@ -38,6 +38,18 @@ export function ServiceDetailView() {
 
   useEffect(() => { load() }, [load])
 
+  // Track recently viewed
+  useEffect(() => {
+    if (id) {
+      try {
+        const ids: string[] = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]')
+        const filtered = ids.filter((x) => x !== id)
+        filtered.unshift(id)
+        localStorage.setItem('sm_recently_viewed', JSON.stringify(filtered.slice(0, 10)))
+      } catch {}
+    }
+  }, [id])
+
   const toggleSave = async () => {
     try {
       if (saved) {
@@ -68,6 +80,17 @@ export function ServiceDetailView() {
       toast.error(e.message || 'Order failed')
     } finally {
       setOrdering(false)
+    }
+  }
+
+  const reportService = async () => {
+    const reason = window.prompt('Why are you reporting this service?')
+    if (!reason || reason.trim().length < 5) return
+    try {
+      await api.post(`/api/services/${id}/report`, { reason: reason.trim() })
+      toast.success('Report submitted. Thank you.')
+    } catch (e: any) {
+      toast.error(e.message || 'Report failed')
     }
   }
 
@@ -135,7 +158,7 @@ export function ServiceDetailView() {
 
         {/* Seller card */}
         <button
-          onClick={() => toast.info('Seller profile coming soon')}
+          onClick={() => setView('seller-profile', { username: data.seller.username })}
           className="w-full flex items-center gap-3 p-3 rounded-2xl bg-card border border-border/40 active:scale-[0.99] transition"
         >
           <div className="h-12 w-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
@@ -227,6 +250,18 @@ export function ServiceDetailView() {
               ))}
             </div>
           </Section>
+        )}
+
+        {/* Report service */}
+        {!isOwn && (
+          <div className="pt-2">
+            <button
+              onClick={() => reportService()}
+              className="text-xs text-muted-foreground hover:text-destructive transition"
+            >
+              Report this service
+            </button>
+          </div>
         )}
       </div>
 

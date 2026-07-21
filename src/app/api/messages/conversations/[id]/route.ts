@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody, parsePagination } from '@/lib/api'
 import { pushNotification } from '@/lib/audit'
+import { messageLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const sendSchema = z.object({
@@ -57,7 +58,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = messageLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -100,4 +101,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})

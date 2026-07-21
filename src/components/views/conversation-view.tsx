@@ -29,9 +29,11 @@ export function ConversationView() {
   const [online, setOnline] = useState(false)
   const [typing, setTyping] = useState(false)
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
   const typingTimer = useRef<any>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -200,8 +202,55 @@ export function ConversationView() {
       {/* Composer */}
       <div className="glass border-t border-border/40 p-3 pb-safe">
         <div className="max-w-md mx-auto flex items-end gap-2">
-          <button className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-accent transition flex-shrink-0">
-            <Paperclip className="h-5 w-5 text-muted-foreground" />
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const fd = new FormData()
+              fd.append('file', file)
+              setUploading(true)
+              try {
+                const res = await fetch('/api/uploads', { method: 'POST', body: fd, credentials: 'include' })
+                const json = await res.json()
+                if (json.success) {
+                  const isImage = file.type.startsWith('image/')
+                  const msg = await api.post<{ message: Message }>(`/api/messages/conversations/${id}`, {
+                    type: isImage ? 'image' : 'file',
+                    content: file.name,
+                    attachmentUrl: json.data.url,
+                    attachmentName: file.name,
+                  })
+                  setMessages((prev) => [...prev, msg.message])
+                  socketRef.current?.emit('message', {
+                    conversationId: id,
+                    messageId: msg.message.id,
+                    senderId: user!.id,
+                    senderUsername: user!.username,
+                    content: file.name,
+                    type: isImage ? 'image' : 'file',
+                    attachmentUrl: json.data.url,
+                    createdAt: msg.message.createdAt,
+                  })
+                } else {
+                  toast.error(json.error || 'Upload failed')
+                }
+              } catch (err: any) {
+                toast.error(err.message || 'Upload failed')
+              } finally {
+                setUploading(false)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+              }
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-accent transition flex-shrink-0 disabled:opacity-50"
+          >
+            {uploading ? <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <Paperclip className="h-5 w-5 text-muted-foreground" />}
           </button>
           <div className="flex-1 min-h-10 max-h-32 rounded-2xl bg-muted/60 border border-border/40 flex items-end px-3 py-2">
             <textarea
