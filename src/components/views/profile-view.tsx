@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
-import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3, LifeBuoy, FileText, Grid3x3, Check } from 'lucide-react'
+import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3, LifeBuoy, FileText, Grid3x3, Check, Bookmark } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { api } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
@@ -18,10 +18,12 @@ export function ProfileView() {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [savedCount, setSavedCount] = useState(0)
 
   useEffect(() => {
     if (user) {
       api.get<{ dataUrl: string }>(`/api/qr/wallet?id=${user.id}`).then((d) => setQrUrl(d.dataUrl)).catch(() => {})
+      api.get<{ items: any[] }>('/api/saved').then((d) => setSavedCount(d.items.length)).catch(() => {})
     }
   }, [user])
 
@@ -82,6 +84,7 @@ export function ProfileView() {
       <div className="space-y-2">
         <MenuItem icon={<Plus className="h-4 w-4" />} label="Create a Service" onClick={() => setView('create-service')} />
         <MenuItem icon={<Grid3x3 className="h-4 w-4" />} label="My Services" onClick={() => setView('my-services')} />
+        <MenuItem icon={<Bookmark className="h-4 w-4" />} label="Saved Services" onClick={() => setView('saved')} badge={savedCount > 0 ? String(savedCount) : undefined} />
         <MenuItem icon={<BarChart3 className="h-4 w-4" />} label="Seller Analytics" onClick={() => setView('analytics')} />
         <MenuItem icon={<Package className="h-4 w-4" />} label="My Orders" onClick={() => setView('orders')} />
         <MenuItem icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />

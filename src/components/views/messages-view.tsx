@@ -14,6 +14,7 @@ type Convo = {
   type: string
   orderId: string | null
   updatedAt: string
+  unread: boolean
   lastMessage: { content: string; type: string; createdAt: string } | null
   other: {
     id: string
@@ -103,13 +104,16 @@ export function MessagesView() {
                 onClick={() => setView('conversation', { id: c.id })}
                 className="w-full text-left active:scale-[0.99] transition"
               >
-                <Card className="p-3 flex items-center gap-3">
+                <Card className={clsx('p-3 flex items-center gap-3', c.unread && 'border-primary/40 bg-primary/5')}>
                   <div className="relative h-12 w-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
                     {c.other?.avatarUrl && <img src={c.other.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                    {c.unread && (
+                      <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary border-2 border-card" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="text-sm font-semibold truncate">
+                      <p className={clsx('text-sm truncate', c.unread ? 'font-bold' : 'font-semibold')}>
                         {c.other?.displayName || c.other?.username || 'Unknown'}
                       </p>
                       {c.other?.isVerified && <ShieldCheck className="h-3 w-3 text-primary flex-shrink-0" />}
@@ -117,7 +121,7 @@ export function MessagesView() {
                         <span className="ml-auto text-[10px] text-muted-foreground">Order chat</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    <p className={clsx('text-xs truncate mt-0.5', c.unread ? 'text-foreground font-medium' : 'text-muted-foreground')}>
                       {c.lastMessage?.type === 'image' ? '📷 Photo' :
                        c.lastMessage?.type === 'file' ? '📎 File' :
                        c.lastMessage?.type === 'voice' ? '🎤 Voice' :
@@ -125,9 +129,14 @@ export function MessagesView() {
                     </p>
                   </div>
                   {c.lastMessage && (
-                    <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                      {new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(c.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {c.unread && (
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </div>
                   )}
                 </Card>
               </motion.button>

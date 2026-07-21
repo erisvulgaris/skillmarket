@@ -5,6 +5,66 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 11 — Round 11 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 10 was stable with admin support detail, conversation message search, order export, and unread messages badge all working. This round focused on: QA testing, adding conversation unread indicators (per-conversation), adding saved services count badge on profile, and adding wallet monthly summary.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add conversation unread indicator (per-conversation dot)
+3. ✅ Add saved services count badge on profile
+4. ✅ Add wallet monthly summary (income/expenses/net for current month)
+5. ✅ Improve styling (unread dots, monthly summary card, saved badge)
+
+### Completed Modifications
+
+#### Conversation Unread Indicator
+- Updated conversations API to return `unread` boolean per conversation
+  - Uses `lastReadAt` from ConversationMember vs last message timestamp
+  - Only marks as unread if last message sender is not the current user
+- Updated MessagesView conversation cards with:
+  - Unread dot on avatar (primary color, top-right)
+  - Card border highlighted (primary/40) and background tinted (primary/5)
+  - Bold username and message text for unread conversations
+  - Small dot indicator next to timestamp
+- Updated store's `loadUnreadMessages` to use the `unread` field from API
+
+#### Saved Services Count Badge
+- Profile view now fetches saved services count from `/api/saved`
+- "Saved Services" menu item shows count badge when > 0
+- Uses Bookmark icon for visual consistency
+
+#### Wallet Monthly Summary
+- New `MonthlySummary` component in WalletView:
+  - Shows current month name (e.g., "JULY SUMMARY")
+  - Transaction count for the month
+  - Income (credits) and Expenses (debits) breakdown
+  - Net calculation (income - expenses) with color coding
+  - Derived from already-loaded transaction data (no extra API call)
+
+#### Styling Improvements
+- Unread conversation cards with primary tint and bold text
+- Monthly summary with clean grid layout and colored amounts
+- Saved count badge with primary background
+- Avatar unread dot with card-colored border
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Wallet shows "JULY SUMMARY" with 4 transactions, Income 100, Expenses 750, Net −650
+- ✅ Profile shows "Saved Services" with "1" count badge
+- ✅ Conversations API returns `unread` field (false for read, true for unread)
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. No per-conversation unread indicator → added unread field to API + UI dots
+2. No saved count on profile → added badge with live count
+3. No monthly summary → built MonthlySummary component with income/expenses/net
+
+---
+
 ## Phase 10 — Round 10 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -897,6 +957,9 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 37. ~~**Conversation message search**~~ — ✅ DONE in Round 10 (in-conversation search).
 38. ~~**Order history export**~~ — ✅ DONE in Round 10 (CSV export button).
 39. ~~**Unread messages badge**~~ — ✅ DONE in Round 10 (nav badge with count).
+40. ~~**Conversation unread indicator**~~ — ✅ DONE in Round 11 (per-conversation dots + bold text).
+41. ~~**Saved services count badge**~~ — ✅ DONE in Round 11 (profile menu badge).
+42. ~~**Wallet monthly summary**~~ — ✅ DONE in Round 11 (income/expenses/net card).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
@@ -905,5 +968,5 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 - Add offline data sync with IndexedDB
 - Add user block/mute in messaging
 - Add service dashboard with views/sales chart
-- Add saved services count badge on profile
-- Add conversation unread indicator (per-conversation)
+- Add notification sound on new message
+- Add wallet spending category breakdown

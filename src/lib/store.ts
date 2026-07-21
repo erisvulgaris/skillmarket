@@ -97,15 +97,7 @@ export const useApp = create<AppState>((set, get) => ({
   loadUnreadMessages: async () => {
     try {
       const data = await api.get<{ conversations: any[] }>('/api/messages/conversations?limit=50')
-      // Count conversations where lastMessage exists and we haven't read it
-      // This is approximate — real unread tracking would need lastReadAt comparison
-      const unread = data.conversations.filter((c) => {
-        if (!c.lastMessage) return false
-        // Simple heuristic: if updated in last 5 min and no lastReadAt, count as unread
-        const updated = new Date(c.updatedAt).getTime()
-        const fiveMinAgo = Date.now() - 5 * 60 * 1000
-        return updated > fiveMinAgo
-      }).length
+      const unread = data.conversations.filter((c) => c.unread).length
       set({ unreadMessages: unread })
     } catch {}
   },

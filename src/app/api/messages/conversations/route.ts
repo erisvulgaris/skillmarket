@@ -10,9 +10,10 @@ export async function GET(req: Request) {
 
     const memberships = await db.conversationMember.findMany({
       where: { userId: user.id },
-      select: { conversationId: true },
+      select: { conversationId: true, lastReadAt: true },
     })
     const ids = memberships.map((m) => m.conversationId)
+    const readMap = new Map(memberships.map((m) => [m.conversationId, m.lastReadAt]))
 
     const convos = await db.conversation.findMany({
       where: { id: { in: ids } },
@@ -27,12 +28,16 @@ export async function GET(req: Request) {
 
     const mapped = convos.map((c) => {
       const other = c.members.find((m) => m.userId !== user.id)
+      const lastReadAt = readMap.get(c.id)
+      const lastMessageTime = c.messages[0]?.createdAt
+      const unread = lastMessageTime && (!lastReadAt || lastMessageTime > lastReadAt) && c.messages[0]?.senderId !== user.id
       return {
         id: c.id,
         type: c.type,
         orderId: c.orderId,
         updatedAt: c.updatedAt,
         lastMessage: c.messages[0] || null,
+        unread: !!unread,
         other: other
           ? {
               id: other.user.id,

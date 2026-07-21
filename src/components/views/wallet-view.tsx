@@ -129,6 +129,9 @@ export function WalletView() {
         </div>
       </Card>
 
+      {/* Monthly summary */}
+      <MonthlySummary transactions={txs} />
+
       {/* Transactions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -236,5 +239,40 @@ function TxRow({ tx }: { tx: Tx }) {
         <p className="text-[10px] text-muted-foreground">Bal {formatSC(tx.balanceAfter)}</p>
       </div>
     </motion.div>
+  )
+}
+
+function MonthlySummary({ transactions }: { transactions: Tx[] }) {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthTx = transactions.filter((t) => new Date(t.createdAt) >= monthStart)
+  const income = monthTx.filter((t) => t.direction === 'credit').reduce((s, t) => s + t.amount, 0)
+  const expenses = monthTx.filter((t) => t.direction === 'debit').reduce((s, t) => s + t.amount, 0)
+  const net = income - expenses
+  const monthName = now.toLocaleString('default', { month: 'long' })
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold uppercase text-muted-foreground">{monthName} Summary</p>
+        <span className="text-[10px] text-muted-foreground">{monthTx.length} transactions</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground">Income</p>
+          <p className="text-lg font-bold text-emerald-500 tabular-nums">{formatSC(income)}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground">Expenses</p>
+          <p className="text-lg font-bold text-rose-500 tabular-nums">{formatSC(expenses)}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-border/30">
+        <span className="text-xs font-semibold">Net</span>
+        <span className={clsx('text-sm font-bold tabular-nums', net >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+          {net >= 0 ? '+' : '−'}{formatSC(Math.abs(net))}
+        </span>
+      </div>
+    </Card>
   )
 }
