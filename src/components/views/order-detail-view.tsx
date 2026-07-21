@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { SkillCredits } from '@/components/sc-badge'
-import { ArrowLeft, Clock, Package, CheckCircle2, XCircle, MessageSquare, Star, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Clock, Package, CheckCircle2, XCircle, MessageSquare, Star, ShieldCheck, AlertTriangle, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
@@ -23,6 +23,10 @@ export function OrderDetailView() {
   const [reviewing, setReviewing] = useState(false)
   const [rating, setRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
+  const [deliverableUrl, setDeliverableUrl] = useState('')
+  const [deliverableName, setDeliverableName] = useState('')
+  const [uploadingDeliverable, setUploadingDeliverable] = useState(false)
+  const deliverFileRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -168,8 +172,50 @@ export function OrderDetailView() {
               placeholder="Add a note about your delivery…"
               className="min-h-[80px]"
             />
+            {/* Attachment upload */}
+            <input
+              type="file"
+              ref={deliverFileRef}
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const fd = new FormData()
+                fd.append('file', file)
+                setUploadingDeliverable(true)
+                try {
+                  const res = await fetch('/api/uploads', { method: 'POST', body: fd, credentials: 'include' })
+                  const json = await res.json()
+                  if (json.success) {
+                    setDeliverableUrl(json.data.url)
+                    setDeliverableName(file.name)
+                    toast.success('File uploaded')
+                  } else {
+                    toast.error(json.error || 'Upload failed')
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || 'Upload failed')
+                } finally {
+                  setUploadingDeliverable(false)
+                  if (deliverFileRef.current) deliverFileRef.current.value = ''
+                }
+              }}
+            />
+            <button
+              onClick={() => deliverFileRef.current?.click()}
+              disabled={uploadingDeliverable}
+              className="w-full p-3 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition disabled:opacity-50"
+            >
+              {uploadingDeliverable ? (
+                <><div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> Uploading…</>
+              ) : deliverableUrl ? (
+                <><Paperclip className="h-4 w-4 text-primary" /> {deliverableName}</>
+              ) : (
+                <><Paperclip className="h-4 w-4" /> Attach deliverable file</>
+              )}
+            </button>
             <Button
-              onClick={() => { doAction('deliver', { note: deliverNote }); setShowDeliver(false); setDeliverNote('') }}
+              onClick={() => { doAction('deliver', { note: deliverNote, attachmentUrl: deliverableUrl, filename: deliverableName, fileType: 'file' }); setShowDeliver(false); setDeliverNote(''); setDeliverableUrl(''); setDeliverableName('') }}
               disabled={actionLoading}
               className="w-full"
             >

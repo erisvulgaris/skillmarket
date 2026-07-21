@@ -23,6 +23,7 @@ export function ServiceDetailView() {
   const [saved, setSaved] = useState(false)
   const [ordering, setOrdering] = useState(false)
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
+  const [activeImage, setActiveImage] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -132,10 +133,47 @@ export function ServiceDetailView() {
 
   return (
     <div className="pb-32 slide-enter">
-      {/* Image header */}
+      {/* Image gallery */}
       <div className="relative aspect-video bg-muted">
-        {data.images[0] ? (
-          <img src={data.images[0]} alt={data.title} className="h-full w-full object-cover" />
+        {data.images.length > 0 ? (
+          <>
+            <img src={data.images[activeImage]} alt={data.title} className="h-full w-full object-cover" />
+            {data.images.length > 1 && (
+              <>
+                {/* Navigation arrows */}
+                {activeImage > 0 && (
+                  <button
+                    onClick={() => setActiveImage(activeImage - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full glass flex items-center justify-center active:scale-90"
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                  </button>
+                )}
+                {activeImage < data.images.length - 1 && (
+                  <button
+                    onClick={() => setActiveImage(activeImage + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full glass flex items-center justify-center active:scale-90"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+                {/* Dots */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {data.images.map((_: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(i)}
+                      className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+                {/* Counter */}
+                <span className="absolute top-4 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold">
+                  {activeImage + 1} / {data.images.length}
+                </span>
+              </>
+            )}
+          </>
         ) : (
           <div className="h-full w-full flex items-center justify-center text-6xl">🎨</div>
         )}

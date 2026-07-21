@@ -78,6 +78,7 @@ model Profile {
   responseTimeMins Int     @default(120)
   isVerified      Boolean  @default(false)
   verificationType String? // email | identity | expert
+  notificationPrefs String? // JSON: { order: true, payment: true, transfer: true, message: true, review: true, dispute: true, announcement: true, referral: true }
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

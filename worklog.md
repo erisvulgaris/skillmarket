@@ -5,6 +5,101 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 6 — Round 6 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 5 was stable with 2FA login, service packages, quick replies, emoji picker, onboarding tour, and service share all working. This round focused on: QA testing, adding service package creation in CreateServiceView, adding order attachment upload for deliverables, building admin CMS page editor, adding notification preferences, and improving styling with a service image gallery.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add service package creation in CreateServiceView (sellers define tiers)
+3. ✅ Add order attachment upload (deliverables via /api/uploads)
+4. ✅ Build admin CMS page editor (create/edit Terms, Privacy, FAQ)
+5. ✅ Add notification preferences (per-type toggle)
+6. ✅ Improve styling (service image gallery with navigation, package creation UI, CMS editor)
+7. ✅ Add features: service image gallery with dots/counter
+
+### Completed Modifications
+
+#### Service Package Creation in CreateServiceView
+- New API endpoint: `POST /api/services/[id]/packages` — create packages for a service (seller only)
+- New API endpoint: `GET /api/services/[id]/packages` — list packages
+- Updated CreateServiceView with package creation UI:
+  - 3 default package tiers (Basic/Standard/Premium) with editable fields
+  - Each tier: name, description, price, delivery days, revisions, feature list
+  - Add/remove feature inputs per package
+  - "POPULAR" badge on Premium tier
+  - Packages created after service is published
+  - Empty descriptions are skipped (optional tiers)
+
+#### Order Attachment Upload
+- Updated OrderDetailView deliver form with attachment upload:
+  - Hidden file input triggered by dashed-border upload button
+  - Upload progress spinner
+  - Shows uploaded filename with paperclip icon
+  - Attachment URL passed to deliver action
+  - Creates OrderAttachment record on delivery
+
+#### Admin CMS Page Editor
+- New `AdminCmsTab` component replacing the read-only CMS list
+- Features:
+  - "New Page" button to create custom pages
+  - Click any page to edit (title, body, published toggle)
+  - Slug auto-generated from title for new pages
+  - Published/draft toggle switch
+  - Markdown-supported body textarea
+  - Save via PUT `/api/admin/cms/[slug]`
+  - Back button to return to page list
+
+#### Notification Preferences
+- New `notificationPrefs` JSON field on Profile model
+- New API endpoints:
+  - `GET /api/notifications/preferences` — get current preferences
+  - `PATCH /api/notifications/preferences` — update individual preferences
+- 8 notification types: order, payment, transfer, message, review, dispute, announcement, referral
+- New `NotificationPrefsSection` in SettingsView:
+  - Toggle switches for each notification type
+  - Description for each type
+  - Optimistic UI updates with revert on failure
+  - Accessed from Settings → Notifications
+
+#### Service Image Gallery
+- Updated ServiceDetailView with multi-image gallery:
+  - Left/right navigation arrows
+  - Dot indicators (active dot is wider)
+  - Image counter (1 / N)
+  - Tap dots to jump to specific image
+  - Only shows when service has multiple images
+
+#### Styling Improvements
+- Package creation cards with per-tier background
+- CMS editor with clean form layout
+- Notification preferences with divider-separated rows
+- Image gallery with glass-morphism navigation buttons
+- Upload button with dashed border and hover states
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Create service shows package creation UI (Basic/Standard/Premium)
+- ✅ Notification preferences render with 8 toggleable types
+- ✅ Admin CMS editor opens with edit form (title, body, publish toggle)
+- ✅ CMS page list shows with "New Page" button
+- ✅ Order deliver form includes attachment upload button
+- ✅ Service image gallery navigation works (arrows, dots, counter)
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. `useEffect` not imported in settings-view → added to imports (caused client crash)
+2. No package creation UI → built 3-tier form in CreateServiceView
+3. No deliverable upload → added file upload to order deliver form
+4. CMS tab was read-only → built full editor with create/edit/publish
+5. No notification preferences → built 8-type toggle system
+6. Service detail only showed first image → built multi-image gallery
+
+---
+
 ## Phase 5 — Round 5 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -489,13 +584,18 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 18. ~~**Wishlist/share**~~ — ✅ DONE in Round 5 (Web Share API + clipboard fallback).
 19. ~~**Onboarding tour**~~ — ✅ DONE in Round 5 (6-step intro with progress dots).
 20. ~~**Emoji picker**~~ — ✅ DONE in Round 5 (30-emoji grid in messaging).
+21. ~~**Service package creation**~~ — ✅ DONE in Round 6 (3-tier form in CreateServiceView).
+22. ~~**Order attachment upload**~~ — ✅ DONE in Round 6 (deliverable file upload in order detail).
+23. ~~**Admin CMS editor**~~ — ✅ DONE in Round 6 (create/edit/publish pages).
+24. ~~**Notification preferences**~~ — ✅ DONE in Round 6 (8-type toggle system).
+25. ~~**Service image gallery**~~ — ✅ DONE in Round 6 (multi-image with navigation).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
 - Add email notification transport (Resend/SendGrid)
 - Add web push notifications (PWA push API + service worker)
 - Add offline data sync with IndexedDB
-- Add service package creation in CreateServiceView (sellers can define their own tiers)
-- Add order attachment upload (deliverables via /api/uploads)
-- Build admin CMS page editor (create/edit Terms, Privacy, FAQ)
-- Add notification preferences (per-type toggle)
+- Add CMS page rendering on public routes (view Terms/Privacy/FAQ)
+- Add service editing (sellers can edit existing services)
+- Add order message threading (messages linked to orders)
+- Add search autocomplete suggestions

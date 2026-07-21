@@ -505,19 +505,7 @@ export function AdminView() {
         )}
 
         {tab === 'cms' && (
-          <div className="space-y-2">
-            {loading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
-              cmsPages.map((p) => (
-                <Card key={p.id} className="p-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-semibold flex-1 truncate">{p.title}</p>
-                    <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', p.published ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground')}>{p.published ? 'LIVE' : 'DRAFT'}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">/{p.slug}</p>
-                </Card>
-              ))}
-          </div>
+          <AdminCmsTab pages={cmsPages} loading={loading} onSaved={loadCms} />
         )}
 
         {tab === 'broadcast' && <BroadcastPanel />}
@@ -615,6 +603,110 @@ function BroadcastPanel() {
         </Button>
       </div>
     </Card>
+  )
+}
+
+function AdminCmsTab({ pages, loading, onSaved }: { pages: any[]; loading: boolean; onSaved: () => void }) {
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [published, setPublished] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  const selected = pages.find((p) => p.slug === selectedSlug)
+
+  const editPage = (p: any) => {
+    setSelectedSlug(p.slug)
+    setTitle(p.title)
+    setBody(p.body)
+    setPublished(p.published)
+  }
+
+  const newPage = () => {
+    setSelectedSlug('')
+    setTitle('')
+    setBody('')
+    setPublished(true)
+  }
+
+  const save = async () => {
+    if (!title.trim() || !body.trim()) return toast.error('Title and body required')
+    setSaving(true)
+    try {
+      const slug = selectedSlug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)
+      const res = await fetch(`/api/admin/cms/${slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, published }),
+        credentials: 'include',
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success('Page saved')
+        setSelectedSlug(slug)
+        onSaved()
+      } else {
+        toast.error(json.error || 'Save failed')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (selectedSlug !== null) {
+    return (
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setSelectedSlug(null)} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to pages
+          </button>
+          <span className="text-xs text-muted-foreground">/{selectedSlug || 'new-slug'}</span>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Title</p>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Page title" className="h-9 text-sm" />
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Body (Markdown supported)</p>
+          <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Page content…" className="min-h-[200px] text-xs font-mono" />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPublished(!published)}
+            className={clsx('relative h-6 w-11 rounded-full transition', published ? 'bg-emerald-500' : 'bg-muted')}
+          >
+            <span className={clsx('absolute top-0.5 h-5 w-5 rounded-full bg-white transition', published ? 'left-5' : 'left-0.5')} />
+          </button>
+          <span className="text-xs font-semibold">{published ? 'Published (live)' : 'Draft (hidden)'}</span>
+        </div>
+        <Button onClick={save} disabled={saving} className="w-full rounded-2xl">
+          {saving ? 'Saving…' : 'Save Page'}
+        </Button>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button onClick={newPage} className="w-full rounded-2xl mb-2">
+        <Plus className="h-4 w-4 mr-1" /> New Page
+      </Button>
+      {loading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
+        pages.map((p) => (
+          <button key={p.id} onClick={() => editPage(p)} className="w-full text-left active:scale-[0.99] transition">
+            <Card className="p-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-semibold flex-1 truncate">{p.title}</p>
+                <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', p.published ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground')}>{p.published ? 'LIVE' : 'DRAFT'}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">/{p.slug}</p>
+            </Card>
+          </button>
+        ))}
+    </div>
   )
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { api, ApiError } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
@@ -16,7 +16,7 @@ import { motion } from 'framer-motion'
 export function SettingsView() {
   const { setView, user, refreshUser } = useApp()
   const { theme, setTheme } = useTheme()
-  const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile' | '2fa'>('menu')
+  const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile' | '2fa' | 'notifications'>('menu')
 
   return (
     <div className="min-h-screen">
@@ -31,6 +31,7 @@ export function SettingsView() {
             {section === 'password' && 'Change Password'}
             {section === 'profile' && 'Edit Profile'}
             {section === '2fa' && 'Two-Factor Authentication'}
+            {section === 'notifications' && 'Notification Preferences'}
           </h1>
         </div>
       </header>
@@ -75,7 +76,7 @@ export function SettingsView() {
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   trailing={<ToggleSwitch on={theme === 'dark'} />}
                 />
-                <SettingRow icon={<Bell className="h-4 w-4 text-primary" />} label="Notifications" desc="Manage notification preferences" onClick={() => setView('notifications')} />
+                <SettingRow icon={<Bell className="h-4 w-4 text-primary" />} label="Notifications" desc="Manage notification preferences" onClick={() => setSection('notifications')} />
               </Card>
             </div>
 
@@ -109,6 +110,7 @@ export function SettingsView() {
         {section === 'password' && <ChangePasswordSection />}
         {section === 'profile' && <EditProfileSection onSaved={() => { setSection('menu'); refreshUser() }} />}
         {section === '2fa' && <TwoFactorSection enabled={user?.twoFactorEnabled || false} onChanged={() => { refreshUser(); setSection('menu') }} />}
+        {section === 'notifications' && <NotificationPrefsSection />}
       </div>
     </div>
   )
@@ -556,6 +558,70 @@ function TwoFactorSection({ enabled, onChanged }: { enabled: boolean; onChanged:
   }
 
   return null
+}
+
+const NOTIF_TYPES = [
+  { key: 'order', label: 'Orders', desc: 'New orders and order status updates' },
+  { key: 'payment', label: 'Payments', desc: 'Payment releases and escrow updates' },
+  { key: 'transfer', label: 'Transfers', desc: 'SkillCredits sent and received' },
+  { key: 'message', label: 'Messages', desc: 'New chat messages' },
+  { key: 'review', label: 'Reviews', desc: 'New reviews on your services' },
+  { key: 'dispute', label: 'Disputes', desc: 'Dispute updates and resolutions' },
+  { key: 'announcement', label: 'Announcements', desc: 'Platform-wide broadcasts' },
+  { key: 'referral', label: 'Referrals', desc: 'Referral rewards and signups' },
+]
+
+function NotificationPrefsSection() {
+  const [prefs, setPrefs] = useState<Record<string, boolean>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get<{ preferences: Record<string, boolean> }>('/api/notifications/preferences')
+      .then((d) => setPrefs(d.preferences))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const toggle = async (key: string) => {
+    const updated = { ...prefs, [key]: !prefs[key] }
+    setPrefs(updated)
+    try {
+      await api.patch('/api/notifications/preferences', { [key]: !prefs[key] })
+      toast.success('Preference updated')
+    } catch (e: any) {
+      setPrefs(prefs) // revert
+      toast.error(e.message || 'Failed to update')
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card className="p-4 space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-12 bg-muted/40 rounded-xl animate-pulse" />
+        ))}
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-0 divide-y divide-border/40">
+      {NOTIF_TYPES.map((t) => (
+        <div key={t.key} className="flex items-center gap-3 p-3.5">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{t.label}</p>
+            <p className="text-xs text-muted-foreground">{t.desc}</p>
+          </div>
+          <button
+            onClick={() => toggle(t.key)}
+            className={`relative h-6 w-11 rounded-full transition flex-shrink-0 ${prefs[t.key] ? 'bg-primary' : 'bg-muted'}`}
+          >
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${prefs[t.key] ? 'left-5' : 'left-0.5'}`} />
+          </button>
+        </div>
+      ))}
+    </Card>
+  )
 }
 
 function PinInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
