@@ -23,6 +23,8 @@ type View =
   | 'buy-credits'
   | 'seller-profile'
   | 'dispute'
+  | 'settings'
+  | 'activity'
 
 interface AppState {
   user: User | null

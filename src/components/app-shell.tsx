@@ -21,13 +21,15 @@ import { TransferView } from '@/components/views/transfer-view'
 import { BuyCreditsView } from '@/components/views/buy-credits-view'
 import { SellerProfileView } from '@/components/views/seller-profile-view'
 import { DisputeView } from '@/components/views/dispute-view'
+import { SettingsView } from '@/components/views/settings-view'
+import { ActivityView } from '@/components/views/activity-view'
 import { AnimatePresence } from 'framer-motion'
 import { motion } from 'framer-motion'
 
 export function AppShell() {
   const { view, user } = useApp()
 
-  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute']
+  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute', 'settings', 'activity']
   const isFullScreen = fullScreenViews.includes(view)
 
   return (
@@ -62,6 +64,8 @@ export function AppShell() {
             {view === 'buy-credits' && <BuyCreditsView />}
             {view === 'seller-profile' && <SellerProfileView />}
             {view === 'dispute' && <DisputeView />}
+            {view === 'settings' && <SettingsView />}
+            {view === 'activity' && <ActivityView />}
           </motion.div>
         </AnimatePresence>
       </main>

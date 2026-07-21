@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
-import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown } from 'lucide-react'
+import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { api } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
@@ -77,6 +77,7 @@ export function ProfileView() {
       <div className="space-y-2">
         <MenuItem icon={<Plus className="h-4 w-4" />} label="Create a Service" onClick={() => setView('create-service')} />
         <MenuItem icon={<Package className="h-4 w-4" />} label="My Orders" onClick={() => setView('orders')} />
+        <MenuItem icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
         <MenuItem icon={<Gift className="h-4 w-4" />} label="Refer & Earn" onClick={() => setView('referrals')} badge="50 SC" />
         <MenuItem icon={<Bell className="h-4 w-4" />} label="Notifications" onClick={() => setView('notifications')} />
         <MenuItem
@@ -84,7 +85,7 @@ export function ProfileView() {
           label={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         />
-        <MenuItem icon={<Settings className="h-4 w-4" />} label="Account & Security" onClick={() => toast.info('Settings coming soon')} />
+        <MenuItem icon={<Settings className="h-4 w-4" />} label="Settings & Security" onClick={() => setView('settings')} />
       </div>
 
       <Button onClick={logout} variant="outline" className="w-full rounded-2xl text-destructive">

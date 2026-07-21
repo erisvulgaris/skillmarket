@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send } from 'lucide-react'
+import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
@@ -116,6 +116,14 @@ export function AdminView() {
     try {
       await api.patch(`/api/admin/wallets/${walletId}`, { action })
       toast.success(`Wallet ${action}d`)
+      loadWallets()
+    } catch (e: any) { toast.error(e.message) }
+  }
+
+  const walletAdjust = async (walletId: string, amount: number, reason: string) => {
+    try {
+      await api.post(`/api/admin/wallets/${walletId}/adjust`, { amount, reason })
+      toast.success(`Adjusted ${amount > 0 ? '+' : ''}${amount} SC`)
       loadWallets()
     } catch (e: any) { toast.error(e.message) }
   }
@@ -291,23 +299,7 @@ export function AdminView() {
           <div className="space-y-2">
             {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
               wallets.map((w) => (
-                <Card key={w.id} className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">@{w.user.username}</p>
-                      <div className="flex gap-3 mt-1 text-xs">
-                        <span className="text-muted-foreground">Avail: <b className="text-foreground">{formatSC(w.availableBalance)}</b></span>
-                        <span className="text-muted-foreground">Res: <b className="text-foreground">{formatSC(w.reservedBalance)}</b></span>
-                        <span className="text-muted-foreground">Earned: <b className="text-foreground">{formatSC(w.lifetimeEarned)}</b></span>
-                      </div>
-                    </div>
-                    {w.frozen ? (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => walletAction(w.id, 'unfreeze')}>Unfreeze</Button>
-                    ) : (
-                      <Button size="sm" variant="outline" className="h-7 text-xs text-amber-600" onClick={() => walletAction(w.id, 'freeze')}><Snowflake className="h-3 w-3" /></Button>
-                    )}
-                  </div>
-                </Card>
+                <WalletAdminCard key={w.id} wallet={w} onFreeze={walletAction} onAdjust={walletAdjust} />
               ))}
           </div>
         )}
@@ -534,6 +526,82 @@ function BroadcastPanel() {
     </Card>
   )
 }
+
+function WalletAdminCard({ wallet, onFreeze, onAdjust }: { wallet: any; onFreeze: (id: string, action: 'freeze' | 'unfreeze') => void; onAdjust: (id: string, amount: number, reason: string) => void }) {
+  const [showAdjust, setShowAdjust] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [reason, setReason] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const submit = async () => {
+    const amt = Number(amount)
+    if (!amt || amt === 0) return toast.error('Enter a non-zero amount')
+    if (!reason.trim()) return toast.error('Reason required')
+    setLoading(true)
+    await onAdjust(wallet.id, amt, reason.trim())
+    setLoading(false)
+    setShowAdjust(false)
+    setAmount('')
+    setReason('')
+  }
+
+  return (
+    <Card className="p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold truncate">@{w_user(wallet)}</p>
+            {wallet.frozen && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/10 text-amber-600">FROZEN</span>}
+          </div>
+          <div className="flex gap-3 mt-1 text-xs">
+            <span className="text-muted-foreground">Avail: <b className="text-foreground">{formatSC(wallet.availableBalance)}</b></span>
+            <span className="text-muted-foreground">Res: <b className="text-foreground">{formatSC(wallet.reservedBalance)}</b></span>
+            <span className="text-muted-foreground">Earned: <b className="text-foreground">{formatSC(wallet.lifetimeEarned)}</b></span>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowAdjust(!showAdjust)}>
+            <Plus className="h-3 w-3" />
+          </Button>
+          {wallet.frozen ? (
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onFreeze(wallet.id, 'unfreeze')}>Unfreeze</Button>
+          ) : (
+            <Button size="sm" variant="outline" className="h-7 text-xs text-amber-600" onClick={() => onFreeze(wallet.id, 'freeze')}><Snowflake className="h-3 w-3" /></Button>
+          )}
+        </div>
+      </div>
+      {showAdjust && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="space-y-2 pt-2 border-t"
+        >
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="+100 or -50"
+              className="h-8 text-xs flex-1"
+            />
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Reason"
+              className="h-8 text-xs flex-1"
+            />
+          </div>
+          <Button size="sm" className="w-full h-8 text-xs" disabled={loading} onClick={submit}>
+            {loading ? 'Adjusting…' : 'Apply Adjustment'}
+          </Button>
+          <p className="text-[10px] text-muted-foreground text-center">Positive = credit, negative = debit. Full audit logged.</p>
+        </motion.div>
+      )}
+    </Card>
+  )
+}
+
+function w_user(w: any) { return w.user?.username || 'unknown' }
 
 function DashboardSkeleton() {
   return (

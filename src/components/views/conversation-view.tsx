@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
@@ -30,10 +30,87 @@ export function ConversationView() {
   const [typing, setTyping] = useState(false)
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [recordTime, setRecordTime] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
   const typingTimer = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const recordTimerRef = useRef<any>(null)
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+      audioChunksRef.current = []
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
+        stream.getTracks().forEach((t) => t.stop())
+        // Upload the voice note
+        const fd = new FormData()
+        fd.append('file', file)
+        setUploading(true)
+        try {
+          const res = await fetch('/api/uploads', { method: 'POST', body: fd, credentials: 'include' })
+          const json = await res.json()
+          if (json.success) {
+            const msg = await api.post<{ message: Message }>(`/api/messages/conversations/${id}`, {
+              type: 'voice',
+              content: 'Voice message',
+              attachmentUrl: json.data.url,
+              attachmentName: file.name,
+            })
+            setMessages((prev) => [...prev, msg.message])
+            socketRef.current?.emit('message', {
+              conversationId: id,
+              messageId: msg.message.id,
+              senderId: user!.id,
+              senderUsername: user!.username,
+              content: 'Voice message',
+              type: 'voice',
+              attachmentUrl: json.data.url,
+              createdAt: msg.message.createdAt,
+            })
+          }
+        } catch (e: any) {
+          toast.error(e.message || 'Voice upload failed')
+        } finally {
+          setUploading(false)
+        }
+      }
+      recorder.start()
+      setRecording(true)
+      setRecordTime(0)
+      recordTimerRef.current = setInterval(() => {
+        setRecordTime((t) => t + 1)
+      }, 1000)
+    } catch (e: any) {
+      toast.error('Microphone access denied')
+    }
+  }
+
+  const stopRecording = (cancel = false) => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      if (cancel) {
+        // Don't process the audio
+        mediaRecorderRef.current.ondataavailable = null
+        mediaRecorderRef.current.onstop = null
+      }
+      mediaRecorderRef.current.stop()
+    }
+    setRecording(false)
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current)
+      recordTimerRef.current = null
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -181,6 +258,33 @@ export function ConversationView() {
                   )}>
                     {m.type === 'image' && m.attachmentUrl ? (
                       <img src={m.attachmentUrl} alt="" className="rounded-lg max-w-full" />
+                    ) : m.type === 'voice' && m.attachmentUrl ? (
+                      <div className="flex items-center gap-2 min-w-[160px]">
+                        <button
+                          onClick={(e) => {
+                            const audio = (e.currentTarget.parentElement?.querySelector('audio') as HTMLAudioElement)
+                            if (audio) {
+                              if (audio.paused) audio.play()
+                              else audio.pause()
+                            }
+                          }}
+                          className={clsx('h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0', mine ? 'bg-white/20' : 'bg-primary/10 text-primary')}
+                        >
+                          <Mic className="h-4 w-4" />
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-0.5 h-6">
+                            {Array.from({ length: 18 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={clsx('flex-1 rounded-full', mine ? 'bg-white/40' : 'bg-muted-foreground/40')}
+                                style={{ height: `${4 + Math.abs(Math.sin(i * 0.8)) * 12}px` }}
+                              />
+                            ))}
+                          </div>
+                          <audio src={m.attachmentUrl} controls className="hidden" />
+                        </div>
+                      </div>
                     ) : m.type === 'file' && m.attachmentUrl ? (
                       <a href={m.attachmentUrl} target="_blank" rel="noreferrer" className="underline flex items-center gap-1">
                         <Paperclip className="h-3.5 w-3.5" /> {m.content}
@@ -253,27 +357,66 @@ export function ConversationView() {
             {uploading ? <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <Paperclip className="h-5 w-5 text-muted-foreground" />}
           </button>
           <div className="flex-1 min-h-10 max-h-32 rounded-2xl bg-muted/60 border border-border/40 flex items-end px-3 py-2">
-            <textarea
-              value={text}
-              onChange={(e) => onType(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  send()
-                }
-              }}
-              placeholder="Message…"
-              rows={1}
-              className="flex-1 bg-transparent text-sm outline-none resize-none max-h-24"
-            />
+            {recording ? (
+              <div className="flex-1 flex items-center gap-2 py-1">
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  className="h-3 w-3 rounded-full bg-rose-500"
+                />
+                <span className="text-sm font-mono tabular-nums text-rose-500">
+                  {Math.floor(recordTime / 60)}:{String(recordTime % 60).padStart(2, '0')}
+                </span>
+                <span className="text-xs text-muted-foreground ml-2">Recording…</span>
+              </div>
+            ) : (
+              <textarea
+                value={text}
+                onChange={(e) => onType(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    send()
+                  }
+                }}
+                placeholder="Message…"
+                rows={1}
+                className="flex-1 bg-transparent text-sm outline-none resize-none max-h-24"
+              />
+            )}
           </div>
-          <button
-            onClick={send}
-            disabled={!text.trim() || sending}
-            className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition disabled:opacity-40 flex-shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          {recording ? (
+            <div className="flex gap-1 flex-shrink-0">
+              <button
+                onClick={() => stopRecording(true)}
+                className="h-10 w-10 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center active:scale-90 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => stopRecording(false)}
+                className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+            </div>
+          ) : text.trim() ? (
+            <button
+              onClick={send}
+              disabled={sending}
+              className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition disabled:opacity-40 flex-shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              onClick={startRecording}
+              disabled={uploading}
+              className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-accent transition flex-shrink-0 disabled:opacity-50"
+            >
+              {uploading ? <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <Mic className="h-5 w-5 text-muted-foreground" />}
+            </button>
+          )}
         </div>
       </div>
     </div>

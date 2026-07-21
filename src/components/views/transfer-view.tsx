@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Send, QrCode, ShieldCheck, Camera, Check } from 'lucide-react'
+import { ArrowLeft, Send, QrCode, ShieldCheck, Camera, Check, X, ScanLine, Image as ImageIcon } from 'lucide-react'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import jsQR from 'jsqr'
 
 export function TransferView() {
   const { viewParams, setView, user, refreshUser } = useApp()
@@ -23,6 +24,127 @@ export function TransferView() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<any>(null)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [showScanner, setShowScanner] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const scanIntervalRef = useRef<any>(null)
+
+  const handleScannedData = useCallback((data: string) => {
+    try {
+      const parsed = JSON.parse(data)
+      if (parsed.t === 'wallet' && parsed.uid) {
+        setRecipient(parsed.uid)
+        setShowScanner(false)
+        stopCamera()
+        toast.success('QR scanned! Recipient found.')
+        // Auto-lookup
+        setTimeout(() => lookupRecipientById(parsed.uid), 300)
+        return
+      }
+      if (parsed.t === 'user' && parsed.uid) {
+        setRecipient(parsed.uid)
+        setShowScanner(false)
+        stopCamera()
+        toast.success('QR scanned! User found.')
+        setTimeout(() => lookupRecipientById(parsed.uid), 300)
+        return
+      }
+    } catch {
+      // Not JSON, maybe it's a plain user ID or username
+      if (data && data.length > 3) {
+        setRecipient(data)
+        setShowScanner(false)
+        stopCamera()
+        toast.success('QR scanned!')
+        setTimeout(() => lookupRecipientById(data), 300)
+        return
+      }
+    }
+    toast.error('Invalid QR code. Expected a SkillMarket wallet QR.')
+  }, [])
+
+  const lookupRecipientById = async (id: string) => {
+    try {
+      const d = await api.get<{ recipient: any }>(`/api/wallet/transfer?recipient=${encodeURIComponent(id)}`)
+      setPreview(d.recipient)
+    } catch (e: any) {
+      toast.error(e.message || 'Recipient not found')
+    }
+  }
+
+  const startCamera = async () => {
+    setScanning(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.setAttribute('playsinline', 'true')
+        await videoRef.current.play()
+      }
+      // Start scanning loop
+      scanIntervalRef.current = setInterval(() => {
+        if (videoRef.current && canvasRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+          const canvas = canvasRef.current
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return
+          canvas.width = videoRef.current.videoWidth
+          canvas.height = videoRef.current.videoHeight
+          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const code = jsQR(imageData.data, imageData.width, imageData.height)
+          if (code) {
+            handleScannedData(code.data)
+          }
+        }
+      }, 200)
+    } catch (e: any) {
+      toast.error('Camera access denied. Try uploading an image instead.')
+      setScanning(false)
+    }
+  }
+
+  const stopCamera = () => {
+    setScanning(false)
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current)
+      scanIntervalRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
+    }
+  }
+
+  const scanFromFile = (file: File) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height)
+      if (code) {
+        handleScannedData(code.data)
+      } else {
+        toast.error('No QR code found in image')
+      }
+    }
+    img.src = URL.createObjectURL(file)
+  }
+
+  useEffect(() => {
+    return () => stopCamera()
+  }, [])
 
   useEffect(() => {
     if (user) {
@@ -115,6 +237,9 @@ export function TransferView() {
                   <div className="flex gap-2">
                     <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="@username or user ID" />
                     <Button variant="outline" onClick={lookupRecipient}>Check</Button>
+                    <Button variant="outline" onClick={() => { setShowScanner(true); setTimeout(startCamera, 100) }} className="px-3">
+                      <ScanLine className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -182,6 +307,98 @@ export function TransferView() {
           </>
         )}
       </div>
+
+      {/* QR Scanner Modal */}
+      <canvas ref={canvasRef} className="hidden" />
+      <AnimatePresence>
+        {showScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => { setShowScanner(false); stopCamera() }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card rounded-3xl p-6 max-w-sm w-full space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold flex items-center gap-2">
+                  <ScanLine className="h-5 w-5 text-primary" />
+                  Scan QR Code
+                </h3>
+                <button onClick={() => { setShowScanner(false); stopCamera() }} className="h-8 w-8 rounded-full hover:bg-accent flex items-center justify-center">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="relative aspect-square rounded-2xl overflow-hidden bg-black">
+                {scanning ? (
+                  <video
+                    ref={videoRef}
+                    className="h-full w-full object-cover"
+                    playsInline
+                    muted
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                    <Camera className="h-12 w-12" />
+                  </div>
+                )}
+                {/* Scanner overlay */}
+                {scanning && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-8 border-2 border-primary/60 rounded-2xl">
+                      <div className="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                      <div className="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                      <motion.div
+                        animate={{ y: ['0%', '100%', '0%'] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                        className="absolute inset-x-0 h-0.5 bg-primary shadow-lg shadow-primary/50"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {!scanning && (
+                <Button onClick={startCamera} className="w-full rounded-2xl">
+                  <Camera className="h-4 w-4 mr-2" /> Start Camera
+                </Button>
+              )}
+
+              <div className="text-center text-xs text-muted-foreground">
+                <span>or</span>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) scanFromFile(file)
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                }}
+              />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl">
+                <ImageIcon className="h-4 w-4 mr-2" /> Upload QR Image
+              </Button>
+
+              <p className="text-[10px] text-muted-foreground text-center">
+                Point your camera at a SkillMarket wallet QR code to instantly fill the recipient.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

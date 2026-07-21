@@ -5,6 +5,111 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 3 — Round 3 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 2 was stable with all core features, admin panels, file uploads, rate limiting, and dispute flow working. This round focused on: QA testing, fixing the search category filter bug, wiring the admin wallet adjustment UI, adding a QR scanner for transfers, adding a voice note recorder in messaging, building a full settings/security view, and adding an activity log view.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Fix search category filter (clicking category from marketplace now filters results)
+3. ✅ Wire admin wallet credit adjustment UI
+4. ✅ Add QR scanner for receiving transfers (camera + image upload)
+5. ✅ Add voice note recorder in messaging
+6. ✅ Build settings & security view (change PIN, change password, edit profile)
+7. ✅ Build activity log view (grouped transactions with totals)
+8. ✅ Improve styling (8 new CSS animations, enhanced filters UI)
+
+### Completed Modifications
+
+#### Bug Fixes
+1. **Search category filter not working** — clicking a category from the marketplace navigated to search but didn't apply the filter. Rewrote SearchView to support category browse mode with sort options (newest, popular, price low/high, rating), price range filters, and category chips. Category results now display in a grid with staggered animations.
+
+#### New API Endpoints
+- `POST /api/auth/change-pin` — change transaction PIN (requires current PIN verification, rate limited)
+- `POST /api/auth/change-password` — change login password (requires current password, rate limited)
+- `POST /api/profiles/update` — update profile (displayName, bio, location, skills, languages, avatarUrl, coverUrl)
+
+#### QR Scanner (TransferView)
+- Installed `jsqr` library for QR code decoding
+- Added "Scan QR" button next to the Check button in the transfer form
+- Full scanner modal with:
+  - Live camera feed with animated scan line overlay
+  - Corner brackets for scan area targeting
+  - "Upload QR Image" fallback for devices without camera
+  - Auto-fills recipient and triggers lookup on successful scan
+  - Handles both JSON-encoded wallet QRs and plain user IDs
+  - Graceful camera permission denial handling
+
+#### Voice Note Recorder (ConversationView)
+- Added mic button that appears when text input is empty
+- Full recording flow using MediaRecorder API:
+  - Pulsing red dot indicator with live timer (MM:SS)
+  - Cancel (X) and Send (Check) buttons during recording
+  - Uploads voice note as .webm file via /api/uploads
+  - Sends as 'voice' message type
+  - Real-time delivery via socket.io
+- Voice message rendering with:
+  - Custom waveform visualization (18 animated bars)
+  - Play/pause button
+  - Hidden native audio element for playback
+
+#### Settings & Security View (SettingsView)
+- Full settings page with 4 sections:
+  - **Security**: Change Transaction PIN, Change Password, 2FA (coming soon)
+  - **Profile**: Edit Profile (bio, skills, languages, location), Languages
+  - **Preferences**: Theme toggle, Notifications
+  - **Account**: Activity Log link, Sign Out
+- Change PIN section: 3 PIN inputs (current, new, confirm) with large centered display, success animation
+- Change Password section: 3 password inputs with show/hide toggle
+- Edit Profile section: form for displayName, bio (with counter), location, skills (comma-separated), languages
+
+#### Activity Log View (ActivityView)
+- Transaction history grouped by day with sticky day headers
+- Summary cards: Total In (green) and Total Out (red)
+- Filter chips: All, Received, Sent, Earnings, Payments, Purchases
+- Staggered list animations
+- Each transaction shows: type icon, label, note, time, colored amount
+
+#### Admin Wallet Adjustment UI
+- Added `WalletAdminCard` component in admin wallets tab
+- Each wallet now has a "+" button to expand the adjustment form
+- Form includes: amount input (positive=credit, negative=debit), reason input
+- Calls `/api/admin/wallets/[id]/adjust` endpoint
+- Animated expand/collapse with framer-motion
+- Full audit logging on adjustment
+- Toast confirmation on success
+
+#### Styling Improvements
+- 8 new CSS animations: glowPulse, sparkle, sheetUp, ripple, drawCheck, progressFill, blurIn, line-clamp utilities
+- Enhanced search filters UI with slide-down panel
+- Staggered grid animations on category browse
+- Better empty states throughout
+- Settings page with grouped cards and dividers
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Search category filter works (Development → 2 services shown in grid)
+- ✅ Settings view renders with all 4 sections
+- ✅ PIN change works (1234 → 5678 → 1234 verified)
+- ✅ Activity log shows grouped transactions with totals
+- ✅ QR scanner modal opens with camera + upload options
+- ✅ Admin wallet adjustment works (+100 SC to demo_buyer verified, balance updated 4250→4350)
+- ✅ Voice note recorder UI in messaging (mic button, recording timer, cancel/send)
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. Search category filter not applying → rewrote SearchView with category browse mode
+2. Admin wallet adjustment UI missing → built WalletAdminCard component with expandable form
+3. No QR scanning capability → added jsqr-based scanner with camera + image upload
+4. No voice messages → added MediaRecorder-based recorder with waveform UI
+5. No PIN/password change UI → built full settings view with change flows
+6. No activity log view → built ActivityView with grouped transactions
+
+---
+
 ## Phase 2 — Round 2 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -151,22 +256,26 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 ---
 
 ## Unresolved Issues / Risks / Next Steps
-1. **2FA** — fields exist in schema but not implemented in auth flow.
+1. **2FA** — fields exist in schema and UI placeholder added; TOTP flow not yet implemented.
 2. **Email notifications** — only in-app notifications; no email transport.
 3. **Fraud detection** — dashboard shows counts but no automated rules engine.
 4. **Tests** — no automated tests written yet (wallet integrity, transfers, escrow).
-5. **Voice notes** — UI for voice messages not implemented (file upload supports audio but no recorder UI).
-6. **QR scanner** — QR generation works but scanning/importing QR codes to initiate transfers not implemented.
+5. ~~**Voice notes**~~ — ✅ DONE in Round 3 (MediaRecorder + waveform UI).
+6. ~~**QR scanner**~~ — ✅ DONE in Round 3 (jsqr camera + image upload).
 7. **PostgreSQL migration** — schema is portable; update `datasource` provider when ready.
 8. **Admin: order detail view** — admin can't view order timelines from admin panel (only from user side).
-9. **Admin: wallet adjust UI** — the adjust endpoint exists but the UI input for credit adjustments is not in the wallets tab.
-10. **Search filters** — categoryId filter from marketplace doesn't apply in search view.
+9. ~~**Admin: wallet adjust UI**~~ — ✅ DONE in Round 3 (WalletAdminCard with expandable form).
+10. ~~**Search filters**~~ — ✅ DONE in Round 3 (category browse mode + price/sort filters).
+11. **Profile avatar upload** — edit profile form exists but avatar image upload not wired (uses URL only).
+12. **Push notifications** — no web push API integration for PWA push.
+13. **Offline mode** — service worker caches assets but no offline data sync.
 
 ### Priority Recommendations for Next Phase
-- Implement 2FA flow (TOTP with qr enrollment)
+- Implement 2FA flow (TOTP with qr enrollment using otpauth library)
 - Add automated tests for wallet integrity (double-entry balance conservation)
-- Build QR scanner for receiving transfers
-- Add voice note recorder in messaging
-- Wire admin wallet credit adjustment UI
 - Add email notification transport (Resend/SendGrid)
 - Implement fraud detection rules (velocity checks, multiple devices)
+- Wire avatar image upload in edit profile (using existing /api/uploads endpoint)
+- Add web push notifications (PWA push API + service worker)
+- Build admin order detail view (view order timelines from admin panel)
+- Add offline data sync with IndexedDB
