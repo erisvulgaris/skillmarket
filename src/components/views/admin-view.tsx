@@ -476,13 +476,17 @@ export function AdminView() {
         )}
 
         {tab === 'support' && (
-          <AdminSupportTab tickets={supportTickets} loading={loading} onAction={async (ticketId, status) => {
-            try {
-              await api.patch(`/api/admin/support/${ticketId}`, { status })
-              toast.success(`Ticket ${status}`)
-              loadSupport()
-            } catch (e: any) { toast.error(e.message) }
-          }} />
+          <AdminSupportTab
+            tickets={supportTickets}
+            loading={loading}
+            onAction={async (ticketId, status) => {
+              try {
+                await api.patch(`/api/admin/support/${ticketId}`, { status })
+                toast.success(`Ticket ${status}`)
+                loadSupport()
+              } catch (e: any) { toast.error(e.message) }
+            }}
+          />
         )}
 
         {tab === 'flags' && (
@@ -644,8 +648,106 @@ function AdminSupportTab({ tickets, loading, onAction }: {
   onAction: (ticketId: string, status: string) => Promise<void>
 }) {
   const [filter, setFilter] = useState('all')
+  const [selectedTicket, setSelectedTicket] = useState<any>(null)
+  const [ticketDetail, setTicketDetail] = useState<any>(null)
+  const [noteText, setNoteText] = useState('')
+  const [addingNote, setAddingNote] = useState(false)
+
   const filtered = filter === 'all' ? tickets : tickets.filter((t) => t.status === filter)
 
+  const openTicket = async (ticket: any) => {
+    setSelectedTicket(ticket)
+    setTicketDetail(null)
+    try {
+      const d = await api.get<{ ticket: any }>(`/api/admin/support/${ticket.id}/notes`)
+      setTicketDetail(d.ticket)
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to load')
+    }
+  }
+
+  const addNote = async () => {
+    if (!noteText.trim() || !selectedTicket) return
+    setAddingNote(true)
+    try {
+      await api.post(`/api/admin/support/${selectedTicket.id}/notes`, { body: noteText, internal: true })
+      setNoteText('')
+      // Reload detail
+      const d = await api.get<{ ticket: any }>(`/api/admin/support/${selectedTicket.id}/notes`)
+      setTicketDetail(d.ticket)
+      toast.success('Note added')
+    } catch (e: any) {
+      toast.error(e.message || 'Failed')
+    } finally {
+      setAddingNote(false)
+    }
+  }
+
+  // Detail view
+  if (selectedTicket) {
+    return (
+      <div className="space-y-3">
+        <button onClick={() => { setSelectedTicket(null); setTicketDetail(null) }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to tickets
+        </button>
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold">{selectedTicket.subject}</p>
+            <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase', TICKET_STATUS_META[selectedTicket.status]?.bg, TICKET_STATUS_META[selectedTicket.status]?.color)}>
+              {TICKET_STATUS_META[selectedTicket.status]?.label}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">{selectedTicket.message}</p>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <span>@{selectedTicket.user?.username}</span>
+            <span>· {selectedTicket.priority} priority</span>
+            <span>· {new Date(selectedTicket.createdAt).toLocaleString()}</span>
+          </div>
+        </Card>
+
+        {/* Notes */}
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Internal Notes</p>
+          {ticketDetail?.notes?.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-3">No notes yet</p>
+          )}
+          {ticketDetail?.notes?.map((n: any) => (
+            <Card key={n.id} className="p-2.5">
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
+                <span className="font-semibold">Admin</span>
+                <span>· {new Date(n.createdAt).toLocaleString()}</span>
+              </div>
+              <p className="text-xs">{n.body}</p>
+            </Card>
+          ))}
+        </div>
+
+        {/* Add note */}
+        <Card className="p-3 space-y-2">
+          <Textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Add internal note…"
+            className="min-h-[60px] text-xs"
+          />
+          <Button onClick={addNote} disabled={addingNote || !noteText.trim()} size="sm" className="w-full rounded-xl text-xs">
+            {addingNote ? 'Adding…' : 'Add Note'}
+          </Button>
+        </Card>
+
+        {/* Actions */}
+        {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' && (
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" className="h-8 text-xs flex-1" onClick={() => onAction(selectedTicket.id, 'pending')}>Pending</Button>
+            <Button size="sm" variant="outline" className="h-8 text-xs flex-1 text-emerald-600" onClick={() => onAction(selectedTicket.id, 'resolved')}>Resolve</Button>
+            <Button size="sm" variant="outline" className="h-8 text-xs flex-1" onClick={() => onAction(selectedTicket.id, 'closed')}>Close</Button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // List view
   return (
     <div className="space-y-2">
       <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
@@ -665,31 +767,26 @@ function AdminSupportTab({ tickets, loading, onAction }: {
       {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />) :
        filtered.length === 0 ? <EmptyState icon={<MessageSquare className="h-8 w-8" />} text="No support tickets" /> :
        filtered.map((t) => (
-        <Card key={t.id} className="p-3 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold truncate">{t.subject}</p>
-                <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase', PRIORITY_META[t.priority])}>{t.priority}</span>
+        <button key={t.id} onClick={() => openTicket(t)} className="w-full text-left active:scale-[0.99] transition">
+          <Card className="p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold truncate">{t.subject}</p>
+                  <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase', PRIORITY_META[t.priority])}>{t.priority}</span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{t.message}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] text-muted-foreground">@{t.user?.username}</span>
+                  <span className="text-[10px] text-muted-foreground">· {new Date(t.createdAt).toLocaleDateString()}</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{t.message}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] text-muted-foreground">@{t.user?.username}</span>
-                <span className="text-[10px] text-muted-foreground">· {new Date(t.createdAt).toLocaleDateString()}</span>
-              </div>
+              <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0', TICKET_STATUS_META[t.status]?.bg, TICKET_STATUS_META[t.status]?.color)}>
+                {TICKET_STATUS_META[t.status]?.label}
+              </span>
             </div>
-            <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0', TICKET_STATUS_META[t.status]?.bg, TICKET_STATUS_META[t.status]?.color)}>
-              {TICKET_STATUS_META[t.status]?.label}
-            </span>
-          </div>
-          {t.status !== 'resolved' && t.status !== 'closed' && (
-            <div className="flex gap-1">
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(t.id, 'pending')}>Mark Pending</Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-600" onClick={() => onAction(t.id, 'resolved')}>Resolve</Button>
-              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(t.id, 'closed')}>Close</Button>
-            </div>
-          )}
-        </Card>
+          </Card>
+        </button>
       ))}
     </div>
   )

@@ -6,8 +6,9 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkillCredits } from '@/components/sc-badge'
-import { ClipboardList, Package, CheckCircle2, Clock, XCircle, AlertTriangle, ChevronRight } from 'lucide-react'
+import { ClipboardList, Package, CheckCircle2, Clock, XCircle, AlertTriangle, ChevronRight, Download } from 'lucide-react'
 import { clsx } from 'clsx'
+import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -38,11 +39,45 @@ export function OrdersView() {
 
   useEffect(() => { load() }, [load])
 
+  const exportOrders = () => {
+    const csv = [
+      'Order No,Date,Role,Service,Price,Status,Payment',
+      ...orders.map((o) => {
+        const isBuyer = o.buyerId === user?.id
+        return [
+          o.orderNo,
+          new Date(o.createdAt).toISOString(),
+          isBuyer ? 'Buyer' : 'Seller',
+          `"${o.service.title.replace(/"/g, '""')}"`,
+          o.price,
+          o.status,
+          o.paymentStatus,
+        ].join(',')
+      }),
+    ].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `orders-${Date.now()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Orders exported')
+  }
+
   return (
     <div className="px-4 pt-4 space-y-4">
       <div className="flex items-center gap-2">
         <ClipboardList className="h-5 w-5 text-primary" />
-        <h1 className="text-xl font-bold">Orders</h1>
+        <h1 className="text-xl font-bold flex-1">Orders</h1>
+        {orders.length > 0 && (
+          <button
+            onClick={exportOrders}
+            className="h-9 px-3 rounded-full bg-secondary text-xs font-semibold flex items-center gap-1.5 hover:bg-accent transition"
+          >
+            <Download className="h-3.5 w-3.5" /> Export
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

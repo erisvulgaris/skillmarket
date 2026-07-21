@@ -14,7 +14,7 @@ const tabs = [
 ] as const
 
 export function BottomNav() {
-  const { view, setView } = useApp()
+  const { view, setView, unreadMessages } = useApp()
 
   const activeTab = (() => {
     if (view === 'marketplace' || view === 'service-detail' || view === 'search' || view === 'saved' || view === 'seller-profile') return 'marketplace'
@@ -30,16 +30,16 @@ export function BottomNav() {
       <div className="max-w-md mx-auto px-2 h-16 flex items-center justify-around relative">
         {tabs.map((tab, idx) => {
           const active = activeTab === tab.view
-          const Icon = tab.icon
+          const badge = tab.view === 'messages' ? unreadMessages : undefined
           // Insert FAB in the middle (between orders and wallet)
           if (idx === 2) {
             return (
               <div key="fab-spacer" className="flex items-center">
-                <NavTab tab={tab} active={active} setView={setView} />
+                <NavTab tab={tab} active={active} setView={setView} badge={badge} />
               </div>
             )
           }
-          return <NavTab key={tab.view} tab={tab} active={active} setView={setView} />
+          return <NavTab key={tab.view} tab={tab} active={active} setView={setView} badge={badge} />
         })}
 
         {/* Floating create button */}
@@ -56,7 +56,7 @@ export function BottomNav() {
   )
 }
 
-function NavTab({ tab, active, setView }: { tab: any; active: boolean; setView: (v: any) => void }) {
+function NavTab({ tab, active, setView, badge }: { tab: any; active: boolean; setView: (v: any) => void; badge?: number }) {
   const Icon = tab.icon
   return (
     <button
@@ -73,7 +73,14 @@ function NavTab({ tab, active, setView }: { tab: any; active: boolean; setView: 
           className="absolute -top-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary"
         />
       )}
-      <Icon className={clsx('transition-transform', active ? 'h-5 w-5 scale-110' : 'h-5 w-5')} strokeWidth={active ? 2.5 : 2} />
+      <div className="relative">
+        <Icon className={clsx('transition-transform', active ? 'h-5 w-5 scale-110' : 'h-5 w-5')} strokeWidth={active ? 2.5 : 2} />
+        {badge && badge > 0 ? (
+          <span className="absolute -top-1.5 -right-2 h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        ) : null}
+      </div>
       <span className={clsx('text-[10px] font-medium', active && 'font-semibold')}>{tab.label}</span>
     </button>
   )

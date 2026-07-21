@@ -5,6 +5,81 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 10 — Round 10 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 9 was stable with My Services view, conversation search, and profile completion meter all working. This round focused on: QA testing, building admin support ticket detail view with notes, adding conversation message search, adding order history export, and adding unread messages badge on bottom nav.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add admin support ticket detail view with notes
+3. ✅ Add conversation message search (search within a conversation)
+4. ✅ Add buyer-side order history export (CSV)
+5. ✅ Add unread messages badge on bottom nav
+6. ✅ Improve styling (ticket detail, search bar, export button, nav badge)
+
+### Completed Modifications
+
+#### Admin Support Ticket Detail View
+- New API endpoints:
+  - `GET /api/admin/support/[id]/notes` — get ticket with notes and user info
+  - `POST /api/admin/support/[id]/notes` — add internal note to ticket
+- Updated `AdminSupportTab` with detail view:
+  - Click ticket to open detail
+  - Shows full message, user, priority, date, status
+  - Internal notes section with author and timestamp
+  - Add note textarea with submit button
+  - Status action buttons (Pending, Resolve, Close)
+  - Back button to return to list
+- Fixed Prisma include error (`author` relation not available on SupportTicketNote)
+
+#### Conversation Message Search
+- Updated ConversationView with in-conversation search:
+  - Search icon button in header
+  - Search bar appears below header when toggled
+  - Filters messages by content (case-insensitive)
+  - Shows result count at bottom
+  - Clear button to reset search
+
+#### Order History Export
+- Added Export button to OrdersView header
+- Generates CSV with: Order No, Date, Role, Service, Price, Status, Payment
+- Downloads as `orders-{timestamp}.csv`
+- Only shows when orders exist
+
+#### Unread Messages Badge
+- Added `unreadMessages` state to Zustand store
+- New `loadUnreadMessages` function — counts conversations updated in last 5 minutes
+- Polled every 30 seconds alongside notifications
+- Bottom nav shows red badge with count on Chats tab
+- Badge supports 9+ overflow
+
+#### Styling Improvements
+- Ticket detail with clean card layout and notes timeline
+- Message search bar with icon and clear button
+- Export button with download icon
+- Nav badge with destructive color and min-width
+- Search result count footer
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Admin ticket detail opens with notes section and add note form
+- ✅ Conversation message search filters to "2 result(s)" for "test"
+- ✅ Orders export button shows in header
+- ✅ Fixed Prisma include error on SupportTicketNote
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. SupportTicketNote `author` include error → removed include, show "Admin" label
+2. No ticket detail view → built detail with notes and add note form
+3. No in-conversation search → added search bar with filtering and result count
+4. No order export → added CSV export button
+5. No unread badge → added message badge to bottom nav
+
+---
+
 ## Phase 9 — Round 9 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -818,6 +893,10 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 33. ~~**Service restore UI**~~ — ✅ DONE in Round 9 (MyServicesView with filter/restore).
 34. ~~**Conversation search**~~ — ✅ DONE in Round 9 (search bar in MessagesView).
 35. ~~**Profile completion meter**~~ — ✅ DONE in Round 9 (animated progress with checklist).
+36. ~~**Admin support ticket detail**~~ — ✅ DONE in Round 10 (detail view with notes).
+37. ~~**Conversation message search**~~ — ✅ DONE in Round 10 (in-conversation search).
+38. ~~**Order history export**~~ — ✅ DONE in Round 10 (CSV export button).
+39. ~~**Unread messages badge**~~ — ✅ DONE in Round 10 (nav badge with count).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
@@ -825,7 +904,6 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 - Add web push notifications (PWA push API + service worker)
 - Add offline data sync with IndexedDB
 - Add user block/mute in messaging
-- Add admin support ticket detail view with notes
-- Add conversation message search (search within a conversation's messages)
 - Add service dashboard with views/sales chart
-- Add buyer-side order history export
+- Add saved services count badge on profile
+- Add conversation unread indicator (per-conversation)

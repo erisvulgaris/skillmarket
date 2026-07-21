@@ -8,7 +8,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Home() {
-  const { user, loading, refreshUser, loadNotifications } = useApp()
+  const { user, loading, refreshUser, loadNotifications, loadUnreadMessages } = useApp()
 
   useEffect(() => {
     refreshUser()
@@ -17,10 +17,14 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       loadNotifications()
-      const t = setInterval(loadNotifications, 30000)
+      loadUnreadMessages()
+      const t = setInterval(() => {
+        loadNotifications()
+        loadUnreadMessages()
+      }, 30000)
       return () => clearInterval(t)
     }
-  }, [user, loadNotifications])
+  }, [user, loadNotifications, loadUnreadMessages])
 
   if (loading) {
     return (

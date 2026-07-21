@@ -37,6 +37,7 @@ interface AppState {
   viewParams: Record<string, any>
   notifications: Notification[]
   unreadCount: number
+  unreadMessages: number
   toastShown: boolean
 
   setUser: (u: User | null) => void
@@ -45,6 +46,7 @@ interface AppState {
   refreshUser: () => Promise<void>
   loadNotifications: () => Promise<void>
   markNotificationRead: (id: string) => Promise<void>
+  loadUnreadMessages: () => Promise<void>
   markAllRead: () => Promise<void>
 }
 
@@ -55,6 +57,7 @@ export const useApp = create<AppState>((set, get) => ({
   viewParams: {},
   notifications: [],
   unreadCount: 0,
+  unreadMessages: 0,
   toastShown: false,
 
   setUser: (u) => set({ user: u }),
@@ -90,5 +93,20 @@ export const useApp = create<AppState>((set, get) => ({
       notifications: s.notifications.map((n) => ({ ...n, readAt: n.readAt || new Date().toISOString() })),
       unreadCount: 0,
     }))
+  },
+  loadUnreadMessages: async () => {
+    try {
+      const data = await api.get<{ conversations: any[] }>('/api/messages/conversations?limit=50')
+      // Count conversations where lastMessage exists and we haven't read it
+      // This is approximate — real unread tracking would need lastReadAt comparison
+      const unread = data.conversations.filter((c) => {
+        if (!c.lastMessage) return false
+        // Simple heuristic: if updated in last 5 min and no lastReadAt, count as unread
+        const updated = new Date(c.updatedAt).getTime()
+        const fiveMinAgo = Date.now() - 5 * 60 * 1000
+        return updated > fiveMinAgo
+      }).length
+      set({ unreadMessages: unread })
+    } catch {}
   },
 }))

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile, Package, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile, Package, ChevronRight, Search } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -36,6 +36,8 @@ export function ConversationView() {
   const [recording, setRecording] = useState(false)
   const [recordTime, setRecordTime] = useState(0)
   const [showEmojis, setShowEmojis] = useState(false)
+  const [showMsgSearch, setShowMsgSearch] = useState(false)
+  const [msgSearch, setMsgSearch] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
   const typingTimer = useRef<any>(null)
@@ -249,7 +251,33 @@ export function ConversationView() {
               {typing ? 'typing…' : online ? 'online' : 'offline'}
             </p>
           </div>
+          <button
+            onClick={() => setShowMsgSearch(!showMsgSearch)}
+            className={clsx('h-8 w-8 rounded-full flex items-center justify-center transition flex-shrink-0', showMsgSearch ? 'bg-primary text-primary-foreground' : 'hover:bg-accent')}
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
+        {/* Message search bar */}
+        {showMsgSearch && (
+          <div className="max-w-md mx-auto px-3 pb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                autoFocus
+                value={msgSearch}
+                onChange={(e) => setMsgSearch(e.target.value)}
+                placeholder="Search in conversation…"
+                className="w-full h-9 rounded-lg bg-muted/60 border border-border/40 pl-9 pr-3 text-xs outline-none focus:border-primary"
+              />
+              {msgSearch && (
+                <button onClick={() => setMsgSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Order context banner */}
@@ -275,7 +303,7 @@ export function ConversationView() {
       <div className="flex-1 overflow-y-auto scroll-area max-w-md mx-auto w-full px-3 py-4 space-y-2">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 bg-muted/40 rounded-2xl animate-pulse" style={{ width: '60%' }} />)
-          : messages.map((m) => {
+          : (msgSearch.trim() ? messages.filter((m) => m.content.toLowerCase().includes(msgSearch.toLowerCase())) : messages).map((m) => {
               const mine = m.senderId === user?.id
               return (
                 <motion.div
@@ -332,6 +360,11 @@ export function ConversationView() {
                 </motion.div>
               )
             })}
+        {msgSearch.trim() && !loading && (
+          <div className="text-center text-[10px] text-muted-foreground py-2">
+            {messages.filter((m) => m.content.toLowerCase().includes(msgSearch.toLowerCase())).length} result(s)
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
