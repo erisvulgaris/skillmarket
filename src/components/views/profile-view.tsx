@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
-import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity } from 'lucide-react'
+import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { api } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
@@ -76,6 +76,7 @@ export function ProfileView() {
       {/* Menu */}
       <div className="space-y-2">
         <MenuItem icon={<Plus className="h-4 w-4" />} label="Create a Service" onClick={() => setView('create-service')} />
+        <MenuItem icon={<BarChart3 className="h-4 w-4" />} label="Seller Analytics" onClick={() => setView('analytics')} />
         <MenuItem icon={<Package className="h-4 w-4" />} label="My Orders" onClick={() => setView('orders')} />
         <MenuItem icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
         <MenuItem icon={<Gift className="h-4 w-4" />} label="Refer & Earn" onClick={() => setView('referrals')} badge="50 SC" />

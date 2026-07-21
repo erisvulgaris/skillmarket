@@ -14,7 +14,7 @@ import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
-type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'audit' | 'disputes' | 'reports' | 'settings' | 'flags' | 'cms' | 'broadcast'
+type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'settings' | 'flags' | 'cms' | 'broadcast'
 
 export function AdminView() {
   const { setView } = useApp()
@@ -30,6 +30,9 @@ export function AdminView() {
   const [settings, setSettings] = useState<any[]>([])
   const [flags, setFlags] = useState<any[]>([])
   const [cmsPages, setCmsPages] = useState<any[]>([])
+  const [adminOrders, setAdminOrders] = useState<any[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [fraudAlerts, setFraudAlerts] = useState<any>(null)
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
@@ -94,15 +97,27 @@ export function AdminView() {
     catch {} finally { setLoading(false) }
   }, [])
 
+  const loadOrders = useCallback(async () => {
+    setLoading(true)
+    try { const d = await api.get<{ items: any[] }>('/api/admin/orders?limit=50'); setAdminOrders(d.items) }
+    catch {} finally { setLoading(false) }
+  }, [])
+
+  const loadFraud = useCallback(async () => {
+    setLoading(true)
+    try { const d = await api.get<any>('/api/admin/fraud'); setFraudAlerts(d) }
+    catch {} finally { setLoading(false) }
+  }, [])
+
   useEffect(() => {
     const loaders: Record<Tab, () => void> = {
       dashboard: loadDashboard, users: loadUsers, wallets: loadWallets,
-      services: loadServices, audit: loadAudit, disputes: loadDisputes,
-      reports: loadReports, settings: loadSettings, flags: loadFlags, cms: loadCms,
+      services: loadServices, orders: loadOrders, audit: loadAudit, disputes: loadDisputes,
+      reports: loadReports, fraud: loadFraud, settings: loadSettings, flags: loadFlags, cms: loadCms,
       broadcast: () => setLoading(false),
     }
     loaders[tab]?.()
-  }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadAudit, loadDisputes, loadReports, loadSettings, loadFlags, loadCms])
+  }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSettings, loadFlags, loadCms])
 
   const userAction = async (userId: string, action: string) => {
     try {
@@ -172,8 +187,10 @@ export function AdminView() {
     { k: 'users', label: 'Users' },
     { k: 'wallets', label: 'Wallets' },
     { k: 'services', label: 'Services' },
+    { k: 'orders', label: 'Orders' },
     { k: 'disputes', label: 'Disputes' },
     { k: 'reports', label: 'Reports' },
+    { k: 'fraud', label: 'Fraud' },
     { k: 'flags', label: 'Flags' },
     { k: 'settings', label: 'Settings' },
     { k: 'cms', label: 'CMS' },
@@ -328,6 +345,21 @@ export function AdminView() {
           </div>
         )}
 
+        {tab === 'orders' && (
+          <AdminOrdersTab
+            orders={adminOrders}
+            loading={loading}
+            selectedOrder={selectedOrder}
+            onSelect={async (id) => {
+              try {
+                const d = await api.get<{ order: any }>(`/api/orders/${id}`)
+                setSelectedOrder(d.order)
+              } catch (e: any) { toast.error(e.message) }
+            }}
+            onClose={() => setSelectedOrder(null)}
+          />
+        )}
+
         {tab === 'disputes' && (
           <div className="space-y-2">
             {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />) :
@@ -373,6 +405,65 @@ export function AdminView() {
                 )}
               </Card>
             ))}
+          </div>
+        )}
+
+        {tab === 'fraud' && (
+          <div className="space-y-3">
+            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
+             !fraudAlerts ? <EmptyState icon={<AlertTriangle className="h-8 w-8" />} text="No data" /> :
+             <>
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-2">
+                <Card className={clsx('p-3 text-center', fraudAlerts.summary.high > 0 && 'border-rose-500/40')}>
+                  <p className="text-2xl font-bold text-rose-500">{fraudAlerts.summary.high}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">High</p>
+                </Card>
+                <Card className={clsx('p-3 text-center', fraudAlerts.summary.medium > 0 && 'border-amber-500/40')}>
+                  <p className="text-2xl font-bold text-amber-500">{fraudAlerts.summary.medium}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Medium</p>
+                </Card>
+                <Card className="p-3 text-center">
+                  <p className="text-2xl font-bold text-muted-foreground">{fraudAlerts.summary.low}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Low</p>
+                </Card>
+              </div>
+
+              {fraudAlerts.alerts.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 mb-3" />
+                  <p className="text-sm font-semibold">No fraud alerts detected</p>
+                  <p className="text-xs text-muted-foreground mt-1">All clear — no suspicious activity found.</p>
+                </Card>
+              ) : (
+                fraudAlerts.alerts.map((a: any, i: number) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 50 }}
+                  >
+                    <Card className={clsx('p-3 border-l-4', a.level === 'high' ? 'border-l-rose-500' : a.level === 'medium' ? 'border-l-amber-500' : 'border-l-muted-foreground')}>
+                      <div className="flex items-start gap-2">
+                        <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0', a.level === 'high' ? 'bg-rose-500/10 text-rose-600' : a.level === 'medium' ? 'bg-amber-500/10 text-amber-600' : 'bg-muted text-muted-foreground')}>
+                          {a.level}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold">{a.type.replace(/_/g, ' ')}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{a.message}</p>
+                          {a.userId && (
+                            <button onClick={() => { setTab('users') }} className="text-[10px] text-primary font-semibold mt-1">
+                              View user →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
+             </>
+            }
           </div>
         )}
 
@@ -602,6 +693,141 @@ function WalletAdminCard({ wallet, onFreeze, onAdjust }: { wallet: any; onFreeze
 }
 
 function w_user(w: any) { return w.user?.username || 'unknown' }
+
+const ORDER_STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-500/10' },
+  in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-500/10' },
+  delivered: { label: 'Delivered', color: 'text-violet-600', bg: 'bg-violet-500/10' },
+  completed: { label: 'Completed', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+  cancelled: { label: 'Cancelled', color: 'text-muted-foreground', bg: 'bg-muted' },
+  disputed: { label: 'Disputed', color: 'text-rose-600', bg: 'bg-rose-500/10' },
+}
+
+function AdminOrdersTab({ orders, loading, selectedOrder, onSelect, onClose }: {
+  orders: any[]
+  loading: boolean
+  selectedOrder: any
+  onSelect: (id: string) => void
+  onClose: () => void
+}) {
+  const [filter, setFilter] = useState('all')
+
+  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter)
+
+  if (selectedOrder) {
+    const o = selectedOrder
+    return (
+      <div className="space-y-3">
+        <button onClick={onClose} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to orders
+        </button>
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold">{o.orderNo}</p>
+              <p className="text-[10px] text-muted-foreground">{new Date(o.createdAt).toLocaleString()}</p>
+            </div>
+            <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded uppercase', ORDER_STATUS_META[o.status]?.bg, ORDER_STATUS_META[o.status]?.color)}>
+              {ORDER_STATUS_META[o.status]?.label || o.status}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p className="text-muted-foreground">Buyer</p>
+              <p className="font-semibold">@{o.buyer?.username}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Seller</p>
+              <p className="font-semibold">@{o.seller?.username}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Service</p>
+              <p className="font-semibold line-clamp-1">{o.service?.title}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Price</p>
+              <p className="font-semibold">{formatSC(o.price)} SC</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Payment</p>
+              <p className="font-semibold capitalize">{o.paymentStatus}</p>
+            </div>
+          </div>
+          {o.requirements && (
+            <div>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Requirements</p>
+              <p className="text-xs mt-1 p-2 rounded-lg bg-secondary/50">{o.requirements}</p>
+            </div>
+          )}
+        </Card>
+        {o.statusHistory?.length > 0 && (
+          <Card className="p-4 space-y-2">
+            <p className="text-xs font-bold uppercase text-muted-foreground">Timeline</p>
+            <div className="space-y-2">
+              {o.statusHistory.map((h: any, i: number) => (
+                <div key={h.id} className="flex gap-2 text-xs">
+                  <div className="flex flex-col items-center">
+                    <div className={clsx('h-2 w-2 rounded-full', i === 0 ? 'bg-primary' : 'bg-muted-foreground/40')} />
+                    {i < o.statusHistory.length - 1 && <div className="w-px flex-1 bg-border my-1" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold capitalize">{h.status.replace(/_/g, ' ')}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(h.createdAt).toLocaleString()}</p>
+                    {h.note && <p className="text-muted-foreground">{h.note}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
+        {['all', 'pending', 'in_progress', 'delivered', 'completed', 'cancelled', 'disputed'].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={clsx(
+              'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition',
+              filter === f ? 'bg-violet-600 text-white' : 'bg-secondary text-muted-foreground'
+            )}
+          >
+            {f === 'all' ? 'All' : ORDER_STATUS_META[f]?.label || f}
+          </button>
+        ))}
+      </div>
+      {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
+       filtered.length === 0 ? <EmptyState icon={<Package className="h-8 w-8" />} text="No orders" /> :
+       filtered.map((o) => (
+        <button key={o.id} onClick={() => onSelect(o.id)} className="w-full text-left active:scale-[0.99] transition">
+          <Card className="p-3 flex items-center gap-3">
+            <div className={clsx('h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0', ORDER_STATUS_META[o.status]?.bg)}>
+              <span className={ORDER_STATUS_META[o.status]?.color}><Package className="h-4 w-4" /></span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">{o.service?.title || 'Service'}</p>
+              <p className="text-xs text-muted-foreground">@{o.buyer?.username} → @{o.seller?.username}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase', ORDER_STATUS_META[o.status]?.bg, ORDER_STATUS_META[o.status]?.color)}>
+                  {ORDER_STATUS_META[o.status]?.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground">{new Date(o.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-sm font-bold">{formatSC(o.price)}</p>
+              <p className="text-[10px] text-muted-foreground">SC</p>
+            </div>
+          </Card>
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function DashboardSkeleton() {
   return (

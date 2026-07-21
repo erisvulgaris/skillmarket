@@ -25,6 +25,7 @@ type View =
   | 'dispute'
   | 'settings'
   | 'activity'
+  | 'analytics'
 
 interface AppState {
   user: User | null

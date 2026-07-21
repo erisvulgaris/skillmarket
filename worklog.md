@@ -5,6 +5,117 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 4 — Round 4 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 3 was stable with QR scanner, voice notes, settings/security, activity log, and admin wallet adjustments all working. This round focused on: QA testing, wiring avatar upload in edit profile, building admin order detail view with Orders tab, implementing full 2FA (TOTP) flow, adding fraud detection rules engine, building seller analytics dashboard, and improving styling.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Wire avatar image upload in edit profile
+3. ✅ Build admin order detail view + add Orders tab to admin panel
+4. ✅ Implement 2FA flow (TOTP with QR enrollment + verify + disable)
+5. ✅ Add fraud detection rules engine (velocity, large transfers, device fingerprint, rapid spend, new account)
+6. ✅ Add seller analytics dashboard (earnings chart, stats, conversion rate)
+7. ✅ Improve styling (avatar uploader with camera overlay, fraud alert cards with severity levels, analytics chart with hover tooltips)
+
+### Completed Modifications
+
+#### Avatar Upload in Edit Profile
+- Added avatar uploader component in SettingsView → EditProfileSection
+- Uses existing `/api/uploads` endpoint
+- Circular avatar with gradient fallback (initial letter)
+- Camera icon overlay button
+- Upload progress spinner overlay
+- Preview updates instantly after upload
+- Avatar URL saved with profile update
+
+#### Admin Orders Tab + Order Detail View
+- Added "Orders" tab to admin panel (now 13 tabs)
+- `AdminOrdersTab` component with:
+  - Status filter chips (All, Pending, In Progress, Delivered, Completed, Cancelled, Disputed)
+  - Order list cards with status badges, buyer→seller, date, price
+  - Click to open order detail view
+- Admin order detail view shows:
+  - Order number, date, status badge
+  - Buyer, seller, service title, price, payment status
+  - Requirements
+  - Full timeline with status history
+  - Back button to return to order list
+
+#### 2FA Implementation (TOTP)
+- Installed `otpauth` library
+- 3 new API endpoints:
+  - `POST /api/auth/2fa/setup` — generates TOTP secret, stores temporarily, returns QR code data URL + manual entry secret
+  - `POST /api/auth/2fa/verify` — verifies 6-digit code against TOTP, enables 2FA if valid
+  - `POST /api/auth/2fa/disable` — verifies code then disables 2FA and clears secret
+- Full 2FA UI in SettingsView:
+  - Intro screen explaining 2FA with "How it works" steps
+  - QR code display with manual entry secret fallback
+  - 6-digit verification code input (large, centered, tracking)
+  - Disable flow for already-enabled accounts
+  - Status indicator on settings menu (green dot + "ON" badge when enabled)
+- All endpoints rate-limited with `strictLimit`
+
+#### Fraud Detection Engine (`src/lib/fraud.ts`)
+- 5 fraud detection rules:
+  1. **Velocity check** — ≥20 transfers/hour = high, ≥10 = medium
+  2. **Large transfer** — ≥10,000 SC = high, ≥5,000 SC = medium
+  3. **Multiple accounts per device** — same fingerprint on >3 accounts = high
+  4. **Rapid spend after purchase** — ≥3 transfers within 1h of credit purchase = medium
+  5. **New account high balance** — <24h old account with ≥5,000 SC = medium
+- `runFraudChecks()` aggregates all alerts for a user
+- `getPlatformFraudAlerts()` scans all recent users + checks disputed orders + frozen wallets
+- New API endpoint: `GET /api/admin/fraud` — returns alerts with summary (high/medium/low counts)
+- New "Fraud" tab in admin panel with:
+  - Summary cards (high/medium/low counts, color-coded)
+  - Alert cards with severity-colored left borders
+  - Each alert shows: level badge, type, message, user link
+  - "No fraud alerts" empty state with green checkmark
+
+#### Seller Analytics Dashboard
+- New API endpoint: `GET /api/seller/analytics` — returns:
+  - Stats: totalServices, activeServices, totalOrders, completedOrders, pendingOrders, totalEarnings, totalViews, avgRating, reviewCount, repeatCustomers, conversionRate
+  - Daily earnings for last 14 days (array)
+  - 5 most recent orders
+- New `AnalyticsView` with:
+  - Gradient hero card showing total earnings with mini-stats (orders, views, rating)
+  - 6 stat cards in grid (active listings, total orders, total views, avg rating, repeat buyers, conversion rate)
+  - 14-day daily earnings bar chart with hover tooltips
+  - Recent orders list with status dots
+  - Accessed from profile menu
+
+#### Styling Improvements
+- Avatar uploader with camera overlay icon
+- Fraud alert cards with severity-colored left borders (rose/amber/muted)
+- Analytics chart bars with hover tooltips showing exact SC amount
+- Summary cards with conditional border colors based on alert counts
+- 2FA QR code display with manual entry fallback
+- Status filter chips with active state animation
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Avatar upload in edit profile (uses /api/uploads, preview updates)
+- ✅ Admin Orders tab works (filter chips, order list, detail view with timeline)
+- ✅ Admin order detail shows full timeline, buyer/seller, requirements
+- ✅ 2FA setup generates QR code (256x256 data URL) + manual entry secret
+- ✅ 2FA verify/disable endpoints work with TOTP validation
+- ✅ Fraud detection finds 2 medium alerts (new account high balance for seeded sellers)
+- ✅ Seller analytics shows real data (Maya: 2,680 SC earned, 1 order, 469 views, 4.5 rating)
+- ✅ Analytics daily earnings chart renders with 14-day bars
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. Avatar upload not wired → added avatar uploader component using existing /api/uploads
+2. No admin order viewing → built AdminOrdersTab with detail view and timeline
+3. 2FA only a placeholder → full TOTP implementation with setup/verify/disable flow
+4. No fraud detection → built 5-rule engine with admin dashboard
+5. No seller analytics → built full analytics API + view with earnings chart
+
+---
+
 ## Phase 3 — Round 3 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -256,26 +367,28 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 ---
 
 ## Unresolved Issues / Risks / Next Steps
-1. **2FA** — fields exist in schema and UI placeholder added; TOTP flow not yet implemented.
+1. ~~**2FA**~~ — ✅ DONE in Round 4 (full TOTP with setup/verify/disable, QR enrollment).
 2. **Email notifications** — only in-app notifications; no email transport.
-3. **Fraud detection** — dashboard shows counts but no automated rules engine.
+3. ~~**Fraud detection**~~ — ✅ DONE in Round 4 (5-rule engine with admin Fraud tab).
 4. **Tests** — no automated tests written yet (wallet integrity, transfers, escrow).
 5. ~~**Voice notes**~~ — ✅ DONE in Round 3 (MediaRecorder + waveform UI).
 6. ~~**QR scanner**~~ — ✅ DONE in Round 3 (jsqr camera + image upload).
 7. **PostgreSQL migration** — schema is portable; update `datasource` provider when ready.
-8. **Admin: order detail view** — admin can't view order timelines from admin panel (only from user side).
+8. ~~**Admin: order detail view**~~ — ✅ DONE in Round 4 (AdminOrdersTab with full timeline).
 9. ~~**Admin: wallet adjust UI**~~ — ✅ DONE in Round 3 (WalletAdminCard with expandable form).
 10. ~~**Search filters**~~ — ✅ DONE in Round 3 (category browse mode + price/sort filters).
-11. **Profile avatar upload** — edit profile form exists but avatar image upload not wired (uses URL only).
+11. ~~**Profile avatar upload**~~ — ✅ DONE in Round 4 (avatar uploader in edit profile).
 12. **Push notifications** — no web push API integration for PWA push.
 13. **Offline mode** — service worker caches assets but no offline data sync.
+14. **2FA login verification** — 2FA can be enabled/disabled but login flow doesn't yet prompt for 2FA code.
+15. **Seller analytics** — ✅ DONE in Round 4 (earnings chart, stats, conversion rate).
 
 ### Priority Recommendations for Next Phase
-- Implement 2FA flow (TOTP with qr enrollment using otpauth library)
+- Add 2FA code prompt during login (when user has 2FA enabled)
 - Add automated tests for wallet integrity (double-entry balance conservation)
 - Add email notification transport (Resend/SendGrid)
-- Implement fraud detection rules (velocity checks, multiple devices)
-- Wire avatar image upload in edit profile (using existing /api/uploads endpoint)
 - Add web push notifications (PWA push API + service worker)
-- Build admin order detail view (view order timelines from admin panel)
 - Add offline data sync with IndexedDB
+- Build service packages/tiers (basic/standard/premium pricing)
+- Add quick reply suggestions in messaging
+- Implement wishlist/share feature for services

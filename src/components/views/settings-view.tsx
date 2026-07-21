@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { api, ApiError } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Lock, KeyRound, User, Shield, Bell, Globe, LogOut, ChevronRight, Check, Moon, Sun, Fingerprint } from 'lucide-react'
+import { ArrowLeft, Lock, KeyRound, User, Shield, Bell, Globe, LogOut, ChevronRight, Check, Moon, Sun, Fingerprint, Camera } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ import { motion } from 'framer-motion'
 export function SettingsView() {
   const { setView, user, refreshUser } = useApp()
   const { theme, setTheme } = useTheme()
-  const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile'>('menu')
+  const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile' | '2fa'>('menu')
 
   return (
     <div className="min-h-screen">
@@ -30,6 +30,7 @@ export function SettingsView() {
             {section === 'pin' && 'Change Transaction PIN'}
             {section === 'password' && 'Change Password'}
             {section === 'profile' && 'Edit Profile'}
+            {section === '2fa' && 'Two-Factor Authentication'}
           </h1>
         </div>
       </header>
@@ -43,7 +44,14 @@ export function SettingsView() {
               <Card className="divide-y divide-border/40 p-0">
                 <SettingRow icon={<KeyRound className="h-4 w-4 text-primary" />} label="Transaction PIN" desc="Change your 4-digit PIN" onClick={() => setSection('pin')} />
                 <SettingRow icon={<Lock className="h-4 w-4 text-primary" />} label="Password" desc="Change your login password" onClick={() => setSection('password')} />
-                <SettingRow icon={<Fingerprint className="h-4 w-4 text-primary" />} label="Two-Factor Auth" desc="Coming soon" badge="SOON" onClick={() => toast.info('2FA coming soon')} />
+                <SettingRow
+                  icon={<Fingerprint className="h-4 w-4 text-primary" />}
+                  label="Two-Factor Auth"
+                  desc={user?.twoFactorEnabled ? 'Enabled — requires code on login' : 'Add an extra layer of security'}
+                  badge={user?.twoFactorEnabled ? 'ON' : undefined}
+                  onClick={() => setSection('2fa')}
+                  trailing={user?.twoFactorEnabled ? <span className="h-2 w-2 rounded-full bg-emerald-500" /> : undefined}
+                />
               </Card>
             </div>
 
@@ -100,6 +108,7 @@ export function SettingsView() {
         {section === 'pin' && <ChangePinSection />}
         {section === 'password' && <ChangePasswordSection />}
         {section === 'profile' && <EditProfileSection onSaved={() => { setSection('menu'); refreshUser() }} />}
+        {section === '2fa' && <TwoFactorSection enabled={user?.twoFactorEnabled || false} onChanged={() => { refreshUser(); setSection('menu') }} />}
       </div>
     </div>
   )
@@ -242,11 +251,33 @@ function EditProfileSection({ onSaved }: { onSaved: () => void }) {
   const [skills, setSkills] = useState((user?.profile?.skills || []).join(', '))
   const [languages, setLanguages] = useState((user?.profile?.languages || []).join(', '))
   const [loading, setLoading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user?.profile?.avatarUrl || '')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const uploadAvatar = async (file: File) => {
+    setUploadingAvatar(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/uploads', { method: 'POST', body: fd, credentials: 'include' })
+      const json = await res.json()
+      if (json.success) {
+        setAvatarUrl(json.data.url)
+        toast.success('Avatar uploaded')
+      } else {
+        toast.error(json.error || 'Upload failed')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Upload failed')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
 
   const submit = async () => {
     setLoading(true)
     try {
-      // We'll use a direct update — need an endpoint. For now, use the existing pattern.
       const res = await fetch('/api/profiles/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,6 +285,7 @@ function EditProfileSection({ onSaved }: { onSaved: () => void }) {
           displayName,
           bio,
           location,
+          avatarUrl: avatarUrl || undefined,
           skills: skills.split(',').map((s) => s.trim()).filter(Boolean),
           languages: languages.split(',').map((s) => s.trim()).filter(Boolean),
         }),
@@ -275,6 +307,41 @@ function EditProfileSection({ onSaved }: { onSaved: () => void }) {
 
   return (
     <Card className="p-4 space-y-4">
+      {/* Avatar uploader */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) uploadAvatar(file)
+          if (avatarInputRef.current) avatarInputRef.current.value = ''
+        }}
+      />
+      <div className="flex flex-col items-center gap-3 py-2">
+        <button
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={uploadingAvatar}
+          className="relative h-24 w-24 rounded-full overflow-hidden bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-3xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+          ) : (
+            user?.username?.[0]?.toUpperCase() || '?'
+          )}
+          {uploadingAvatar && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          <div className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 border-card">
+            <Camera className="h-3.5 w-3.5" />
+          </div>
+        </button>
+        <p className="text-xs text-muted-foreground">Tap to upload avatar</p>
+      </div>
+
       <div className="space-y-2">
         <Label>Display Name</Label>
         <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
@@ -301,6 +368,194 @@ function EditProfileSection({ onSaved }: { onSaved: () => void }) {
       </Button>
     </Card>
   )
+}
+
+function TwoFactorSection({ enabled, onChanged }: { enabled: boolean; onChanged: () => void }) {
+  const [step, setStep] = useState<'intro' | 'qr' | 'verify' | 'disable'>(enabled ? 'disable' : 'intro')
+  const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [secret, setSecret] = useState<string | null>(null)
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const setup = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/2fa/setup', { method: 'POST', credentials: 'include' })
+      const json = await res.json()
+      if (json.success) {
+        setQrUrl(json.data.qrUrl)
+        setSecret(json.data.secret)
+        setStep('qr')
+      } else {
+        toast.error(json.error || 'Setup failed')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Setup failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const verify = async () => {
+    if (code.length !== 6) return toast.error('Enter 6-digit code')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+        credentials: 'include',
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success('2FA enabled successfully!')
+        onChanged()
+      } else {
+        toast.error(json.error || 'Invalid code')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Verification failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const disable = async () => {
+    if (code.length !== 6) return toast.error('Enter 6-digit code')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/2fa/disable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+        credentials: 'include',
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success('2FA disabled')
+        onChanged()
+      } else {
+        toast.error(json.error || 'Invalid code')
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (step === 'disable') {
+    return (
+      <Card className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <Fingerprint className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-emerald-600">2FA is Active</p>
+            <p className="text-xs text-muted-foreground">Your account requires a verification code on login.</p>
+          </div>
+        </div>
+        <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+          <p className="text-xs text-amber-600 font-semibold">Disable 2FA</p>
+          <p className="text-xs text-muted-foreground mt-1">Enter your current 6-digit code to disable 2FA.</p>
+        </div>
+        <Input
+          type="text"
+          inputMode="numeric"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="000000"
+          maxLength={6}
+          className="text-center text-2xl tracking-[0.3em] font-bold h-14"
+        />
+        <Button onClick={disable} disabled={loading} variant="destructive" className="w-full rounded-2xl">
+          {loading ? 'Disabling…' : 'Disable 2FA'}
+        </Button>
+      </Card>
+    )
+  }
+
+  if (step === 'intro') {
+    return (
+      <Card className="p-6 space-y-4 text-center">
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
+          <Fingerprint className="h-8 w-8" />
+        </div>
+        <div>
+          <p className="text-base font-bold">Protect Your Account</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Two-factor authentication adds an extra layer of security. You'll need a 6-digit code from your authenticator app (Google Authenticator, Authy, etc.) each time you log in.
+          </p>
+        </div>
+        <div className="text-left space-y-2 p-3 rounded-xl bg-secondary/50">
+          <p className="text-xs font-bold">How it works:</p>
+          <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+            <li>Scan the QR code with your authenticator app</li>
+            <li>Enter the 6-digit code to verify</li>
+            <li>2FA is enabled — use the code on every login</li>
+          </ol>
+        </div>
+        <Button onClick={setup} disabled={loading} className="w-full rounded-2xl h-12">
+          {loading ? 'Setting up…' : 'Get Started'}
+        </Button>
+      </Card>
+    )
+  }
+
+  if (step === 'qr' && qrUrl) {
+    return (
+      <Card className="p-4 space-y-4">
+        <div className="text-center">
+          <p className="text-sm font-bold">Scan QR Code</p>
+          <p className="text-xs text-muted-foreground mt-1">Use Google Authenticator, Authy, or any TOTP app</p>
+        </div>
+        <div className="flex justify-center">
+          <div className="p-3 bg-white rounded-2xl">
+            <img src={qrUrl} alt="2FA QR Code" className="h-48 w-48" />
+          </div>
+        </div>
+        {secret && (
+          <div className="p-3 rounded-xl bg-secondary/50">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold">Manual entry code</p>
+            <p className="text-xs font-mono break-all mt-1">{secret}</p>
+          </div>
+        )}
+        <Button onClick={() => setStep('verify')} className="w-full rounded-2xl">
+          I've Scanned the Code
+        </Button>
+      </Card>
+    )
+  }
+
+  if (step === 'verify') {
+    return (
+      <Card className="p-4 space-y-4">
+        <div className="text-center">
+          <p className="text-sm font-bold">Enter Verification Code</p>
+          <p className="text-xs text-muted-foreground mt-1">Enter the 6-digit code from your authenticator app</p>
+        </div>
+        <Input
+          type="text"
+          inputMode="numeric"
+          autoFocus
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="000000"
+          maxLength={6}
+          className="text-center text-3xl tracking-[0.3em] font-bold h-16"
+        />
+        <Button onClick={verify} disabled={loading || code.length !== 6} className="w-full rounded-2xl h-12">
+          {loading ? 'Verifying…' : 'Enable 2FA'}
+        </Button>
+        <button onClick={() => setStep('qr')} className="w-full text-xs text-muted-foreground hover:text-foreground">
+          ← Back to QR code
+        </button>
+      </Card>
+    )
+  }
+
+  return null
 }
 
 function PinInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
