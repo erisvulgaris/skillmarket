@@ -262,11 +262,29 @@ model Service {
   orders        Order[]  @relation("OrderService")
   reviews       Review[]
   savedBy       SavedService[]
+  packages      ServicePackage[]
 
   @@index([sellerId])
   @@index([categoryId])
   @@index([status])
   @@index([featured])
+}
+
+model ServicePackage {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name        String   // Basic | Standard | Premium
+  description String
+  price       Int
+  deliveryDays Int
+  features    String   // JSON array of included features
+  revisions   Int      @default(1)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceId])
 }
 
 model SavedService {
@@ -293,6 +311,7 @@ model Order {
   seller          User     @relation("OrderSeller", fields: [sellerId], references: [id])
   serviceId       String
   service         Service  @relation("OrderService", fields: [serviceId], references: [id])
+  packageId       String?
   price           Int
   requirements    String?
   status          String   @default("pending") // pending | in_progress | delivered | completed | cancelled | disputed

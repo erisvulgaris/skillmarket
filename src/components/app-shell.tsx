@@ -3,6 +3,7 @@
 import { useApp } from '@/lib/store'
 import { BottomNav } from '@/components/bottom-nav'
 import { TopBar } from '@/components/top-bar'
+import { OnboardingTour } from '@/components/onboarding-tour'
 import { MarketplaceView } from '@/components/views/marketplace-view'
 import { WalletView } from '@/components/views/wallet-view'
 import { OrdersView } from '@/components/views/orders-view'
@@ -77,6 +78,8 @@ export function AppShell() {
       <footer className="mt-auto text-center text-[10px] text-muted-foreground/60 py-2 pb-safe">
         SkillMarket · Powered by SkillCredits
       </footer>
+
+      <OnboardingTour />
     </div>
   )
 }

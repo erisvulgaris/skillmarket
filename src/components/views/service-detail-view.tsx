@@ -9,10 +9,10 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Clock, ShieldCheck, MessageSquare, Share2, Bookmark, ChevronRight, Star } from 'lucide-react'
+import { ArrowLeft, Clock, ShieldCheck, MessageSquare, Share2, Bookmark, ChevronRight, Star, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { safeJsonParse } from '@/lib/api-client'
+import { safeJsonParse } from '@/lib/api'
 
 export function ServiceDetailView() {
   const { viewParams, setView, user } = useApp()
@@ -22,6 +22,7 @@ export function ServiceDetailView() {
   const [requirements, setRequirements] = useState('')
   const [saved, setSaved] = useState(false)
   const [ordering, setOrdering] = useState(false)
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -63,7 +64,8 @@ export function ServiceDetailView() {
   }
 
   const order = async () => {
-    if (!user?.wallet || user.wallet.availableBalance < data.price) {
+    const orderPrice = selectedPackageId ? (data.packages?.find((p: any) => p.id === selectedPackageId)?.price || data.price) : data.price
+    if (!user?.wallet || user.wallet.availableBalance < orderPrice) {
       toast.error('Insufficient balance. Buy more credits first.')
       setView('buy-credits')
       return
@@ -72,6 +74,7 @@ export function ServiceDetailView() {
     try {
       const res = await api.post<{ order: any; conversationId: string }>('/api/orders', {
         serviceId: id,
+        packageId: selectedPackageId || undefined,
         requirements: requirements || undefined,
       })
       toast.success('Order placed! Credits escrowed.')
@@ -91,6 +94,22 @@ export function ServiceDetailView() {
       toast.success('Report submitted. Thank you.')
     } catch (e: any) {
       toast.error(e.message || 'Report failed')
+    }
+  }
+
+  const shareService = async () => {
+    const shareData = {
+      title: data.title,
+      text: `Check out this service on SkillMarket: ${data.title}`,
+      url: window.location.href,
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(shareData.url)
+      toast.success('Link copied to clipboard!')
     }
   }
 
@@ -127,7 +146,10 @@ export function ServiceDetailView() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="absolute top-4 right-4 flex gap-2">
-          <button className="h-10 w-10 rounded-full glass flex items-center justify-center active:scale-90 transition">
+          <button
+            onClick={shareService}
+            className="h-10 w-10 rounded-full glass flex items-center justify-center active:scale-90 transition"
+          >
             <Share2 className="h-4 w-4" />
           </button>
           <button
@@ -179,6 +201,53 @@ export function ServiceDetailView() {
         <Section title="About this service">
           <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{data.description}</p>
         </Section>
+
+        {/* Package tiers */}
+        {data.packages && data.packages.length > 0 && (
+          <Section title="Choose a Package">
+            <div className="space-y-2">
+              {data.packages.map((pkg: any, i: number) => {
+                const isSelected = selectedPackageId === pkg.id
+                const isDefault = selectedPackageId === null && i === 0
+                const features = safeJsonParse<string[]>(pkg.features, [])
+                return (
+                  <button
+                    key={pkg.id}
+                    onClick={() => setSelectedPackageId(pkg.id)}
+                    className={`w-full text-left p-3 rounded-2xl border-2 transition relative overflow-hidden ${
+                      isSelected || isDefault ? 'border-primary bg-primary/5' : 'border-border'
+                    }`}
+                  >
+                    {pkg.name === 'Premium' && (
+                      <span className="absolute top-0 right-0 px-2 py-0.5 rounded-bl-lg bg-amber-400 text-amber-950 text-[9px] font-bold">POPULAR</span>
+                    )}
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-bold">{pkg.name}</p>
+                      <div className="flex items-center gap-1">
+                        <SkillCredits amount={pkg.price} size="md" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">{pkg.description}</p>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-2">
+                      <span>📦 {pkg.deliveryDays} days</span>
+                      <span>🔄 {pkg.revisions} revision{pkg.revisions !== 1 ? 's' : ''}</span>
+                    </div>
+                    {features.length > 0 && (
+                      <ul className="space-y-1">
+                        {features.map((f: string, fi: number) => (
+                          <li key={fi} className="text-xs flex items-start gap-1.5">
+                            <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </Section>
+        )}
 
         {/* Tags */}
         {data.tags.length > 0 && (
@@ -270,8 +339,10 @@ export function ServiceDetailView() {
         <div className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border/40 p-3 pb-safe">
           <div className="max-w-md mx-auto flex items-center gap-2">
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground">Total price</p>
-              <SkillCredits amount={data.price} size="lg" />
+              <p className="text-[10px] text-muted-foreground">
+                {selectedPackageId ? (data.packages?.find((p: any) => p.id === selectedPackageId)?.name + ' package') : 'Total price'}
+              </p>
+              <SkillCredits amount={selectedPackageId ? (data.packages?.find((p: any) => p.id === selectedPackageId)?.price || data.price) : data.price} size="lg" />
             </div>
             <Button
               onClick={order}

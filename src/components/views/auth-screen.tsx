@@ -12,6 +12,8 @@ export function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
   const [form, setForm] = useState({
     emailOrUsername: '',
     email: '',
@@ -26,10 +28,17 @@ export function AuthScreen() {
     setLoading(true)
     try {
       if (mode === 'login') {
-        await api.post('/api/auth/login', {
+        const res = await api.post<any>('/api/auth/login', {
           emailOrUsername: form.emailOrUsername,
           password: form.password,
+          twoFactorCode: twoFactorRequired ? twoFactorCode : undefined,
         })
+        if (res.requiresTwoFactor) {
+          setTwoFactorRequired(true)
+          setLoading(false)
+          toast.info('Enter your 2FA code')
+          return
+        }
       } else {
         await api.post('/api/auth/register', {
           email: form.email,
@@ -145,6 +154,29 @@ export function AuthScreen() {
               }
             />
 
+            {mode === 'login' && twoFactorRequired && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-2"
+              >
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">Two-factor authentication required. Enter the 6-digit code from your authenticator app.</p>
+                </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoFocus
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength={6}
+                  className="w-full h-14 rounded-2xl bg-background border border-border/60 text-center text-2xl tracking-[0.3em] font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+                />
+              </motion.div>
+            )}
+
             {mode === 'register' && (
               <>
                 <Field
@@ -170,7 +202,7 @@ export function AuthScreen() {
               disabled={loading}
               className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              {loading ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
+              {loading ? 'Please wait…' : mode === 'login' ? (twoFactorRequired ? 'Verify & Sign In' : 'Sign In') : 'Create Account'}
             </button>
           </form>
 
@@ -178,7 +210,7 @@ export function AuthScreen() {
             {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setTwoFactorRequired(false); setTwoFactorCode('') }}
               className="text-primary font-semibold hover:underline"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}

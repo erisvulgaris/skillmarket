@@ -3,11 +3,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx } from 'clsx'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+
+const EMOJIS = ['😀', '😂', '🥰', '😍', '🤔', '😎', '🤝', '👍', '👎', '❤️', '🔥', '✨', '🎉', '💪', '🙏', '👀', '💯', '⭐', '🚀', '💡', '✅', '❌', '💰', '🎨', '💻', '📱', '🔔', '📦', '🎯', '⏰']
 
 type Message = {
   id: string
@@ -32,6 +34,7 @@ export function ConversationView() {
   const [uploading, setUploading] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recordTime, setRecordTime] = useState(0)
+  const [showEmojis, setShowEmojis] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
   const typingTimer = useRef<any>(null)
@@ -303,6 +306,47 @@ export function ConversationView() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Quick replies */}
+      {!text.trim() && !recording && messages.length > 0 && (
+        <div className="px-3 pb-2 max-w-md mx-auto">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            {['Hello! 👋', 'Thanks!', 'Got it ✅', 'Can you share more details?', 'I\'ll get started right away', 'Looks great!'].map((q) => (
+              <button
+                key={q}
+                onClick={() => { setText(q); onType(q) }}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full bg-secondary/80 border border-border/40 text-xs font-medium hover:bg-accent active:scale-95 transition"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Emoji picker */}
+      <AnimatePresence>
+        {showEmojis && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="px-3 pb-2 max-w-md mx-auto"
+          >
+            <div className="bg-card border border-border/40 rounded-2xl p-2 grid grid-cols-8 gap-0.5">
+              {EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => { setText((prev) => prev + e); onType(text + e) }}
+                  className="h-9 w-9 flex items-center justify-center text-xl hover:bg-accent rounded-lg active:scale-90 transition"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Composer */}
       <div className="glass border-t border-border/40 p-3 pb-safe">
         <div className="max-w-md mx-auto flex items-end gap-2">
@@ -383,6 +427,14 @@ export function ConversationView() {
                 rows={1}
                 className="flex-1 bg-transparent text-sm outline-none resize-none max-h-24"
               />
+            )}
+            {!recording && (
+              <button
+                onClick={() => setShowEmojis(!showEmojis)}
+                className={clsx('h-7 w-7 rounded-full flex items-center justify-center transition flex-shrink-0', showEmojis ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}
+              >
+                <Smile className="h-4 w-4" />
+              </button>
             )}
           </div>
           {recording ? (

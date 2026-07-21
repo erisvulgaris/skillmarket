@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 const createSchema = z.object({
   serviceId: z.string(),
+  packageId: z.string().optional(),
   requirements: z.string().max(2000).optional(),
 })
 
@@ -74,11 +75,21 @@ export async function POST(req: Request) {
 
     const service = await db.service.findUnique({
       where: { id: data!.serviceId },
-      include: { seller: true },
+      include: { seller: true, packages: true },
     })
     if (!service) return err('NOT_FOUND', 404)
     if (service.status !== 'active') return err('SERVICE_NOT_AVAILABLE', 400)
     if (service.sellerId === user.id) return err('Cannot buy your own service', 400)
+
+    // Determine price: use package price if packageId provided, else service base price
+    let orderPrice = service.price
+    let packageId: string | undefined = undefined
+    if (data!.packageId) {
+      const pkg = service.packages.find((p) => p.id === data!.packageId)
+      if (!pkg) return err('Package not found', 404)
+      orderPrice = pkg.price
+      packageId = pkg.id
+    }
 
     const orderNo = genOrderNo()
     const order = await db.$transaction(async (tx) => {
@@ -88,7 +99,8 @@ export async function POST(req: Request) {
           buyerId: user.id,
           sellerId: service.sellerId,
           serviceId: service.id,
-          price: service.price,
+          packageId,
+          price: orderPrice,
           requirements: data!.requirements,
           status: 'pending',
           paymentStatus: 'escrow',
@@ -128,14 +140,14 @@ export async function POST(req: Request) {
       const buyerWallet = await tx.wallet.findUnique({ where: { userId: user.id } })
       if (!buyerWallet) throw new Error('WALLET_NOT_FOUND')
       if (buyerWallet.frozen) throw new Error('WALLET_FROZEN')
-      if (buyerWallet.availableBalance < service.price) throw new Error('INSUFFICIENT_BALANCE')
+      if (buyerWallet.availableBalance < orderPrice) throw new Error('INSUFFICIENT_BALANCE')
 
       const updatedWallet = await tx.wallet.update({
         where: { id: buyerWallet.id },
         data: {
-          availableBalance: { decrement: service.price },
-          reservedBalance: { increment: service.price },
-          lifetimeSpent: { increment: service.price },
+          availableBalance: { decrement: orderPrice },
+          reservedBalance: { increment: orderPrice },
+          lifetimeSpent: { increment: orderPrice },
         },
       })
 
@@ -144,7 +156,7 @@ export async function POST(req: Request) {
           walletId: buyerWallet.id,
           type: 'order_payment',
           direction: 'debit',
-          amount: service.price,
+          amount: orderPrice,
           balanceAfter: updatedWallet.availableBalance,
           referenceId: o.id,
           referenceType: 'order',
@@ -154,8 +166,8 @@ export async function POST(req: Request) {
 
       await tx.ledgerEntry.createMany({
         data: [
-          { walletId: buyerWallet.id, entryType: 'debit', account: 'user_wallet', amount: service.price, transactionId: wt.id, referenceId: o.id, referenceType: 'order_escrow' },
-          { walletId: buyerWallet.id, entryType: 'credit', account: 'escrow', amount: service.price, transactionId: wt.id, referenceId: o.id, referenceType: 'order_escrow' },
+          { walletId: buyerWallet.id, entryType: 'debit', account: 'user_wallet', amount: orderPrice, transactionId: wt.id, referenceId: o.id, referenceType: 'order_escrow' },
+          { walletId: buyerWallet.id, entryType: 'credit', account: 'escrow', amount: orderPrice, transactionId: wt.id, referenceId: o.id, referenceType: 'order_escrow' },
         ],
       })
 

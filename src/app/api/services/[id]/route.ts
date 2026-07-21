@@ -10,6 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       include: {
         seller: { include: { profile: true } },
         category: true,
+        packages: { orderBy: { sortOrder: 'asc' } },
         reviews: {
           where: { status: 'published' },
           orderBy: { createdAt: 'desc' },
