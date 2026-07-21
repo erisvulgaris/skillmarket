@@ -5,6 +5,91 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 7 — Round 7 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 6 was stable with service package creation, order attachments, CMS editor, notification preferences, and image gallery all working. This round focused on: QA testing, adding CMS page rendering on public routes, adding service editing, adding search autocomplete suggestions, building a help/support center, and improving styling.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add CMS page rendering on public routes (view Terms/Privacy/FAQ)
+3. ✅ Add service editing (sellers can edit existing services)
+4. ✅ Add search autocomplete suggestions
+5. ✅ Build help & support center (FAQs, quick links, contact support)
+6. ✅ Improve styling (help hero, autocomplete dropdown, edit mode)
+7. ✅ Add features: support ticket API, pause/activate service
+
+### Completed Modifications
+
+#### CMS Page Rendering (Public Routes)
+- New public API endpoint: `GET /api/cms/[slug]` — no auth required, returns published pages
+- New `CmsPageView` component with:
+  - Clean article layout with last-updated date
+  - Back button navigation (configurable `from` view)
+  - Loading skeletons
+  - "Page not found" empty state
+- Accessible from Help center quick links and Profile menu
+
+#### Service Editing
+- New `PATCH /api/services/[id]` endpoint — seller-only update with audit logging
+- Updated CreateServiceView to handle edit mode:
+  - Detects `editId` from viewParams
+  - Pre-fills form with existing service data (title, description, price, delivery, tags, skills, images, FAQs)
+  - Submits via PATCH instead of POST when editing
+  - Header and button text change to "Edit Service" / "Save Changes"
+- Updated ServiceDetailView for own services:
+  - "Edit Service" button (navigates to create-service with editId)
+  - "Pause"/"Activate" toggle button (updates availability)
+  - Replaces the disabled "This is your own service" button
+
+#### Search Autocomplete Suggestions
+- Updated SearchView with live autocomplete dropdown:
+  - Fetches suggestions after 150ms debounce (vs 400ms for full search)
+  - Shows top 5 matching services with thumbnail, title, seller, price
+  - Click suggestion to open service detail directly
+  - Dropdown appears below search input with shadow and scroll
+  - Dismisses on blur (with delay for click registration)
+
+#### Help & Support Center
+- New `HelpView` component with:
+  - Hero card with life buoy icon
+  - Search bar for help articles
+  - 3 quick links (Terms, Privacy, FAQ) → CMS pages
+  - 8 expandable FAQs (buying credits, transfers, escrow, selling, PIN, refunds, withdrawals, 2FA)
+  - Contact support form (subject, message, priority)
+- New API endpoints:
+  - `POST /api/support/tickets` — create support ticket, notifies admins
+  - `GET /api/support/tickets` — list user's tickets
+- Help & Terms links added to profile menu
+
+#### Styling Improvements
+- Help center hero with gradient background and life buoy icon
+- Autocomplete dropdown with card shadow and scroll
+- FAQ accordion with animated expand/collapse
+- Edit mode indicators (header text, button text changes)
+- Support form with priority selector buttons
+- Quick links grid with icon badges
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ CMS page view renders Terms of Service with content
+- ✅ Help center shows FAQs, quick links, and contact form
+- ✅ Service edit button shows for owner, opens pre-filled form
+- ✅ Search autocomplete shows 2 suggestions for "logo"
+- ✅ Support ticket API creates tickets and notifies admins
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. No public CMS viewing → created public API + CmsPageView
+2. No service editing → built PATCH endpoint + edit mode in CreateServiceView
+3. No search suggestions → added autocomplete dropdown with 150ms debounce
+4. No help center → built full HelpView with FAQs and support tickets
+5. Owner service detail had disabled button → replaced with Edit + Pause/Activate actions
+
+---
+
 ## Phase 6 — Round 6 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -589,13 +674,17 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 23. ~~**Admin CMS editor**~~ — ✅ DONE in Round 6 (create/edit/publish pages).
 24. ~~**Notification preferences**~~ — ✅ DONE in Round 6 (8-type toggle system).
 25. ~~**Service image gallery**~~ — ✅ DONE in Round 6 (multi-image with navigation).
+26. ~~**CMS page rendering**~~ — ✅ DONE in Round 7 (public API + CmsPageView).
+27. ~~**Service editing**~~ — ✅ DONE in Round 7 (PATCH endpoint + edit mode).
+28. ~~**Search autocomplete**~~ — ✅ DONE in Round 7 (live suggestions dropdown).
+29. ~~**Help & support center**~~ — ✅ DONE in Round 7 (FAQs, quick links, support tickets).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
 - Add email notification transport (Resend/SendGrid)
 - Add web push notifications (PWA push API + service worker)
 - Add offline data sync with IndexedDB
-- Add CMS page rendering on public routes (view Terms/Privacy/FAQ)
-- Add service editing (sellers can edit existing services)
-- Add order message threading (messages linked to orders)
-- Add search autocomplete suggestions
+- Add order message threading (messages linked to orders in conversation view)
+- Add service deletion/archiving (soft delete by seller)
+- Add admin support ticket management panel
+- Add user block/mute in messaging

@@ -26,6 +26,8 @@ type View =
   | 'settings'
   | 'activity'
   | 'analytics'
+  | 'cms-page'
+  | 'help'
 
 interface AppState {
   user: User | null

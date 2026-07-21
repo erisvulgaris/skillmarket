@@ -25,13 +25,15 @@ import { DisputeView } from '@/components/views/dispute-view'
 import { SettingsView } from '@/components/views/settings-view'
 import { ActivityView } from '@/components/views/activity-view'
 import { AnalyticsView } from '@/components/views/analytics-view'
+import { CmsPageView } from '@/components/views/cms-page-view'
+import { HelpView } from '@/components/views/help-view'
 import { AnimatePresence } from 'framer-motion'
 import { motion } from 'framer-motion'
 
 export function AppShell() {
   const { view, user } = useApp()
 
-  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute', 'settings', 'activity', 'analytics']
+  const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute', 'settings', 'activity', 'analytics', 'cms-page', 'help']
   const isFullScreen = fullScreenViews.includes(view)
 
   return (
@@ -69,6 +71,8 @@ export function AppShell() {
             {view === 'settings' && <SettingsView />}
             {view === 'activity' && <ActivityView />}
             {view === 'analytics' && <AnalyticsView />}
+            {view === 'cms-page' && <CmsPageView />}
+            {view === 'help' && <HelpView />}
           </motion.div>
         </AnimatePresence>
       </main>

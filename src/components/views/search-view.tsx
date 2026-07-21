@@ -31,6 +31,8 @@ export function SearchView() {
   const [showFilters, setShowFilters] = useState(false)
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const debounceRef = useRef<any>(null)
 
   useEffect(() => {
@@ -71,13 +73,25 @@ export function SearchView() {
   const onType = (v: string) => {
     setQuery(v)
     if (categoryId) {
-      // Switching to text search clears category browse
       setCategoryId(null)
       setCategoryName(null)
       setBrowseServices([])
     }
+    setShowSuggestions(true)
     clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => doSearch(v), 300)
+    // Fetch suggestions quickly (shorter debounce)
+    if (v.trim().length >= 2) {
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const d = await api.get<SearchResult>(`/api/marketplace/search?q=${encodeURIComponent(v)}`)
+          setSuggestions(d.services.slice(0, 5))
+        } catch {}
+      }, 150)
+    } else {
+      setSuggestions([])
+    }
+    // Full search after longer delay
+    debounceRef.current = setTimeout(() => doSearch(v), 400)
   }
 
   const submitSearch = (q: string) => {
@@ -109,14 +123,37 @@ export function SearchView() {
               autoFocus={!isBrowsing}
               value={query}
               onChange={(e) => onType(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={(e) => e.key === 'Enter' && submitSearch(query)}
               placeholder={isBrowsing ? `Search in ${categoryName}…` : "Search services, people…"}
               className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-9 text-sm outline-none focus:border-primary"
             />
             {query && (
-              <button onClick={() => { setQuery(''); setResults(null) }} className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center hover:bg-accent">
+              <button onClick={() => { setQuery(''); setResults(null); setSuggestions([]) }} className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full flex items-center justify-center hover:bg-accent">
                 <X className="h-3.5 w-3.5" />
               </button>
+            )}
+            {/* Autocomplete suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-12 left-0 right-0 bg-card border border-border/40 rounded-xl shadow-xl overflow-hidden z-50 max-h-64 overflow-y-auto scroll-area">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setView('service-detail', { id: s.id }); setShowSuggestions(false) }}
+                    className="w-full flex items-center gap-2 p-2.5 hover:bg-accent transition text-left"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                      {s.images[0] && <img src={s.images[0]} alt="" className="h-full w-full object-cover" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">{s.title}</p>
+                      <p className="text-[10px] text-muted-foreground">@{s.seller?.username}</p>
+                    </div>
+                    <SkillCredits amount={s.price} size="sm" />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
           <button

@@ -14,7 +14,9 @@ import { toast } from 'sonner'
 type Category = { id: string; name: string }
 
 export function CreateServiceView() {
-  const { setView } = useApp()
+  const { setView, viewParams } = useApp()
+  const editId = viewParams.editId as string | undefined
+  const [isEdit, setIsEdit] = useState(!!editId)
   const [categories, setCategories] = useState<Category[]>([])
   const [form, setForm] = useState({
     title: '',
@@ -42,6 +44,26 @@ export function CreateServiceView() {
     api.get<{ categories: Category[] }>('/api/marketplace/categories').then((d) => setCategories(d.categories)).catch(() => {})
   }, [])
 
+  // Load service data when editing
+  useEffect(() => {
+    if (editId) {
+      api.get<{ service: any }>(`/api/services/${editId}`).then((d) => {
+        const s = d.service
+        setForm({
+          title: s.title,
+          description: s.description,
+          categoryId: s.categoryId || '',
+          price: String(s.price),
+          deliveryDays: String(s.deliveryDays),
+          tags: s.tags || [],
+          skills: s.skills || [],
+          images: s.images || [],
+          faqs: s.faqs || [],
+        })
+      }).catch(() => toast.error('Failed to load service'))
+    }
+  }, [editId])
+
   const addTag = () => {
     const t = tagInput.trim()
     if (t && !form.tags.includes(t) && form.tags.length < 10) {
@@ -65,7 +87,7 @@ export function CreateServiceView() {
 
     setLoading(true)
     try {
-      const res = await api.post<{ service: any }>('/api/services/create', {
+      const payload = {
         title: form.title,
         description: form.description,
         categoryId: form.categoryId || undefined,
@@ -75,32 +97,42 @@ export function CreateServiceView() {
         skills: form.skills,
         images: form.images,
         faqs: form.faqs,
-      })
-
-      // Create packages for the new service
-      const serviceId = res.service.id
-      const validPackages = packages.filter((p) => p.description && p.price && Number(p.price) > 0)
-      for (let i = 0; i < validPackages.length; i++) {
-        const p = validPackages[i]
-        try {
-          await api.post(`/api/services/${serviceId}/packages`, {
-            name: p.name,
-            description: p.description,
-            price: Number(p.price),
-            deliveryDays: Number(p.deliveryDays),
-            features: p.features.filter((f) => f.trim()),
-            revisions: Number(p.revisions) || 1,
-            sortOrder: i,
-          })
-        } catch (e) {
-          console.error('Failed to create package', e)
-        }
       }
 
-      toast.success('Service published!')
-      setView('profile')
+      if (isEdit && editId) {
+        // Edit mode — PATCH the service
+        await api.patch(`/api/services/${editId}`, payload)
+        toast.success('Service updated!')
+        setView('service-detail', { id: editId })
+      } else {
+        // Create mode
+        const res = await api.post<{ service: any }>('/api/services/create', payload)
+
+        // Create packages for the new service
+        const serviceId = res.service.id
+        const validPackages = packages.filter((p) => p.description && p.price && Number(p.price) > 0)
+        for (let i = 0; i < validPackages.length; i++) {
+          const p = validPackages[i]
+          try {
+            await api.post(`/api/services/${serviceId}/packages`, {
+              name: p.name,
+              description: p.description,
+              price: Number(p.price),
+              deliveryDays: Number(p.deliveryDays),
+              features: p.features.filter((f) => f.trim()),
+              revisions: Number(p.revisions) || 1,
+              sortOrder: i,
+            })
+          } catch (e) {
+            console.error('Failed to create package', e)
+          }
+        }
+
+        toast.success('Service published!')
+        setView('profile')
+      }
     } catch (e: any) {
-      toast.error(e.message || 'Failed to create service')
+      toast.error(e.message || 'Failed to save service')
     } finally {
       setLoading(false)
     }
@@ -113,7 +145,7 @@ export function CreateServiceView() {
           <button onClick={() => setView('profile')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-base font-bold">Create Service</h1>
+          <h1 className="text-base font-bold">{isEdit ? 'Edit Service' : 'Create Service'}</h1>
         </div>
       </header>
 
@@ -352,7 +384,7 @@ export function CreateServiceView() {
         </Card>
 
         <Button onClick={submit} disabled={loading} className="w-full rounded-2xl h-12">
-          {loading ? 'Publishing…' : 'Publish Service'}
+          {loading ? (isEdit ? 'Saving…' : 'Publishing…') : (isEdit ? 'Save Changes' : 'Publish Service')}
         </Button>
       </div>
     </div>

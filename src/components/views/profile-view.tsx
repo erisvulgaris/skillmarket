@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
-import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3 } from 'lucide-react'
+import { User, ShieldCheck, Gift, Bell, Plus, Settings, LogOut, Moon, Sun, ChevronRight, Shield, Star, Package, QrCode, Crown, Activity, BarChart3, LifeBuoy, FileText } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { api } from '@/lib/api-client'
 import { useRouter } from 'next/navigation'
@@ -87,6 +87,8 @@ export function ProfileView() {
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         />
         <MenuItem icon={<Settings className="h-4 w-4" />} label="Settings & Security" onClick={() => setView('settings')} />
+        <MenuItem icon={<LifeBuoy className="h-4 w-4" />} label="Help & Support" onClick={() => setView('help')} />
+        <MenuItem icon={<FileText className="h-4 w-4" />} label="Terms & Privacy" onClick={() => setView('cms-page', { slug: 'terms', from: 'profile' })} />
       </div>
 
       <Button onClick={logout} variant="outline" className="w-full rounded-2xl text-destructive">

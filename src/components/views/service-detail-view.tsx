@@ -395,9 +395,28 @@ export function ServiceDetailView() {
       )}
       {isOwn && (
         <div className="fixed bottom-0 inset-x-0 z-30 glass border-t border-border/40 p-3 pb-safe">
-          <div className="max-w-md mx-auto">
-            <Button className="w-full rounded-2xl" variant="secondary" disabled>
-              This is your own service
+          <div className="max-w-md mx-auto flex gap-2">
+            <Button
+              onClick={() => setView('create-service', { editId: id })}
+              className="flex-1 rounded-2xl"
+            >
+              Edit Service
+            </Button>
+            <Button
+              onClick={async () => {
+                const newAvail = data.availability === 'available' ? 'paused' : 'available'
+                try {
+                  await api.patch(`/api/services/${id}`, { availability: newAvail })
+                  toast.success(`Service ${newAvail === 'available' ? 'activated' : 'paused'}`)
+                  load()
+                } catch (e: any) {
+                  toast.error(e.message || 'Failed')
+                }
+              }}
+              variant="outline"
+              className="rounded-2xl"
+            >
+              {data.availability === 'available' ? 'Pause' : 'Activate'}
             </Button>
           </div>
         </div>
