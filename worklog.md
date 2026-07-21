@@ -5,6 +5,73 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 8 — Round 8 (Cron Job: 2026-07-22)
+
+### Current Project Status Assessment
+Phase 7 was stable with CMS rendering, service editing, search autocomplete, and help center all working. This round focused on: QA testing, building admin support ticket management panel, adding service deletion/archiving, adding order message threading (order context banner in conversations), and improving styling.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add admin support ticket management panel
+3. ✅ Add service deletion/archiving (soft delete by seller)
+4. ✅ Add order message threading (order context banner in conversations)
+5. ✅ Improve styling (support ticket cards, order context banner, archive link)
+
+### Completed Modifications
+
+#### Admin Support Ticket Management
+- New API endpoints:
+  - `GET /api/admin/support` — list all tickets with user info (admin only)
+  - `PATCH /api/admin/support/[id]` — update ticket status, add internal notes, notify user
+- New `AdminSupportTab` component in admin panel with:
+  - Status filter chips (All, Open, Pending, Resolved, Closed)
+  - Ticket cards showing subject, message preview, priority badge, user, date, status
+  - Action buttons: Mark Pending, Resolve, Close
+  - Priority color coding (low/normal/high/urgent)
+  - Status color coding (amber/blue/emerald/muted)
+- Added "Support" tab to admin panel (now 14 tabs)
+
+#### Service Deletion/Archiving
+- New API endpoints:
+  - `POST /api/services/[id]/archive` — soft-delete (sets status=hidden, availability=paused, deletedAt=now)
+  - `DELETE /api/services/[id]/archive` — restore (sets status=active, availability=available, deletedAt=null)
+- Both seller-only with audit logging
+- Added "Archive this service" link in ServiceDetailView for owners
+- Confirmation dialog before archiving
+- Navigates to marketplace after archiving
+
+#### Order Message Threading
+- Updated ConversationView to fetch order info when conversation has an orderId
+- Added order context banner below header:
+  - Package icon with primary background
+  - Service title (truncated)
+  - Order number and status
+  - Click to navigate to order detail
+  - Styled with primary/5 background and primary/20 border
+- Only shows for order-linked conversations
+
+#### Styling Improvements
+- Support ticket cards with priority and status badges
+- Order context banner with clickable navigation
+- Archive link with destructive hover color
+- Filter chips with active state animation
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Admin Support tab shows with filters and empty state
+- ✅ Order context banner shows in conversation (service title + order no + status)
+- ✅ Archive link shows for service owner
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. No admin support management → built AdminSupportTab with status/priority display
+2. No service archiving → created archive/restore API + UI link
+3. No order context in chats → added order info banner in ConversationView
+
+---
+
 ## Phase 7 — Round 7 (Cron Job: 2026-07-22)
 
 ### Current Project Status Assessment
@@ -678,13 +745,16 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 27. ~~**Service editing**~~ — ✅ DONE in Round 7 (PATCH endpoint + edit mode).
 28. ~~**Search autocomplete**~~ — ✅ DONE in Round 7 (live suggestions dropdown).
 29. ~~**Help & support center**~~ — ✅ DONE in Round 7 (FAQs, quick links, support tickets).
+30. ~~**Admin support panel**~~ — ✅ DONE in Round 8 (AdminSupportTab with status/priority).
+31. ~~**Service archiving**~~ — ✅ DONE in Round 8 (archive/restore API + UI).
+32. ~~**Order message threading**~~ — ✅ DONE in Round 8 (order context banner in conversations).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
 - Add email notification transport (Resend/SendGrid)
 - Add web push notifications (PWA push API + service worker)
 - Add offline data sync with IndexedDB
-- Add order message threading (messages linked to orders in conversation view)
-- Add service deletion/archiving (soft delete by seller)
-- Add admin support ticket management panel
 - Add user block/mute in messaging
+- Add service restore UI in profile (list archived services)
+- Add admin support ticket detail view with notes
+- Add conversation search (search within messages)

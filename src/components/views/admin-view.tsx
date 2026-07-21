@@ -8,13 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus } from 'lucide-react'
+import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus, MessageSquare } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
-type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'settings' | 'flags' | 'cms' | 'broadcast'
+type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'support' | 'settings' | 'flags' | 'cms' | 'broadcast'
 
 export function AdminView() {
   const { setView } = useApp()
@@ -33,6 +33,7 @@ export function AdminView() {
   const [adminOrders, setAdminOrders] = useState<any[]>([])
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [fraudAlerts, setFraudAlerts] = useState<any>(null)
+  const [supportTickets, setSupportTickets] = useState<any[]>([])
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
@@ -109,15 +110,21 @@ export function AdminView() {
     catch {} finally { setLoading(false) }
   }, [])
 
+  const loadSupport = useCallback(async () => {
+    setLoading(true)
+    try { const d = await api.get<{ items: any[] }>('/api/admin/support?limit=30'); setSupportTickets(d.items) }
+    catch {} finally { setLoading(false) }
+  }, [])
+
   useEffect(() => {
     const loaders: Record<Tab, () => void> = {
       dashboard: loadDashboard, users: loadUsers, wallets: loadWallets,
       services: loadServices, orders: loadOrders, audit: loadAudit, disputes: loadDisputes,
-      reports: loadReports, fraud: loadFraud, settings: loadSettings, flags: loadFlags, cms: loadCms,
+      reports: loadReports, fraud: loadFraud, support: loadSupport, settings: loadSettings, flags: loadFlags, cms: loadCms,
       broadcast: () => setLoading(false),
     }
     loaders[tab]?.()
-  }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSettings, loadFlags, loadCms])
+  }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSupport, loadSettings, loadFlags, loadCms])
 
   const userAction = async (userId: string, action: string) => {
     try {
@@ -191,6 +198,7 @@ export function AdminView() {
     { k: 'disputes', label: 'Disputes' },
     { k: 'reports', label: 'Reports' },
     { k: 'fraud', label: 'Fraud' },
+    { k: 'support', label: 'Support' },
     { k: 'flags', label: 'Flags' },
     { k: 'settings', label: 'Settings' },
     { k: 'cms', label: 'CMS' },
@@ -467,6 +475,16 @@ export function AdminView() {
           </div>
         )}
 
+        {tab === 'support' && (
+          <AdminSupportTab tickets={supportTickets} loading={loading} onAction={async (ticketId, status) => {
+            try {
+              await api.patch(`/api/admin/support/${ticketId}`, { status })
+              toast.success(`Ticket ${status}`)
+              loadSupport()
+            } catch (e: any) { toast.error(e.message) }
+          }} />
+        )}
+
         {tab === 'flags' && (
           <div className="space-y-2">
             {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />) :
@@ -603,6 +621,77 @@ function BroadcastPanel() {
         </Button>
       </div>
     </Card>
+  )
+}
+
+const TICKET_STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
+  open: { label: 'Open', color: 'text-amber-600', bg: 'bg-amber-500/10' },
+  pending: { label: 'Pending', color: 'text-blue-600', bg: 'bg-blue-500/10' },
+  resolved: { label: 'Resolved', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+  closed: { label: 'Closed', color: 'text-muted-foreground', bg: 'bg-muted' },
+}
+
+const PRIORITY_META: Record<string, string> = {
+  low: 'text-muted-foreground',
+  normal: 'text-blue-600',
+  high: 'text-amber-600',
+  urgent: 'text-rose-600',
+}
+
+function AdminSupportTab({ tickets, loading, onAction }: {
+  tickets: any[]
+  loading: boolean
+  onAction: (ticketId: string, status: string) => Promise<void>
+}) {
+  const [filter, setFilter] = useState('all')
+  const filtered = filter === 'all' ? tickets : tickets.filter((t) => t.status === filter)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
+        {['all', 'open', 'pending', 'resolved', 'closed'].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={clsx(
+              'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition',
+              filter === f ? 'bg-violet-600 text-white' : 'bg-secondary text-muted-foreground'
+            )}
+          >
+            {f === 'all' ? 'All' : TICKET_STATUS_META[f]?.label || f}
+          </button>
+        ))}
+      </div>
+      {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />) :
+       filtered.length === 0 ? <EmptyState icon={<MessageSquare className="h-8 w-8" />} text="No support tickets" /> :
+       filtered.map((t) => (
+        <Card key={t.id} className="p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold truncate">{t.subject}</p>
+                <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase', PRIORITY_META[t.priority])}>{t.priority}</span>
+              </div>
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{t.message}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] text-muted-foreground">@{t.user?.username}</span>
+                <span className="text-[10px] text-muted-foreground">· {new Date(t.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0', TICKET_STATUS_META[t.status]?.bg, TICKET_STATUS_META[t.status]?.color)}>
+              {TICKET_STATUS_META[t.status]?.label}
+            </span>
+          </div>
+          {t.status !== 'resolved' && t.status !== 'closed' && (
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(t.id, 'pending')}>Mark Pending</Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs text-emerald-600" onClick={() => onAction(t.id, 'resolved')}>Resolve</Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(t.id, 'closed')}>Close</Button>
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
   )
 }
 

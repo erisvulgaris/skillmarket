@@ -370,6 +370,27 @@ export function ServiceDetailView() {
             </button>
           </div>
         )}
+
+        {/* Delete/archive for owner */}
+        {isOwn && (
+          <div className="pt-2">
+            <button
+              onClick={async () => {
+                if (!confirm('Archive this service? It will be hidden from the marketplace. You can reactivate it from your profile.')) return
+                try {
+                  await api.post(`/api/services/${id}/archive`)
+                  toast.success('Service archived')
+                  setView('marketplace')
+                } catch (e: any) {
+                  toast.error(e.message || 'Failed')
+                }
+              }}
+              className="text-xs text-muted-foreground hover:text-destructive transition"
+            >
+              Archive this service
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sticky CTA */}

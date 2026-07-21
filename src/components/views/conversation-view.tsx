@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile, Package, ChevronRight } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -27,6 +27,7 @@ export function ConversationView() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [text, setText] = useState('')
+  const [orderInfo, setOrderInfo] = useState<any>(null)
   const [other, setOther] = useState<any>(null)
   const [online, setOnline] = useState(false)
   const [typing, setTyping] = useState(false)
@@ -123,7 +124,16 @@ export function ConversationView() {
       // fetch conversation meta
       const convos = await api.get<{ conversations: any[] }>('/api/messages/conversations?limit=50')
       const convo = convos.conversations.find((c) => c.id === id)
-      if (convo) setOther(convo.other)
+      if (convo) {
+        setOther(convo.other)
+        // If this is an order conversation, fetch order info
+        if (convo.orderId) {
+          try {
+            const orderData = await api.get<{ order: any }>(`/api/orders/${convo.orderId}`)
+            setOrderInfo(orderData.order)
+          } catch {}
+        }
+      }
     } catch {
     } finally {
       setLoading(false)
@@ -241,6 +251,25 @@ export function ConversationView() {
           </div>
         </div>
       </header>
+
+      {/* Order context banner */}
+      {orderInfo && (
+        <div className="bg-primary/5 border-b border-primary/20">
+          <button
+            onClick={() => setView('order-detail', { id: orderInfo.id })}
+            className="max-w-md mx-auto w-full px-3 py-2 flex items-center gap-2 active:bg-accent/50 transition"
+          >
+            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <Package className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-semibold truncate">{orderInfo.service?.title || 'Order'}</p>
+              <p className="text-[10px] text-muted-foreground">{orderInfo.orderNo} · {orderInfo.status}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto scroll-area max-w-md mx-auto w-full px-3 py-4 space-y-2">
