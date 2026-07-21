@@ -1,0 +1,597 @@
+// SkillMarket — P2P Digital Service Marketplace
+// Virtual currency: SkillCredits
+// Double-entry ledger, soft-delete where appropriate, audit trail.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Users & Identity
+// ─────────────────────────────────────────────
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  username          String   @unique
+  passwordHash      String
+  role              String   @default("user") // user | admin
+  status            String   @default("active") // active | suspended | banned
+  transactionPinHash String?
+  twoFactorEnabled  Boolean  @default(false)
+  twoFactorSecret   String?
+  referralCode      String   @unique
+  referredById      String?
+  referredBy        User?    @relation("Referrals", fields: [referredById], references: [id])
+  referrals         User[]   @relation("Referrals")
+  emailVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  profile           Profile?
+  wallet            Wallet?
+  sessions          Session[]
+  devices           Device[]
+  services          Service[]
+  ordersBuyer       Order[]     @relation("OrderBuyer")
+  ordersSeller      Order[]     @relation("OrderSeller")
+  reviewsGiven      Review[]    @relation("ReviewAuthor")
+  reviewsReceived   Review[]    @relation("ReviewTarget")
+  transfersSent     Transfer[]  @relation("TransferSender")
+  transfersReceived Transfer[]  @relation("TransferReceiver")
+  purchases         CreditPurchase[]
+  conversations     ConversationMember[]
+  messages          Message[]
+  notifications     Notification[]
+  savedServices     SavedService[]
+  reportsFiled      Report[]    @relation("ReportAuthor")
+  reportsAgainst    Report[]    @relation("ReportTarget")
+  disputesFiled     Dispute[]   @relation("DisputeClaimant")
+  disputesAgainst   Dispute[]   @relation("DisputeRespondent")
+  supportTickets    SupportTicket[]
+  auditLogs         AuditLog[]
+  referralRewards   ReferralReward[]
+  announcementAcks  AnnouncementAck[]
+
+  @@index([status])
+  @@index([role])
+}
+
+model Profile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String?
+  bio             String?
+  avatarUrl       String?
+  coverUrl        String?
+  location        String?
+  languages       String   // JSON array
+  skills          String   // JSON array
+  responseTimeMins Int     @default(120)
+  isVerified      Boolean  @default(false)
+  verificationType String? // email | identity | expert
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Sessions & Devices
+// ─────────────────────────────────────────────
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique
+  userAgent    String?
+  ip           String?
+  deviceFingerprint String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+}
+
+model Device {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint   String
+  name          String?
+  platform      String?
+  lastSeenAt    DateTime @default(now())
+  trusted       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Wallet & Ledger (double-entry)
+// ─────────────────────────────────────────────
+
+model Wallet {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availableBalance     Int      @default(0) // stored as integer units of SkillCredits
+  reservedBalance      Int      @default(0)
+  pendingBalance       Int      @default(0)
+  lifetimePurchased    Int      @default(0)
+  lifetimeEarned       Int      @default(0)
+  lifetimeSent         Int      @default(0)
+  lifetimeReceived     Int      @default(0)
+  lifetimeSpent        Int      @default(0)
+  frozen               Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  transactions         WalletTransaction[]
+  ledgerEntries        LedgerEntry[]
+
+  @@index([userId])
+}
+
+// A wallet transaction is the user-facing record (one per logical financial event).
+model WalletTransaction {
+  id              String   @id @default(cuid())
+  walletId        String
+  wallet          Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type            String   // purchase | transfer_in | transfer_out | order_payment | order_refund | order_earnings | referral_reward | admin_adjustment | fee
+  direction       String   // credit | debit
+  amount          Int      // positive integer
+  balanceAfter    Int
+  referenceId     String?  // related entity id (transfer, order, purchase)
+  referenceType   String?
+  note            String?
+  counterpartyId  String?  // the other user involved
+  createdAt       DateTime @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([type])
+  @@index([referenceId])
+}
+
+// Ledger entries are the raw double-entry bookkeeping records.
+// Every transaction creates at least 2 ledger entries (debit + credit) that must balance.
+model LedgerEntry {
+  id            String   @id @default(cuid())
+  walletId      String
+  wallet        Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  entryType     String   // debit | credit
+  account       String   // user_wallet | platform | revenue | escrow | referral_pool
+  amount        Int
+  transactionId String?  // links to WalletTransaction.id
+  referenceId   String?
+  referenceType String?
+  createdAt     DateTime @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([account])
+  @@index([transactionId])
+}
+
+// ─────────────────────────────────────────────
+// Credit Purchases & Transfers
+// ─────────────────────────────────────────────
+
+model CreditPurchase {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  amountCredits   Int
+  amountFiat      Float
+  currency        String   @default("USD")
+  status          String   @default("pending") // pending | succeeded | failed | refunded
+  gateway         String   @default("internal")
+  gatewayRef      String?  // external gateway reference (opaque)
+  idempotencyKey  String   @unique
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Transfer {
+  id              String   @id @default(cuid())
+  senderId        String
+  sender          User     @relation("TransferSender", fields: [senderId], references: [id])
+  receiverId      String
+  receiver        User     @relation("TransferReceiver", fields: [receiverId], references: [id])
+  amount          Int
+  note            String?
+  status          String   @default("completed") // completed | failed | reversed
+  receiptNo       String   @unique
+  createdAt       DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+// ─────────────────────────────────────────────
+// Marketplace
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  icon        String?
+  parentId    String?
+  parent      Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  sortOrder   Int       @default(0)
+  featured    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  services    Service[]
+}
+
+model Service {
+  id            String   @id @default(cuid())
+  sellerId      String
+  seller        User     @relation(fields: [sellerId], references: [id])
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
+  title         String
+  slug          String   @unique
+  description   String
+  price         Int
+  deliveryDays  Int      @default(3)
+  tags          String   // JSON array
+  skills        String   // JSON array
+  images        String   // JSON array of urls
+  faqs          String   // JSON array
+  availability  String   @default("available") // available | paused | sold_out
+  status        String   @default("active") // active | hidden | removed
+  featured      Boolean  @default(false)
+  trendingScore Float    @default(0)
+  views         Int      @default(0)
+  ratingAvg     Float    @default(0)
+  ratingCount   Int      @default(0)
+  completedOrders Int    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  orders        Order[]  @relation("OrderService")
+  reviews       Review[]
+  savedBy       SavedService[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+}
+
+model SavedService {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, serviceId])
+}
+
+// ─────────────────────────────────────────────
+// Orders
+// ─────────────────────────────────────────────
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNo         String   @unique
+  buyerId         String
+  buyer           User     @relation("OrderBuyer", fields: [buyerId], references: [id])
+  sellerId        String
+  seller          User     @relation("OrderSeller", fields: [sellerId], references: [id])
+  serviceId       String
+  service         Service  @relation("OrderService", fields: [serviceId], references: [id])
+  price           Int
+  requirements    String?
+  status          String   @default("pending") // pending | in_progress | delivered | completed | cancelled | disputed
+  paymentStatus   String   @default("escrow") // escrow | released | refunded
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  acceptedAt      DateTime?
+  deliveredAt     DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+
+  statusHistory   OrderStatusHistory[]
+  attachments     OrderAttachment[]
+  activities      OrderActivity[]
+  reviews         Review[]
+  dispute         Dispute?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model OrderStatusHistory {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model OrderAttachment {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  url       String
+  filename  String
+  fileType  String
+  uploadedBy String
+  createdAt DateTime @default(now())
+}
+
+model OrderActivity {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actorId   String
+  action    String
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Messaging
+// ─────────────────────────────────────────────
+
+model Conversation {
+  id        String   @id @default(cuid())
+  type      String   @default("direct") // direct | group | order
+  orderId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   ConversationMember[]
+  messages  Message[]
+}
+
+model ConversationMember {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User     @relation(fields: [senderId], references: [id])
+  type            String   @default("text") // text | image | file | voice | system
+  content         String
+  attachmentUrl   String?
+  attachmentName  String?
+  status          String   @default("sent") // sent | delivered | read
+  createdAt       DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// Reviews
+// ─────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id])
+  authorId   String
+  author     User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetId   String
+  target     User     @relation("ReviewTarget", fields: [targetId], references: [id])
+  rating     Int
+  comment    String?
+  images     String   // JSON array
+  status     String   @default("published") // published | hidden | removed
+  createdAt  DateTime @default(now())
+
+  @@index([targetId])
+  @@index([serviceId])
+}
+
+// ─────────────────────────────────────────────
+// Notifications & Announcements
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // order | payment | transfer | message | review | dispute | announcement | referral
+  title     String
+  body      String
+  data      String?  // JSON
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  type      String   @default("info") // info | warning | maintenance
+  published Boolean  @default(true)
+  scheduledAt DateTime?
+  createdAt DateTime @default(now())
+  acks      AnnouncementAck[]
+}
+
+model AnnouncementAck {
+  id              String   @id @default(cuid())
+  announcementId  String
+  announcement    Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ackedAt         DateTime @default(now())
+
+  @@unique([announcementId, userId])
+}
+
+// ─────────────────────────────────────────────
+// Reports & Disputes
+// ─────────────────────────────────────────────
+
+model Report {
+  id           String   @id @default(cuid())
+  authorId     String
+  author       User     @relation("ReportAuthor", fields: [authorId], references: [id])
+  targetType   String   // service | user | message | review
+  targetId     String
+  targetUserId String?
+  targetUser   User?    @relation("ReportTarget", fields: [targetUserId], references: [id])
+  reason       String
+  detail       String?
+  status       String   @default("open") // open | reviewing | resolved | dismissed
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+}
+
+model Dispute {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id])
+  claimantId    String
+  claimant      User     @relation("DisputeClaimant", fields: [claimantId], references: [id])
+  respondentId  String
+  respondent    User     @relation("DisputeRespondent", fields: [respondentId], references: [id])
+  reason        String
+  detail        String?
+  status        String   @default("open") // open | investigating | resolved_claimant | resolved_respondent | closed
+  resolution    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  evidence      DisputeEvidence[]
+}
+
+model DisputeEvidence {
+  id         String   @id @default(cuid())
+  disputeId  String
+  dispute    Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  uploadedBy String
+  url        String
+  filename   String
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Support
+// ─────────────────────────────────────────────
+
+model SupportTicket {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  subject    String
+  message    String
+  priority   String   @default("normal") // low | normal | high | urgent
+  status     String   @default("open") // open | pending | resolved | closed
+  notes      SupportTicketNote[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model SupportTicketNote {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  body      String
+  internal  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Referrals
+// ─────────────────────────────────────────────
+
+model ReferralReward {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  referredId   String
+  amount       Int
+  reason       String   // signup | first_purchase | first_sale
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Audit Logs
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  before     String?  // JSON
+  after      String?  // JSON
+  ip         String?
+  userAgent  String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+}
+
+// ─────────────────────────────────────────────
+// Platform Config
+// ─────────────────────────────────────────────
+
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  enabled   Boolean  @default(false)
+  description String?
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // string | number | boolean | json
+  updatedAt DateTime @updatedAt
+}
+
+model CmsPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String
+  published Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
