@@ -13,6 +13,7 @@ import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { EnterpriseDashboard } from '@/components/views/enterprise-dashboard'
 
 type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'support' | 'settings' | 'flags' | 'cms' | 'broadcast'
 
@@ -234,90 +235,10 @@ export function AdminView() {
       </header>
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-4 pb-24">
-        {tab === 'dashboard' && (loading ? <DashboardSkeleton /> : data ? (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={<Users className="h-4 w-4" />} label="Total Users" value={data.stats.totalUsers} sub={`+${data.stats.newUsers7d} this week`} />
-              <StatCard icon={<Wallet className="h-4 w-4" />} label="Credits Sold" value={data.stats.totalCreditsSold} sub="Lifetime" />
-              <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Transfers 24h" value={data.stats.transfers24h} sub="Count" />
-              <StatCard icon={<Package className="h-4 w-4" />} label="Orders" value={data.stats.ordersTotal} sub={`${data.stats.ordersPending} pending`} />
-              <StatCard icon={<Activity className="h-4 w-4" />} label="Active Services" value={data.stats.activeServices} sub="Live" />
-              <StatCard icon={<AlertTriangle className="h-4 w-4" />} label="Fraud Alerts" value={data.stats.fraudAlerts} sub={`${data.stats.disputesOpen} disputes`} accent="warn" />
-            </div>
-
-            <Card className="p-4 space-y-2">
-              <p className="text-xs font-bold uppercase text-muted-foreground">Wallet Balances (Platform)</p>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Available</span>
-                <span className="font-bold tabular-nums">{formatSC(data.stats.walletAvailable)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">In Escrow</span>
-                <span className="font-bold tabular-nums">{formatSC(data.stats.walletReserved)}</span>
-              </div>
-            </Card>
-
-            <Card className="p-4 space-y-3">
-              <p className="text-xs font-bold uppercase text-muted-foreground">Daily Transfers (14d)</p>
-              <div className="flex items-end gap-1 h-24">
-                {data.dailyTransfers.map((d: any) => (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                    <div className="w-full bg-violet-500/30 rounded-t" style={{ height: `${Math.min(100, (d.volume / Math.max(...data.dailyTransfers.map((x: any) => x.volume || 1))) * 100)}%` }} />
-                    <span className="text-[8px] text-muted-foreground">{d.date.slice(5)}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="p-4 space-y-2">
-              <p className="text-xs font-bold uppercase text-muted-foreground">Recent Activity</p>
-              <div className="space-y-2 max-h-64 overflow-y-auto scroll-area">
-                {data.recentActivity.map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-2 text-xs">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
-                    <span className="font-medium">{a.actor}</span>
-                    <span className="text-muted-foreground">{a.action}</span>
-                    <span className="text-muted-foreground ml-auto">{new Date(a.createdAt).toLocaleTimeString()}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </>
-        ) : null)}
+        {tab === 'dashboard' && <EnterpriseDashboard onBack={() => setView('profile')} />}
 
         {tab === 'users' && (
-          <div className="space-y-2">
-            {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
-              users.map((u) => (
-                <Card key={u.id} className="p-3 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">{u.username[0].toUpperCase()}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="text-sm font-semibold truncate">@{u.username}</p>
-                        {u.isVerified && <CheckCircle2 className="h-3 w-3 text-primary" />}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', u.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600')}>{u.status}</span>
-                        {u.role === 'admin' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600">ADMIN</span>}
-                        {u.wallet && <span className="text-[10px] text-muted-foreground">{formatSC(u.wallet.availableBalance)} SC</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 flex-wrap">
-                    {u.status === 'active' ? (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => userAction(u.id, 'suspend')}>Suspend</Button>
-                    ) : (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => userAction(u.id, 'activate')}>Activate</Button>
-                    )}
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => userAction(u.id, u.isVerified ? 'unverify' : 'verify')}>{u.isVerified ? 'Unverify' : 'Verify'}</Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => userAction(u.id, 'ban')}><Ban className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => userAction(u.id, 'reset_pin')}>Reset PIN</Button>
-                  </div>
-                </Card>
-              ))}
-          </div>
+          <AdminUsersTab users={users} loading={loading} onAction={userAction} />
         )}
 
         {tab === 'wallets' && (
@@ -1103,6 +1024,171 @@ function AdminOrdersTab({ orders, loading, selectedOrder, onSelect, onClose }: {
           </Card>
         </button>
       ))}
+    </div>
+  )
+}
+
+function AdminUsersTab({ users, loading, onAction }: {
+  users: any[]
+  loading: boolean
+  onAction: (userId: string, action: string) => Promise<void>
+}) {
+  const [selectedUser, setSelectedUser] = useState<string | null>(null)
+  const [userDetail, setUserDetail] = useState<any>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  const openUser = async (userId: string) => {
+    setSelectedUser(userId)
+    setUserDetail(null)
+    setDetailLoading(true)
+    try {
+      const d = await api.get<{ user: any }>(`/api/admin/users/${userId}`)
+      setUserDetail(d.user)
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to load user')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  if (selectedUser && userDetail) {
+    const u = userDetail
+    return (
+      <div className="space-y-3">
+        <button onClick={() => setSelectedUser(null)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to users
+        </button>
+
+        {/* User header */}
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-xl font-bold">
+              {u.username[0].toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-bold">@{u.username}</p>
+                {u.profile?.isVerified && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
+                <span className={clsx('text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ml-auto', u.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600')}>{u.status}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{u.email}</p>
+              <p className="text-[10px] text-muted-foreground">Joined {new Date(u.createdAt).toLocaleDateString()} · {u.role}</p>
+            </div>
+          </div>
+          {u.profile?.bio && <p className="text-xs text-muted-foreground">{u.profile.bio}</p>}
+        </Card>
+
+        {/* Wallet info */}
+        {u.wallet && (
+          <Card className="p-4 space-y-2">
+            <p className="text-xs font-bold uppercase text-muted-foreground">Wallet</p>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <p className="text-muted-foreground">Available</p>
+                <p className="font-bold text-base">{formatSC(u.wallet.availableBalance)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Reserved</p>
+                <p className="font-bold text-base">{formatSC(u.wallet.reservedBalance)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Lifetime Earned</p>
+                <p className="font-bold text-emerald-500">{formatSC(u.wallet.lifetimeEarned)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Lifetime Spent</p>
+                <p className="font-bold text-rose-500">{formatSC(u.wallet.lifetimeSpent)}</p>
+              </div>
+            </div>
+            {u.wallet.frozen && <p className="text-[10px] font-bold text-amber-600">⚠ WALLET FROZEN</p>}
+          </Card>
+        )}
+
+        {/* Recent transactions */}
+        {u.wallet?.transactions?.length > 0 && (
+          <Card className="p-4 space-y-2">
+            <p className="text-xs font-bold uppercase text-muted-foreground">Recent Transactions</p>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto scroll-area">
+              {u.wallet.transactions.slice(0, 10).map((t: any) => (
+                <div key={t.id} className="flex items-center gap-2 text-[10px]">
+                  <span className={clsx('h-1.5 w-1.5 rounded-full', t.direction === 'credit' ? 'bg-emerald-500' : 'bg-rose-500')} />
+                  <span className="font-medium capitalize">{t.type.replace(/_/g, ' ')}</span>
+                  <span className={clsx('ml-auto font-bold tabular-nums', t.direction === 'credit' ? 'text-emerald-500' : 'text-rose-500')}>
+                    {t.direction === 'credit' ? '+' : '−'}{formatSC(t.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Sessions */}
+        {u.sessions?.length > 0 && (
+          <Card className="p-4 space-y-2">
+            <p className="text-xs font-bold uppercase text-muted-foreground">Sessions ({u.sessions.length})</p>
+            {u.sessions.slice(0, 5).map((s: any) => (
+              <div key={s.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="truncate flex-1">{s.userAgent || 'Unknown device'}</span>
+                <span>{s.ip || '—'}</span>
+                <span>{s.revokedAt ? '🔴' : '🟢'}</span>
+              </div>
+            ))}
+          </Card>
+        )}
+
+        {/* Actions */}
+        <Card className="p-4 space-y-2">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Admin Actions</p>
+          <div className="flex gap-1 flex-wrap">
+            {u.status === 'active' ? (
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { onAction(u.id, 'suspend'); setSelectedUser(null) }}>Suspend</Button>
+            ) : (
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { onAction(u.id, 'activate'); setSelectedUser(null) }}>Activate</Button>
+            )}
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(u.id, u.profile?.isVerified ? 'unverify' : 'verify')}>{u.profile?.isVerified ? 'Unverify' : 'Verify'}</Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(u.id, 'ban')}><Ban className="h-3 w-3" /></Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(u.id, 'reset_pin')}>Reset PIN</Button>
+            {u.role !== 'admin' && <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onAction(u.id, 'make_admin')}>Make Admin</Button>}
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  if (selectedUser && detailLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
+        users.map((u) => (
+          <button key={u.id} onClick={() => openUser(u.id)} className="w-full text-left active:scale-[0.99] transition">
+            <Card className="p-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">{u.username[0].toUpperCase()}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-semibold truncate">@{u.username}</p>
+                    {u.isVerified && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', u.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600')}>{u.status}</span>
+                    {u.role === 'admin' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600">ADMIN</span>}
+                    {u.wallet && <span className="text-[10px] text-muted-foreground">{formatSC(u.wallet.availableBalance)} SC</span>}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </button>
+        ))}
     </div>
   )
 }

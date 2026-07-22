@@ -80,7 +80,8 @@ export async function validateBody<T>(schema: z.ZodType<T>, req: Request): Promi
     return { data }
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return { error: e.errors.map((x) => `${x.path.join('.')}: ${x.message}`).join('; ') }
+      const issues = (e.issues || e.errors || []) as any[]
+      return { error: issues.map((x) => `${(x.path || []).join('.')}: ${x.message}`).join('; ') }
     }
     return { error: 'Invalid request body' }
   }

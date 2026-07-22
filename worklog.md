@@ -3,6 +3,92 @@
 ## Project Overview
 A production-ready, mobile-first P2P digital service marketplace PWA powered by an internal virtual currency called **SkillCredits**. Built with Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui, Prisma (SQLite), and a socket.io mini-service for real-time messaging.
 
+## 🔑 Admin Credentials
+- **Email:** admin@skillmarket.app
+- **Password:** admin12345
+- **Transaction PIN:** 1234
+
+## 🔑 Demo Users
+- **Buyer:** buyer@example.com / password123 (PIN 1234)
+- **Seller:** maya@example.com / password123 (PIN 1234)
+
+---
+
+## Phase 12 — Round 12 (2026-07-22)
+
+### Current Project Status Assessment
+Phase 11 was stable with unread indicators, saved count badge, and wallet monthly summary. This round focused on: fixing a critical zod v4 validation bug, building an enterprise-level admin dashboard with charts and analytics, and adding admin user detail view with wallet/session info.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Fix zod v4 `errors` → `issues` validation bug (caused 500 on register)
+3. ✅ Build enterprise-level admin dashboard with charts (recharts)
+4. ✅ Add admin user detail view (wallet, transactions, sessions, actions)
+5. ✅ Add platform analytics API with 30-day charts and KPIs
+6. ✅ Add CSV report export
+
+### Completed Modifications
+
+#### Critical Bug Fix: Zod v4 Validation
+- `validateBody` in `src/lib/api.ts` was using `e.errors` which is undefined in zod v4
+- Changed to `e.issues || e.errors || []` with fallback
+- This was causing 500 errors on ALL POST endpoints with body validation (register, login with invalid data, etc.)
+
+#### Enterprise Admin Dashboard (Complete Redesign)
+- New API endpoint: `GET /api/admin/analytics` — comprehensive platform analytics
+  - 20 KPIs: totalUsers, newUsers30d, activeUsers7d, totalServices, activeServices, totalOrders, completedOrders, pendingOrders, disputedOrders, totalReviews, totalTransfers, totalCreditPurchases, totalRevenue, openDisputes, openReports, openTickets, frozenWallets, totalCreditsInCirculation, platformEscrow, purchaseVolume30d, fiatVolume30d
+  - 4 charts: signupChart (30d), revenueChart (30d), transferChart (30d), orderDistribution
+  - Top 5 services by views, top 5 sellers by earnings
+  - Category distribution with counts
+- New `EnterpriseDashboard` component with:
+  - 8 animated KPI cards with trend indicators (up/down arrows)
+  - Revenue area chart (30-day, gradient fill)
+  - User signup bar chart (30-day)
+  - Order status pie chart (donut with labels)
+  - Transfer volume area chart (30-day, purple gradient)
+  - Top services leaderboard (ranked with medals)
+  - Top sellers leaderboard (with avatars and verified badges)
+  - Category distribution with progress bars
+  - Platform health card (disputes, tickets, reports, frozen wallets)
+  - CSV report export button (downloads all KPIs)
+
+#### Admin User Detail View
+- New `AdminUsersTab` component replacing inline user cards
+- Click any user to open detail panel:
+  - User header with avatar, username, email, join date, role, status badge
+  - Profile bio
+  - Wallet breakdown (available, reserved, lifetime earned/spent)
+  - Frozen wallet indicator
+  - Recent transactions list (last 10, color-coded)
+  - Active sessions with IP and device info
+  - Admin action buttons (suspend, activate, verify, ban, reset PIN, make admin)
+  - Back button to return to user list
+
+#### Styling Improvements
+- Enterprise dashboard with recharts visualizations
+- Gradient area charts with smooth curves
+- Pie chart with custom colors and labels
+- Progress bars for category distribution
+- Medal-style ranking for top services/sellers
+- Color-coded health indicators
+- Animated KPI cards with stagger
+- User detail with clean card layout
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Enterprise dashboard shows 8 KPIs, revenue chart, signup chart, order pie, transfer chart
+- ✅ Admin user detail opens with wallet, transactions, sessions, actions
+- ✅ CSV report export works
+- ✅ Zod validation bug fixed (no more 500 on register)
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. Zod v4 `e.errors` undefined → changed to `e.issues || e.errors || []` (CRITICAL, affected all POST validation)
+2. Basic admin dashboard → replaced with enterprise dashboard with charts and analytics
+3. No user detail view → built AdminUsersTab with full detail panel
+
 ---
 
 ## Phase 11 — Round 11 (Cron Job: 2026-07-22)
@@ -960,6 +1046,9 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 40. ~~**Conversation unread indicator**~~ — ✅ DONE in Round 11 (per-conversation dots + bold text).
 41. ~~**Saved services count badge**~~ — ✅ DONE in Round 11 (profile menu badge).
 42. ~~**Wallet monthly summary**~~ — ✅ DONE in Round 11 (income/expenses/net card).
+43. ~~**Enterprise admin dashboard**~~ — ✅ DONE in Round 12 (charts, KPIs, analytics, CSV export).
+44. ~~**Admin user detail**~~ — ✅ DONE in Round 12 (wallet, transactions, sessions, actions).
+45. ~~**Zod v4 validation bug**~~ — ✅ FIXED in Round 12 (errors → issues).
 
 ### Priority Recommendations for Next Phase
 - Add automated tests for wallet integrity (double-entry balance conservation)
@@ -967,6 +1056,6 @@ Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, 
 - Add web push notifications (PWA push API + service worker)
 - Add offline data sync with IndexedDB
 - Add user block/mute in messaging
-- Add service dashboard with views/sales chart
 - Add notification sound on new message
 - Add wallet spending category breakdown
+- Add admin bulk user actions (bulk suspend, bulk verify)
