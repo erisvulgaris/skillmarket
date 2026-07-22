@@ -3,13 +3,38 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile, Package, ChevronRight, Search } from 'lucide-react'
+import { ArrowLeft, Send, Paperclip, Image as ImageIcon, Mic, ShieldCheck, Check, CheckCheck, X, Smile, Package, ChevronRight, Search, MoreVertical, Bell, BellOff, User, Flag } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 import { clsx } from 'clsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
 const EMOJIS = ['😀', '😂', '🥰', '😍', '🤔', '😎', '🤝', '👍', '👎', '❤️', '🔥', '✨', '🎉', '💪', '🙏', '👀', '💯', '⭐', '🚀', '💡', '✅', '❌', '💰', '🎨', '💻', '📱', '🔔', '📦', '🎯', '⏰']
+
+// Simple notification beep using Web Audio API
+function playMessageSound(senderId?: string) {
+  try {
+    if (typeof window === 'undefined') return
+    const soundPref = localStorage.getItem('sm_message_sound')
+    if (soundPref === 'off') return
+    // Check if sender is muted
+    if (senderId) {
+      const muted = JSON.parse(localStorage.getItem('sm_muted_users') || '[]')
+      if (muted.includes(senderId)) return
+    }
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15)
+    gain.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.15)
+  } catch {}
+}
 
 type Message = {
   id: string
@@ -38,6 +63,7 @@ export function ConversationView() {
   const [showEmojis, setShowEmojis] = useState(false)
   const [showMsgSearch, setShowMsgSearch] = useState(false)
   const [msgSearch, setMsgSearch] = useState('')
+  const [showMenu, setShowMenu] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
   const typingTimer = useRef<any>(null)
@@ -157,6 +183,10 @@ export function ConversationView() {
           if (prev.some((m) => m.id === msg.id)) return prev
           return [...prev, msg]
         })
+        // Play notification sound for messages from others
+        if (msg.senderId !== user?.id && msg.senderUsername !== user?.username) {
+          playMessageSound(msg.senderId)
+        }
       }
     })
     socket.on('presence', (data: { userId: string; online: boolean }) => {
@@ -257,7 +287,60 @@ export function ConversationView() {
           >
             <Search className="h-4 w-4" />
           </button>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-accent transition flex-shrink-0"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
         </div>
+        {/* More options menu */}
+        {showMenu && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+            <div className="absolute right-3 top-14 z-50 bg-card border border-border/40 rounded-2xl shadow-xl py-1 w-48 fade-scale">
+              <button
+                onClick={() => {
+                  const muted = JSON.parse(localStorage.getItem('sm_muted_users') || '[]')
+                  if (muted.includes(other?.id)) {
+                    localStorage.setItem('sm_muted_users', JSON.stringify(muted.filter((id: string) => id !== other?.id)))
+                    toast.success('User unmuted')
+                  } else {
+                    localStorage.setItem('sm_muted_users', JSON.stringify([...muted, other?.id]))
+                    toast.success('User muted — no sound on new messages')
+                  }
+                  setShowMenu(false)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent transition text-xs text-left"
+              >
+                {JSON.parse(localStorage.getItem('sm_muted_users') || '[]').includes(other?.id) ? <BellOff className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
+                {JSON.parse(localStorage.getItem('sm_muted_users') || '[]').includes(other?.id) ? 'Unmute' : 'Mute Notifications'}
+              </button>
+              <button
+                onClick={() => {
+                  setView('seller-profile', { username: other?.username })
+                  setShowMenu(false)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent transition text-xs text-left"
+              >
+                <User className="h-3.5 w-3.5" /> View Profile
+              </button>
+              <button
+                onClick={() => {
+                  const reason = window.prompt('Report this user for:')
+                  if (reason && reason.trim().length >= 5) {
+                    api.post('/api/services/' + (orderInfo?.serviceId || 'unknown') + '/report', { reason: `User report: ${reason.trim()}` }).catch(() => {})
+                    toast.success('Report submitted')
+                  }
+                  setShowMenu(false)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-accent transition text-xs text-left text-rose-500"
+              >
+                <Flag className="h-3.5 w-3.5" /> Report User
+              </button>
+            </div>
+          </>
+        )}
         {/* Message search bar */}
         {showMsgSearch && (
           <div className="max-w-md mx-auto px-3 pb-2">

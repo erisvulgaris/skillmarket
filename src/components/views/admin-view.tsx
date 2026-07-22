@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus, MessageSquare, Check } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
@@ -1036,6 +1036,35 @@ function AdminUsersTab({ users, loading, onAction }: {
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [userDetail, setUserDetail] = useState<any>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+
+  const filtered = users.filter((u) => {
+    if (statusFilter !== 'all' && u.status !== statusFilter) return false
+    if (search && !u.username.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const bulkAction = async (action: string) => {
+    const ids = Array.from(selectedIds)
+    for (const id of ids) {
+      await onAction(id, action)
+    }
+    toast.success(`${ids.length} users ${action}d`)
+    setSelectedIds(new Set())
+    setBulkMode(false)
+  }
 
   const openUser = async (userId: string) => {
     setSelectedUser(userId)
@@ -1167,27 +1196,82 @@ function AdminUsersTab({ users, loading, onAction }: {
 
   return (
     <div className="space-y-2">
+      {/* Search + filter bar */}
+      <div className="flex gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search users…"
+          className="flex-1 h-9 rounded-xl bg-muted/60 border border-border/40 px-3 text-xs outline-none focus:border-primary"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-9 rounded-xl bg-muted/60 border border-border/40 px-2 text-xs outline-none"
+        >
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="banned">Banned</option>
+        </select>
+      </div>
+
+      {/* Bulk mode toggle */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
+          className={clsx('h-8 px-3 rounded-full text-xs font-semibold transition', bulkMode ? 'bg-violet-600 text-white' : 'bg-secondary text-muted-foreground')}
+        >
+          {bulkMode ? 'Cancel Bulk' : 'Bulk Actions'}
+        </button>
+        {bulkMode && selectedIds.size > 0 && (
+          <>
+            <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+            <div className="flex gap-1 ml-auto">
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bulkAction('verify')}>Verify All</Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => bulkAction('suspend')}>Suspend</Button>
+              <Button size="sm" variant="outline" className="h-7 text-xs text-rose-600" onClick={() => bulkAction('ban')}>Ban</Button>
+            </div>
+          </>
+        )}
+      </div>
+
       {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
-        users.map((u) => (
-          <button key={u.id} onClick={() => openUser(u.id)} className="w-full text-left active:scale-[0.99] transition">
-            <Card className="p-3 space-y-2">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">{u.username[0].toUpperCase()}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <p className="text-sm font-semibold truncate">@{u.username}</p>
-                    {u.isVerified && <CheckCircle2 className="h-3 w-3 text-primary" />}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', u.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600')}>{u.status}</span>
-                    {u.role === 'admin' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600">ADMIN</span>}
-                    {u.wallet && <span className="text-[10px] text-muted-foreground">{formatSC(u.wallet.availableBalance)} SC</span>}
+        filtered.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-xs text-muted-foreground">No users found</p>
+          </div>
+        ) :
+        filtered.map((u) => (
+          <div key={u.id} className="relative">
+            {bulkMode && (
+              <button
+                onClick={() => toggleSelect(u.id)}
+                className={clsx('absolute left-1 top-1/2 -translate-y-1/2 z-10 h-5 w-5 rounded border-2 flex items-center justify-center transition', selectedIds.has(u.id) ? 'bg-violet-600 border-violet-600' : 'border-muted-foreground/40')}
+              >
+                {selectedIds.has(u.id) && <Check className="h-3 w-3 text-white" />}
+              </button>
+            )}
+            <button onClick={() => bulkMode ? toggleSelect(u.id) : openUser(u.id)} className="w-full text-left active:scale-[0.99] transition">
+              <Card className={clsx('p-3 space-y-2', bulkMode && selectedIds.has(u.id) && 'border-violet-500/50 bg-violet-500/5', bulkMode && 'pl-8')}>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">{u.username[0].toUpperCase()}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="text-sm font-semibold truncate">@{u.username}</p>
+                      {u.isVerified && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={clsx('text-[10px] font-bold px-1.5 py-0.5 rounded', u.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600')}>{u.status}</span>
+                      {u.role === 'admin' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600">ADMIN</span>}
+                      {u.wallet && <span className="text-[10px] text-muted-foreground">{formatSC(u.wallet.availableBalance)} SC</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </button>
+              </Card>
+            </button>
+          </div>
         ))}
     </div>
   )

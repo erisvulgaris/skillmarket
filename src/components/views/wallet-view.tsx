@@ -132,6 +132,9 @@ export function WalletView() {
       {/* Monthly summary */}
       <MonthlySummary transactions={txs} />
 
+      {/* Spending breakdown */}
+      <SpendingBreakdown transactions={txs} />
+
       {/* Transactions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -272,6 +275,81 @@ function MonthlySummary({ transactions }: { transactions: Tx[] }) {
         <span className={clsx('text-sm font-bold tabular-nums', net >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
           {net >= 0 ? '+' : '−'}{formatSC(Math.abs(net))}
         </span>
+      </div>
+    </Card>
+  )
+}
+
+const TX_LABELS: Record<string, string> = {
+  purchase: 'Credit Purchases',
+  order_payment: 'Order Payments',
+  transfer_out: 'Transfers Sent',
+  order_earnings: 'Order Earnings',
+  transfer_in: 'Transfers Received',
+  order_refund: 'Refunds',
+  referral_reward: 'Referral Rewards',
+  admin_adjustment: 'Admin Adjustments',
+  fee: 'Fees',
+}
+
+const TX_COLORS: Record<string, string> = {
+  purchase: 'bg-blue-500',
+  order_payment: 'bg-rose-500',
+  transfer_out: 'bg-amber-500',
+  order_earnings: 'bg-emerald-500',
+  transfer_in: 'bg-emerald-400',
+  order_refund: 'bg-cyan-500',
+  referral_reward: 'bg-violet-500',
+  admin_adjustment: 'bg-gray-500',
+  fee: 'bg-red-400',
+}
+
+function SpendingBreakdown({ transactions }: { transactions: Tx[] }) {
+  // Group by type and sum amounts
+  const byType: Record<string, number> = {}
+  for (const t of transactions) {
+    if (!byType[t.type]) byType[t.type] = 0
+    byType[t.type] += t.amount
+  }
+  const entries = Object.entries(byType).sort((a, b) => b[1] - a[1])
+  const total = entries.reduce((s, [, v]) => s + v, 0)
+
+  if (entries.length === 0 || total === 0) {
+    return (
+      <Card className="p-4 text-center">
+        <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Spending Breakdown</p>
+        <p className="text-xs text-muted-foreground">No transactions yet</p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-4 space-y-3">
+      <p className="text-xs font-bold uppercase text-muted-foreground">Spending Breakdown</p>
+      {/* Stacked bar */}
+      <div className="flex h-3 rounded-full overflow-hidden">
+        {entries.map(([type, amount]) => (
+          <div
+            key={type}
+            className={clsx(TX_COLORS[type] || 'bg-muted')}
+            style={{ width: `${(amount / total) * 100}%` }}
+            title={`${TX_LABELS[type] || type}: ${formatSC(amount)} SC`}
+          />
+        ))}
+      </div>
+      {/* Legend */}
+      <div className="space-y-1.5">
+        {entries.map(([type, amount]) => {
+          const pct = ((amount / total) * 100).toFixed(1)
+          return (
+            <div key={type} className="flex items-center gap-2 text-xs">
+              <span className={clsx('h-2.5 w-2.5 rounded-full flex-shrink-0', TX_COLORS[type] || 'bg-muted')} />
+              <span className="flex-1 text-muted-foreground">{TX_LABELS[type] || type.replace(/_/g, ' ')}</span>
+              <span className="font-bold tabular-nums">{formatSC(amount)}</span>
+              <span className="text-muted-foreground w-10 text-right">{pct}%</span>
+            </div>
+          )
+        })}
       </div>
     </Card>
   )

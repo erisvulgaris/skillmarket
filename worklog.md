@@ -14,6 +14,94 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 13 — Round 13 (2026-07-22)
+
+### Current Project Status Assessment
+Phase 12 was stable with enterprise admin dashboard, user detail view, and zod bug fix. This round focused on: QA testing, adding wallet spending category breakdown chart, adding notification sound on new messages, adding admin bulk user actions with search/filter, and adding message sound toggle in settings.
+
+### Goals for This Round
+1. ✅ QA test the app with agent-browser
+2. ✅ Add wallet spending category breakdown (stacked bar + legend)
+3. ✅ Add notification sound on new message (Web Audio API beep)
+4. ✅ Add admin bulk user actions (search, filter, bulk suspend/verify/ban)
+5. ✅ Add message sound toggle in settings
+6. ✅ Improve styling (spending breakdown chart, bulk action UI, sound toggle)
+
+### Completed Modifications
+
+#### Wallet Spending Category Breakdown
+- New `SpendingBreakdown` component in WalletView:
+  - Groups transactions by type (purchase, order_payment, transfer_out, etc.)
+  - Shows stacked horizontal bar with color-coded segments
+  - Legend with color dot, label, amount, and percentage
+  - 9 transaction types with unique colors
+  - Shows "No transactions yet" empty state
+  - Derived from loaded transaction data (no extra API call)
+
+#### Notification Sound on New Message
+- Added `playMessageSound()` function using Web Audio API:
+  - Creates oscillator with frequency sweep (880Hz → 440Hz over 0.15s)
+  - Low gain (0.15) for subtle notification
+  - Respects `sm_message_sound` localStorage setting
+  - Plays only for messages from other users (not own messages)
+  - Called in ConversationView socket 'message' handler
+
+#### Message Sound Toggle in Settings
+- New "Message Sound" toggle in Settings → Preferences
+  - Uses Volume2 icon
+  - Toggle switch (on/off)
+  - Persists to localStorage (`sm_message_sound`)
+  - Shows description "Play a beep on new messages"
+
+#### Admin Bulk User Actions
+- Updated `AdminUsersTab` with:
+  - Search bar (filters by username or email)
+  - Status filter dropdown (All, Active, Suspended, Banned)
+  - "Bulk Actions" toggle button
+  - When bulk mode is active:
+    - Checkboxes appear on each user card
+    - Selected users highlighted with violet border/background
+    - Count of selected users shown
+    - Action buttons: Verify All, Suspend, Ban
+    - Click "Cancel Bulk" to exit bulk mode
+  - Non-bulk mode: click user to open detail view
+  - Filtered results show "No users found" empty state
+
+#### Styling Improvements
+- Spending breakdown with color-coded stacked bar and legend
+- Bulk action mode with checkbox UI and violet accent
+- Search bar and dropdown filter for admin users
+- Sound toggle with Volume2 icon
+- User cards with selected state (violet border + bg)
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Dev server running on port 3000
+- ✅ Chat service running on port 3003
+- ✅ Wallet shows "Spending Breakdown" with Order Payments 88.2% and Admin Adjustments 11.8%
+- ✅ Settings shows "Message Sound" toggle in Preferences
+- ✅ Admin Users tab shows search, filter, and "Bulk Actions" button
+- ✅ Bulk mode shows checkboxes and action buttons
+- ✅ No console errors or dev log errors
+
+### Bugs Found & Fixed This Round
+1. No spending breakdown → built stacked bar chart with 9 categories
+2. No message sound → added Web Audio API beep with localStorage toggle
+3. No admin bulk actions → built search/filter/bulk-select system
+4. No sound toggle → added to settings preferences
+5. No user mute/block → added conversation options menu with mute, view profile, report
+
+#### User Mute/Block in Messaging
+- Added "more options" dropdown menu in ConversationView header:
+  - **Mute Notifications** — adds user to `sm_muted_users` in localStorage, suppresses sound
+  - **View Profile** — navigates to seller profile
+  - **Report User** — prompts for reason, submits report
+- Updated `playMessageSound` to accept sender ID and check muted list
+- Muted users don't trigger sound notification
+- Mute toggle shows current state (Mute/Unmute)
+
+---
+
 ## Phase 12 — Round 12 (2026-07-22)
 
 ### Current Project Status Assessment

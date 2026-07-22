@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Lock, KeyRound, User, Shield, Bell, Globe, LogOut, ChevronRight, Check, Moon, Sun, Fingerprint, Camera } from 'lucide-react'
+import { ArrowLeft, Lock, KeyRound, User, Shield, Bell, Globe, LogOut, ChevronRight, Check, Moon, Sun, Fingerprint, Camera, Volume2 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -17,6 +17,10 @@ export function SettingsView() {
   const { setView, user, refreshUser } = useApp()
   const { theme, setTheme } = useTheme()
   const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile' | '2fa' | 'notifications'>('menu')
+  const [soundOn, setSoundOn] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return (localStorage.getItem('sm_message_sound') || 'on') === 'on'
+  })
 
   return (
     <div className="min-h-screen">
@@ -75,6 +79,18 @@ export function SettingsView() {
                   desc={theme === 'dark' ? 'Dark mode' : 'Light mode'}
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   trailing={<ToggleSwitch on={theme === 'dark'} />}
+                />
+                <SettingRow
+                  icon={<Volume2 className="h-4 w-4 text-primary" />}
+                  label="Message Sound"
+                  desc="Play a beep on new messages"
+                  onClick={() => {
+                    const current = localStorage.getItem('sm_message_sound') || 'on'
+                    localStorage.setItem('sm_message_sound', current === 'on' ? 'off' : 'on')
+                    setSoundOn(current === 'off')
+                    toast.success(`Message sound ${current === 'off' ? 'enabled' : 'disabled'}`)
+                  }}
+                  trailing={<ToggleSwitch on={soundOn} />}
                 />
                 <SettingRow icon={<Bell className="h-4 w-4 text-primary" />} label="Notifications" desc="Manage notification preferences" onClick={() => setSection('notifications')} />
               </Card>
