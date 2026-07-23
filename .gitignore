@@ -51,4 +51,11 @@ prompt
 
 server.log
 # Skills directory
-/skills/
+/skills/node_modules
+.next/
+db/
+dev.log
+chat.log
+public/uploads/
+.env
+download/

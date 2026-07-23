@@ -242,12 +242,7 @@ export function AdminView() {
         )}
 
         {tab === 'wallets' && (
-          <div className="space-y-2">
-            {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
-              wallets.map((w) => (
-                <WalletAdminCard key={w.id} wallet={w} onFreeze={walletAction} onAdjust={walletAdjust} />
-              ))}
-          </div>
+          <AdminWalletsTab wallets={wallets} loading={loading} onFreeze={walletAction} onAdjust={walletAdjust} />
         )}
 
         {tab === 'services' && (
@@ -1273,6 +1268,48 @@ function AdminUsersTab({ users, loading, onAction }: {
             </button>
           </div>
         ))}
+    </div>
+  )
+}
+
+function AdminWalletsTab({ wallets, loading, onFreeze, onAdjust }: {
+  wallets: any[]
+  loading: boolean
+  onFreeze: (id: string, action: 'freeze' | 'unfreeze') => void
+  onAdjust: (id: string, amount: number, reason: string) => void
+}) {
+  const [search, setSearch] = useState('')
+  const [frozenOnly, setFrozenOnly] = useState(false)
+
+  const filtered = wallets.filter((w) => {
+    if (frozenOnly && !w.frozen) return false
+    if (search && !w.user?.username?.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search wallets by username…"
+          className="flex-1 h-9 rounded-xl bg-muted/60 border border-border/40 px-3 text-xs outline-none focus:border-primary"
+        />
+        <button
+          onClick={() => setFrozenOnly(!frozenOnly)}
+          className={clsx('h-9 px-3 rounded-xl text-xs font-semibold transition flex items-center gap-1', frozenOnly ? 'bg-amber-500 text-white' : 'bg-secondary text-muted-foreground')}
+        >
+          <Snowflake className="h-3.5 w-3.5" /> Frozen
+        </button>
+      </div>
+      {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />) :
+       filtered.length === 0 ? (
+         <div className="text-center py-8"><p className="text-xs text-muted-foreground">No wallets found</p></div>
+       ) :
+       filtered.map((w) => (
+         <WalletAdminCard key={w.id} wallet={w} onFreeze={onFreeze} onAdjust={onAdjust} />
+       ))}
     </div>
   )
 }

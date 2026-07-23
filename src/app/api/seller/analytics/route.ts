@@ -65,6 +65,13 @@ export async function GET() {
 
     const conversionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0
 
+    // Per-service performance
+    const sellerServices = await db.service.findMany({
+      where: { sellerId },
+      select: { id: true, title: true, views: true, completedOrders: true, ratingAvg: true, ratingCount: true, price: true, images: true },
+      orderBy: { views: 'desc' },
+    })
+
     return ok({
       stats: {
         totalServices,
@@ -80,6 +87,16 @@ export async function GET() {
         conversionRate: Math.round(conversionRate * 10) / 10,
       },
       dailyEarnings: dailyEarningsArray,
+      servicePerformance: sellerServices.map((s) => ({
+        id: s.id,
+        title: s.title,
+        views: s.views,
+        completedOrders: s.completedOrders,
+        ratingAvg: s.ratingAvg,
+        ratingCount: s.ratingCount,
+        price: s.price,
+        earnings: s.completedOrders * s.price,
+      })),
       recentOrders: recentOrders.map((o) => ({
         id: o.id,
         orderNo: o.orderNo,

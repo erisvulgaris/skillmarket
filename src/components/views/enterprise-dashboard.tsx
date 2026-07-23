@@ -39,10 +39,16 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
 
   const exportReport = () => {
     if (!data) return
+    const now = new Date().toISOString()
     const csv = [
+      'SkillMarket Platform Report',
+      `Generated,${now}`,
+      '',
+      '=== KPI Summary ===',
       'Metric,Value',
       `Total Users,${data.kpis.totalUsers}`,
       `New Users (30d),${data.kpis.newUsers30d}`,
+      `New Users (7d),${data.kpis.newUsers7d}`,
       `Active Users (7d),${data.kpis.activeUsers7d}`,
       `Total Services,${data.kpis.totalServices}`,
       `Active Services,${data.kpis.activeServices}`,
@@ -50,24 +56,55 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
       `Completed Orders,${data.kpis.completedOrders}`,
       `Pending Orders,${data.kpis.pendingOrders}`,
       `Disputed Orders,${data.kpis.disputedOrders}`,
+      `Total Reviews,${data.kpis.totalReviews}`,
       `Total Transfers,${data.kpis.totalTransfers}`,
       `Credit Purchases,${data.kpis.totalCreditPurchases}`,
       `Total Revenue ($),${data.kpis.totalRevenue}`,
+      `Purchase Volume 30d (SC),${data.kpis.purchaseVolume30d}`,
+      `Fiat Volume 30d ($),${data.kpis.fiatVolume30d}`,
       `Credits in Circulation,${data.kpis.totalCreditsInCirculation}`,
       `Platform Escrow,${data.kpis.platformEscrow}`,
       `Open Disputes,${data.kpis.openDisputes}`,
       `Open Reports,${data.kpis.openReports}`,
       `Open Tickets,${data.kpis.openTickets}`,
       `Frozen Wallets,${data.kpis.frozenWallets}`,
+      '',
+      '=== Daily Revenue (30 days) ===',
+      'Date,Revenue (SC)',
+      ...data.charts.revenueChart.map((d: any) => `${d.date},${d.revenue}`),
+      '',
+      '=== Daily Signups (30 days) ===',
+      'Date,New Users',
+      ...data.charts.signupChart.map((d: any) => `${d.date},${d.count}`),
+      '',
+      '=== Daily Transfers (30 days) ===',
+      'Date,Count,Volume (SC)',
+      ...data.charts.transferChart.map((d: any) => `${d.date},${d.count},${d.volume}`),
+      '',
+      '=== Order Status Distribution ===',
+      'Status,Count',
+      ...data.charts.orderDistribution.map((d: any) => `${d.status},${d.count}`),
+      '',
+      '=== Category Distribution ===',
+      'Category,Services',
+      ...data.charts.categoryDistribution.map((d: any) => `${d.name},${d.count}`),
+      '',
+      '=== Top Services ===',
+      'Rank,Title,Views,Completed Orders,Price (SC)',
+      ...data.topServices.map((s: any, i: number) => `${i + 1},"${s.title}",${s.views},${s.completedOrders},${s.price}`),
+      '',
+      '=== Top Sellers ===',
+      'Rank,Username,Lifetime Earned (SC)',
+      ...data.topSellers.map((s: any, i: number) => `${i + 1},${s.username},${s.lifetimeEarned}`),
     ].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `platform-report-${Date.now()}.csv`
+    a.download = `skillmarket-report-${now.slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('Report exported')
+    toast.success('Detailed report exported')
   }
 
   if (loading) {

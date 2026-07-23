@@ -4,6 +4,7 @@ import { useApp } from '@/lib/store'
 import { BottomNav } from '@/components/bottom-nav'
 import { TopBar } from '@/components/top-bar'
 import { OnboardingTour } from '@/components/onboarding-tour'
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 import { MarketplaceView } from '@/components/views/marketplace-view'
 import { WalletView } from '@/components/views/wallet-view'
 import { OrdersView } from '@/components/views/orders-view'
@@ -86,6 +87,7 @@ export function AppShell() {
       </footer>
 
       <OnboardingTour />
+      <PwaInstallPrompt />
     </div>
   )
 }

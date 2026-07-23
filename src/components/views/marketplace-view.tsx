@@ -7,7 +7,7 @@ import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search } from 'lucide-react'
+import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search, Crown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -66,19 +66,37 @@ export function MarketplaceView() {
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5"
       >
         <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-primary/20 blur-2xl" />
-        <p className="text-xs text-muted-foreground font-medium">Welcome back</p>
-        <h2 className="text-xl font-bold mt-0.5">{user?.profile?.displayName || user?.username}</h2>
-        <div className="flex items-center gap-3 mt-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <SkillCredits amount={user?.wallet?.availableBalance || 0} size="sm" />
+        <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-chart-3/10 blur-2xl" />
+        <div className="relative">
+          <p className="text-xs text-muted-foreground font-medium">Welcome back</p>
+          <h2 className="text-xl font-bold mt-0.5">{user?.profile?.displayName || user?.username}</h2>
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <SkillCredits amount={user?.wallet?.availableBalance || 0} size="sm" />
+            </div>
+            <button
+              onClick={() => setView('buy-credits')}
+              className="text-xs font-semibold text-primary active:scale-95 transition"
+            >
+              + Buy Credits
+            </button>
           </div>
-          <button
-            onClick={() => setView('buy-credits')}
-            className="text-xs font-semibold text-primary active:scale-95 transition"
-          >
-            + Buy Credits
-          </button>
+          {/* Mini stats */}
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
+              <p className="text-sm font-bold tabular-nums">{services.length}</p>
+              <p className="text-[9px] text-muted-foreground">Services</p>
+            </div>
+            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
+              <p className="text-sm font-bold tabular-nums">{featured.length}</p>
+              <p className="text-[9px] text-muted-foreground">Featured</p>
+            </div>
+            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
+              <p className="text-sm font-bold tabular-nums">{categories.length}</p>
+              <p className="text-[9px] text-muted-foreground">Categories</p>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -125,6 +143,36 @@ export function MarketplaceView() {
           </div>
         </div>
       )}
+
+      {/* Trending tags */}
+      {!loading && services.length > 0 && (() => {
+        const tagCount = new Map<string, number>()
+        for (const s of services) {
+          for (const t of s.tags || []) {
+            tagCount.set(t, (tagCount.get(t) || 0) + 1)
+          }
+        }
+        const sorted = Array.from(tagCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
+        if (sorted.length === 0) return null
+        return (
+          <div className="space-y-2">
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <Flame className="h-4 w-4 text-orange-500" /> Trending Tags
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {sorted.map(([tag, count]) => (
+                <button
+                  key={tag}
+                  onClick={() => setView('search', { initialQuery: tag })}
+                  className="px-3 py-1.5 rounded-full bg-secondary border border-border/40 text-xs font-medium hover:bg-accent active:scale-95 transition"
+                >
+                  {tag} <span className="text-muted-foreground">{count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Recently viewed */}
       {recentlyViewed.length > 0 && (
@@ -178,6 +226,55 @@ export function MarketplaceView() {
           </button>
         </div>
       )}
+
+      {/* Top sellers */}
+      {!loading && services.length > 0 && (() => {
+        const sellerMap = new Map<string, { username: string; displayName?: string; avatarUrl?: string; isVerified?: boolean; serviceCount: number; ratingAvg: number }>()
+        for (const s of services) {
+          const key = s.seller.id
+          if (!sellerMap.has(key)) {
+            sellerMap.set(key, {
+              username: s.seller.username,
+              displayName: s.seller.displayName,
+              avatarUrl: s.seller.avatarUrl,
+              isVerified: s.seller.isVerified,
+              serviceCount: 0,
+              ratingAvg: s.ratingAvg,
+            })
+          }
+          sellerMap.get(key)!.serviceCount++
+        }
+        const topSellers = Array.from(sellerMap.values()).slice(0, 3)
+        if (topSellers.length === 0) return null
+        return (
+          <div className="space-y-3">
+            <SectionHeader icon={<Crown className="h-4 w-4 text-amber-400" />} title="Top Sellers" />
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+              {topSellers.map((seller, i) => (
+                <button
+                  key={seller.username}
+                  onClick={() => setView('seller-profile', { username: seller.username })}
+                  className="flex-shrink-0 w-40 p-3 rounded-2xl bg-card border border-border/40 active:scale-[0.98] transition text-center"
+                >
+                  <div className="relative inline-block">
+                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto flex items-center justify-center text-primary-foreground text-lg font-bold overflow-hidden">
+                      {seller.avatarUrl ? <img src={seller.avatarUrl} alt="" className="h-full w-full object-cover" /> : seller.username[0].toUpperCase()}
+                    </div>
+                    <span className={clsx('absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold', i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-gray-300 text-gray-700' : 'bg-amber-700 text-amber-100')}>
+                      {i + 1}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold mt-2 truncate">{seller.displayName || seller.username}</p>
+                  <p className="text-[10px] text-muted-foreground">@{seller.username}</p>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                    <span className="text-[10px] text-muted-foreground">{seller.serviceCount} services</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Sell CTA */}
       <motion.button

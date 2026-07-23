@@ -121,6 +121,35 @@ export function AnalyticsView() {
               </div>
             </Card>
 
+            {/* Service performance */}
+            {data.servicePerformance && data.servicePerformance.length > 0 && (
+              <Card className="p-4 space-y-3">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Service Performance</p>
+                <div className="space-y-2">
+                  {data.servicePerformance.map((s: any, i: number) => {
+                    const maxViews = Math.max(...data.servicePerformance.map((x: any) => x.views), 1)
+                    const viewPct = (s.views / maxViews) * 100
+                    return (
+                      <div key={s.id} className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className={clsx('h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0', i === 0 ? 'bg-amber-400 text-amber-950' : 'bg-muted text-muted-foreground')}>
+                            {i + 1}
+                          </span>
+                          <p className="flex-1 truncate font-medium">{s.title}</p>
+                          <span className="text-muted-foreground flex items-center gap-0.5"><Eye className="h-3 w-3" /> {s.views}</span>
+                          <span className="text-muted-foreground flex items-center gap-0.5"><ShoppingCart className="h-3 w-3" /> {s.completedOrders}</span>
+                          <span className="font-bold text-emerald-500 tabular-nums">{formatSC(s.earnings)}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden ml-7">
+                          <div className="h-full bg-primary/50 rounded-full transition-all" style={{ width: `${viewPct}%` }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            )}
+
             {/* Recent orders */}
             <Card className="p-4 space-y-3">
               <div className="flex items-center justify-between">

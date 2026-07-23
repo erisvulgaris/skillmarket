@@ -122,6 +122,17 @@ export function OrderDetailView() {
         {/* Status banner */}
         <StatusBanner status={order.status} paymentStatus={order.paymentStatus} />
 
+        {/* Delivery countdown */}
+        {(order.status === 'pending' || order.status === 'in_progress' || order.status === 'delivered') && (
+          <DeliveryCountdown
+            status={order.status}
+            createdAt={order.createdAt}
+            acceptedAt={order.acceptedAt}
+            deliveredAt={order.deliveredAt}
+            deliveryDays={order.service?.deliveryDays || 3}
+          />
+        )}
+
         {/* Service summary */}
         <Card className="p-4 flex items-center gap-3">
           <div className="h-14 w-14 rounded-xl bg-muted flex-shrink-0 flex items-center justify-center text-2xl">🎨</div>
@@ -352,5 +363,76 @@ function StatusBanner({ status, paymentStatus }: { status: string; paymentStatus
         <p className="text-xs text-muted-foreground">{m.label} · {paymentStatus}</p>
       </div>
     </motion.div>
+  )
+}
+
+function DeliveryCountdown({ status, createdAt, acceptedAt, deliveredAt, deliveryDays }: {
+  status: string
+  createdAt: string
+  acceptedAt: string | null
+  deliveredAt: string | null
+  deliveryDays: number
+}) {
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  // Calculate deadline from acceptance
+  const startTime = acceptedAt ? new Date(acceptedAt) : new Date(createdAt)
+  const deadline = new Date(startTime.getTime() + deliveryDays * 86400000)
+  const remaining = deadline.getTime() - now
+  const isOverdue = remaining < 0 && status !== 'delivered' && status !== 'completed'
+
+  let label = ''
+  let color = ''
+  let progress = 0
+
+  if (status === 'delivered' || status === 'completed') {
+    label = 'Delivered'
+    color = 'text-emerald-500'
+    progress = 100
+  } else if (isOverdue) {
+    const overdueDays = Math.floor(Math.abs(remaining) / 86400000)
+    label = `${overdueDays}d overdue`
+    color = 'text-rose-500'
+    progress = 100
+  } else if (remaining > 0) {
+    const days = Math.floor(remaining / 86400000)
+    const hours = Math.floor((remaining % 86400000) / 3600000)
+    const mins = Math.floor((remaining % 3600000) / 60000)
+    if (days > 0) label = `${days}d ${hours}h remaining`
+    else if (hours > 0) label = `${hours}h ${mins}m remaining`
+    else label = `${mins}m remaining`
+    color = remaining < 86400000 ? 'text-amber-500' : 'text-blue-500'
+    const totalMs = deliveryDays * 86400000
+    progress = Math.min(100, ((totalMs - remaining) / totalMs) * 100)
+  }
+
+  return (
+    <Card className="p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Clock className={clsx('h-4 w-4', color)} />
+          <p className="text-xs font-bold uppercase text-muted-foreground">Delivery Timer</p>
+        </div>
+        <span className={clsx('text-sm font-bold', color)}>{label}</span>
+      </div>
+      {/* Progress bar */}
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5 }}
+          className={clsx('h-full rounded-full', isOverdue ? 'bg-rose-500' : progress === 100 ? 'bg-emerald-500' : 'bg-primary')}
+        />
+      </div>
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+        <span>Started: {new Date(startTime).toLocaleDateString()}</span>
+        <span>Deadline: {deadline.toLocaleDateString()}</span>
+      </div>
+    </Card>
   )
 }
