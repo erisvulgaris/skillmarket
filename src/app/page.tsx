@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { useApp } from '@/lib/store'
 import { AuthScreen } from '@/components/views/auth-screen'
 import { AppShell } from '@/components/app-shell'
-import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Home() {
@@ -39,10 +38,5 @@ export default function Home() {
 
   if (!user) return <AuthScreen />
 
-  return (
-    <>
-      <AppShell />
-      <Sonner />
-    </>
-  )
+  return <AppShell />
 }

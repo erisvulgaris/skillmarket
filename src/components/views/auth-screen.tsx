@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { api, ApiError } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
-import { Coins, Eye, EyeOff, User, Mail, Lock, ShieldCheck, Gift } from 'lucide-react'
+import { Coins, Eye, EyeOff, User, Mail, Lock, ShieldCheck, Gift, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -14,6 +14,7 @@ export function AuthScreen() {
   const [showPwd, setShowPwd] = useState(false)
   const [twoFactorRequired, setTwoFactorRequired] = useState(false)
   const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
   const [form, setForm] = useState({
     emailOrUsername: '',
     email: '',
@@ -26,6 +27,7 @@ export function AuthScreen() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg('')
     try {
       if (mode === 'login') {
         const res = await api.post<any>('/api/auth/login', {
@@ -51,7 +53,8 @@ export function AuthScreen() {
       await refreshUser()
       toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Something went wrong'
+      const msg = e instanceof ApiError ? e.message : 'Something went wrong. Please try again.'
+      setErrorMsg(msg)
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -197,12 +200,39 @@ export function AuthScreen() {
               </>
             )}
 
+            {/* Inline error message */}
+            {errorMsg && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs"
+              >
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{errorMsg}</span>
+              </motion.div>
+            )}
+
+            {/* Demo credentials hint */}
+            {mode === 'login' && !errorMsg && (
+              <div className="text-[10px] text-muted-foreground/60 text-center leading-relaxed">
+                Admin: admin@skillmarket.app / admin12345<br />
+                Buyer: buyer@example.com / password123
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Please wait…' : mode === 'login' ? (twoFactorRequired ? 'Verify & Sign In' : 'Sign In') : 'Create Account'}
+              {loading ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  <span>Please wait…</span>
+                </>
+              ) : (
+                mode === 'login' ? (twoFactorRequired ? 'Verify & Sign In' : 'Sign In') : 'Create Account'
+              )}
             </button>
           </form>
 
@@ -210,7 +240,7 @@ export function AuthScreen() {
             {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
-              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setTwoFactorRequired(false); setTwoFactorCode('') }}
+              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setTwoFactorRequired(false); setTwoFactorCode(''); setErrorMsg('') }}
               className="text-primary font-semibold hover:underline"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
