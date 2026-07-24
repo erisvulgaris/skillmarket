@@ -14,6 +14,45 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 
 ---
 
+## Phase 15 — Login Fix + Continuous Iteration (2026-07-22)
+
+### Critical Fix: Dashboard Not Loading After Login
+- **Root Cause:** Sonner Toaster was only rendered inside AppShell (when logged in), so error toasts were invisible on auth screen
+- **Fix 1:** Added `<Sonner />` to root `layout.tsx` so toasts work on ALL screens
+- **Fix 2:** Added inline error display with AlertCircle icon in auth form
+- **Fix 3:** Added `window.location.reload()` after successful login to ensure clean state transition
+- **Fix 4:** Added 5-second loading timeout fallback to prevent stuck loading screen
+- **Fix 5:** Added loading spinner animation on submit button
+- **Fix 6:** Added demo credentials hint on login screen
+- **Fix 7:** Mapped 20+ internal error codes to user-friendly messages
+
+### Iterations Completed
+1. **Wallet advanced filters** — Amount range filter dropdown (0-100, 100-500, 500-1K, 1K+ SC), transaction count display
+2. **Order progress tracker** — Visual step indicator (Placed → Active → Delivered → Done) with checkmarks, cancelled/disputed states
+3. **Service comparison** — New CompareView with side-by-side table, BEST badges for price/delivery/rating, package comparison
+4. **Admin dashboard refresh** — Refresh button with RefreshCw icon, last-updated timestamp
+5. **Seller analytics views chart** — Recharts bar chart showing views per service
+6. **Profile notification badge** — Unread count badge on Notifications menu item
+7. **Marketplace quick links** — Added Activity Log and Analytics shortcuts
+8. **Admin user CSV export** — Export button on Users tab, downloads username/email/status/role/balance/verified/joined
+
+### GitHub
+- **Repository:** https://github.com/erisvulgaris/skillmarket
+- **Latest commits:** Login fix + 8 iterations pushed
+- **Status:** All code pushed, tested, and working
+
+### Verification Results
+- ✅ Lint passes (0 errors)
+- ✅ Admin login works (tested with agent-browser)
+- ✅ Buyer login works (tested with agent-browser)
+- ✅ Dashboard loads after login (page reload fix)
+- ✅ Wrong password shows inline error
+- ✅ All 14 admin tabs functional
+- ✅ All customer features working
+- ✅ No console errors
+
+---
+
 ## Phase 14 — 10-Iteration Sprint (2026-07-22)
 
 ### 10 Iterations Completed
