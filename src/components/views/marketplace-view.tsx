@@ -7,7 +7,7 @@ import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search, Crown } from 'lucide-react'
+import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search, Crown, Activity, BarChart3 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -293,6 +293,8 @@ export function MarketplaceView() {
       <div className="grid grid-cols-2 gap-3">
         <QuickLink icon={<Bookmark className="h-4 w-4" />} label="Saved Services" onClick={() => setView('saved')} />
         <QuickLink icon={<Sparkles className="h-4 w-4" />} label="Refer & Earn" onClick={() => setView('referrals')} />
+        <QuickLink icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
+        <QuickLink icon={<BarChart3 className="h-4 w-4" />} label="Analytics" onClick={() => setView('analytics')} />
       </div>
     </div>
   )

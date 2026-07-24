@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus, MessageSquare, Check } from 'lucide-react'
+import { ArrowLeft, Users, Wallet, Package, Shield, AlertTriangle, Activity, TrendingUp, Eye, Snowflake, CheckCircle2, Ban, Flag, Settings as SettingsIcon, Megaphone, FileText, ToggleLeft, Gavel, Send, Plus, MessageSquare, Check, Download } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
@@ -127,6 +127,20 @@ export function AdminView() {
     loaders[tab]?.()
   }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSupport, loadSettings, loadFlags, loadCms])
 
+  const exportUsers = () => {
+    const csv = ['Username,Email,Status,Role,Balance,Verified,Joined',
+      ...users.map((u) => `${u.username},${u.email},${u.status},${u.role},${u.wallet?.availableBalance || 0},${u.isVerified ? 'yes' : 'no'},${new Date(u.createdAt).toLocaleDateString()}`)
+    ].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `users-${Date.now()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Users exported')
+  }
+
   const userAction = async (userId: string, action: string) => {
     try {
       await api.patch(`/api/admin/users/${userId}`, { action, reason: `Admin ${action}` })
@@ -238,7 +252,7 @@ export function AdminView() {
         {tab === 'dashboard' && <EnterpriseDashboard onBack={() => setView('profile')} />}
 
         {tab === 'users' && (
-          <AdminUsersTab users={users} loading={loading} onAction={userAction} />
+          <AdminUsersTab users={users} loading={loading} onAction={userAction} onExport={exportUsers} />
         )}
 
         {tab === 'wallets' && (
@@ -1023,10 +1037,11 @@ function AdminOrdersTab({ orders, loading, selectedOrder, onSelect, onClose }: {
   )
 }
 
-function AdminUsersTab({ users, loading, onAction }: {
+function AdminUsersTab({ users, loading, onAction, onExport }: {
   users: any[]
   loading: boolean
   onAction: (userId: string, action: string) => Promise<void>
+  onExport?: () => void
 }) {
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
   const [userDetail, setUserDetail] = useState<any>(null)
@@ -1199,6 +1214,11 @@ function AdminUsersTab({ users, loading, onAction }: {
           placeholder="Search users…"
           className="flex-1 h-9 rounded-xl bg-muted/60 border border-border/40 px-3 text-xs outline-none focus:border-primary"
         />
+        {onExport && (
+          <button onClick={onExport} className="h-9 px-3 rounded-xl bg-secondary text-xs font-semibold flex items-center gap-1 hover:bg-accent transition flex-shrink-0">
+            <Download className="h-3.5 w-3.5" /> Export
+          </button>
+        )}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
