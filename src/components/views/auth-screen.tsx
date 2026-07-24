@@ -52,6 +52,11 @@ export function AuthScreen() {
       }
       await refreshUser()
       toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
+      // Force a page reload to ensure clean state transition
+      // This is the most reliable way to ensure the dashboard loads
+      setTimeout(() => {
+        window.location.reload()
+      }, 300)
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'Something went wrong. Please try again.'
       setErrorMsg(msg)
