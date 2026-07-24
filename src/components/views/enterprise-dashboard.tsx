@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
-import { ArrowLeft, Users, DollarSign, Package, TrendingUp, TrendingDown, Activity, AlertTriangle, ShieldCheck, Snowflake, Star, Eye, Crown, Download, Zap, ShoppingCart, MessageSquare, Ban, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Users, DollarSign, Package, TrendingUp, TrendingDown, Activity, AlertTriangle, ShieldCheck, Snowflake, Star, Eye, Crown, Download, Zap, ShoppingCart, MessageSquare, Ban, CheckCircle2, RefreshCw } from 'lucide-react'
 import { clsx } from 'clsx'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -22,12 +22,14 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
   const { setView } = useApp()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const d = await api.get<any>('/api/admin/analytics')
       setData(d)
+      setLastUpdated(new Date())
     } catch (e: any) {
       toast.error(e.message || 'Failed to load analytics')
     } finally {
@@ -130,11 +132,16 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold">Platform Analytics</h2>
-          <p className="text-[10px] text-muted-foreground">Real-time enterprise dashboard</p>
+          <p className="text-[10px] text-muted-foreground">Updated {lastUpdated.toLocaleTimeString()}</p>
         </div>
-        <Button onClick={exportReport} size="sm" variant="outline" className="rounded-xl text-xs">
-          <Download className="h-3.5 w-3.5 mr-1" /> Export Report
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button onClick={load} size="sm" variant="ghost" className="rounded-xl text-xs px-2">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
+          <Button onClick={exportReport} size="sm" variant="outline" className="rounded-xl text-xs">
+            <Download className="h-3.5 w-3.5 mr-1" /> Export
+          </Button>
+        </div>
       </div>
 
       {/* KPI Grid */}

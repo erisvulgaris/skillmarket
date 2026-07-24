@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { ArrowLeft, TrendingUp, Eye, Package, Star, Repeat, Zap, BarChart3, ShoppingCart, DollarSign } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -147,6 +148,22 @@ export function AnalyticsView() {
                     )
                   })}
                 </div>
+              </Card>
+            )}
+
+            {/* Views chart */}
+            {data.servicePerformance && data.servicePerformance.length > 0 && (
+              <Card className="p-4 space-y-3">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Views by Service</p>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={data.servicePerformance.map((s: any) => ({ name: s.title.slice(0, 15) + '…', views: s.views }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fontSize: 8 }} angle={-45} textAnchor="end" height={50} />
+                    <YAxis tick={{ fontSize: 8 }} width={30} />
+                    <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8 }} />
+                    <Bar dataKey="views" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </Card>
             )}
 

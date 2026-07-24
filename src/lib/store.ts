@@ -29,6 +29,7 @@ type View =
   | 'cms-page'
   | 'help'
   | 'my-services'
+  | 'compare'
 
 interface AppState {
   user: User | null

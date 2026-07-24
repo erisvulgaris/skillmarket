@@ -153,6 +153,49 @@ export function OrderDetailView() {
           </Card>
         )}
 
+        {/* Progress tracker */}
+        <Card className="p-4 space-y-3">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Order Progress</p>
+          <div className="flex items-center justify-between">
+            {[
+              { key: 'pending', label: 'Placed', icon: '📋' },
+              { key: 'in_progress', label: 'Active', icon: '🔄' },
+              { key: 'delivered', label: 'Delivered', icon: '📦' },
+              { key: 'completed', label: 'Done', icon: '✅' },
+            ].map((step, i, arr) => {
+              const statusOrder = ['pending', 'in_progress', 'delivered', 'completed']
+              const currentIdx = statusOrder.indexOf(order.status)
+              const stepIdx = statusOrder.indexOf(step.key)
+              const isDone = stepIdx <= currentIdx && currentIdx >= 0
+              const isCurrent = stepIdx === currentIdx
+              const isCancelled = order.status === 'cancelled' || order.status === 'disputed'
+              return (
+                <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className={clsx(
+                      'h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                      isCancelled && step.key !== 'pending' ? 'bg-muted text-muted-foreground' :
+                      isDone ? 'bg-primary text-primary-foreground' :
+                      'bg-muted text-muted-foreground'
+                    )}>
+                      {isDone && !isCurrent ? '✓' : i + 1}
+                    </div>
+                    <span className={clsx('text-[9px] font-medium', isDone ? 'text-foreground' : 'text-muted-foreground')}>{step.label}</span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <div className={clsx('h-0.5 flex-1 mx-1 rounded-full transition-all', stepIdx < currentIdx ? 'bg-primary' : 'bg-muted')} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {(order.status === 'cancelled' || order.status === 'disputed') && (
+            <div className={clsx('flex items-center gap-2 p-2 rounded-lg text-xs', order.status === 'cancelled' ? 'bg-muted text-muted-foreground' : 'bg-rose-500/10 text-rose-500')}>
+              {order.status === 'cancelled' ? 'Order was cancelled' : 'Order is under dispute'}
+            </div>
+          )}
+        </Card>
+
         {/* Timeline */}
         <Card className="p-4 space-y-3">
           <p className="text-xs font-bold uppercase text-muted-foreground">Timeline</p>

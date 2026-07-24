@@ -14,7 +14,7 @@ import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 
 export function ProfileView() {
-  const { user, setView, refreshUser } = useApp()
+  const { user, setView, refreshUser, unreadCount } = useApp()
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [qrUrl, setQrUrl] = useState<string | null>(null)
@@ -89,7 +89,7 @@ export function ProfileView() {
         <MenuItem icon={<Package className="h-4 w-4" />} label="My Orders" onClick={() => setView('orders')} />
         <MenuItem icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
         <MenuItem icon={<Gift className="h-4 w-4" />} label="Refer & Earn" onClick={() => setView('referrals')} badge="50 SC" />
-        <MenuItem icon={<Bell className="h-4 w-4" />} label="Notifications" onClick={() => setView('notifications')} />
+        <MenuItem icon={<Bell className="h-4 w-4" />} label="Notifications" onClick={() => setView('notifications')} badge={unreadCount > 0 ? String(unreadCount) : undefined} />
         <MenuItem
           icon={theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           label={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}

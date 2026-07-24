@@ -41,6 +41,7 @@ export function WalletView() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
+  const [amountFilter, setAmountFilter] = useState<string>('all')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -49,12 +50,18 @@ export function WalletView() {
       if (filter !== 'all') params.set('type', filter)
       if (search) params.set('search', search)
       const data = await api.get<{ items: Tx[] }>(`/api/wallet/transactions?${params}`)
-      setTxs(data.items)
+      // Apply amount filter client-side
+      let filtered = data.items
+      if (amountFilter !== 'all') {
+        const [min, max] = amountFilter.split('-').map(Number)
+        filtered = filtered.filter((t) => t.amount >= min && t.amount <= max)
+      }
+      setTxs(filtered)
     } catch {
     } finally {
       setLoading(false)
     }
-  }, [filter, search])
+  }, [filter, search, amountFilter])
 
   useEffect(() => { load() }, [load])
 
@@ -139,7 +146,10 @@ export function WalletView() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold">Transactions</h3>
-          <button onClick={exportCsv} className="text-xs text-primary font-semibold active:scale-95">Export CSV</button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">{txs.length} results</span>
+            <button onClick={exportCsv} className="text-xs text-primary font-semibold active:scale-95">Export CSV</button>
+          </div>
         </div>
 
         {/* Filter chips */}
@@ -165,21 +175,35 @@ export function WalletView() {
           ))}
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search transactions…"
-            className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-3 text-sm outline-none focus:border-primary"
-          />
+        {/* Search + amount filter */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search transactions…"
+              className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-3 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <select
+            value={amountFilter}
+            onChange={(e) => setAmountFilter(e.target.value)}
+            className="h-10 rounded-xl bg-muted/60 border border-border/40 px-2 text-xs outline-none"
+          >
+            <option value="all">All amounts</option>
+            <option value="0-100">0–100 SC</option>
+            <option value="100-500">100–500 SC</option>
+            <option value="500-1000">500–1K SC</option>
+            <option value="1000-999999">1K+ SC</option>
+          </select>
         </div>
 
         <div className="space-y-2">
           {loading
             ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)
             : txs.length === 0
-            ? <div className="text-center py-10 text-sm text-muted-foreground">No transactions yet</div>
+            ? <div className="text-center py-10 text-sm text-muted-foreground">No transactions found</div>
             : txs.map((tx) => <TxRow key={tx.id} tx={tx} />)}
         </div>
       </div>
