@@ -41,6 +41,12 @@ export function AuthScreen() {
           toast.info('Enter your 2FA code')
           return
         }
+        // Set user from login response then fetch full profile async
+        useApp.getState().setUser(res.user)
+        useApp.getState().setLoading(false)
+        toast.success('Welcome back!')
+        // Fetch full user data in background
+        refreshUser()
       } else {
         await api.post('/api/auth/register', {
           email: form.email,
@@ -49,14 +55,9 @@ export function AuthScreen() {
           transactionPin: form.transactionPin,
           referralCode: form.referralCode || undefined,
         })
+        await refreshUser()
+        toast.success('Account created!')
       }
-      await refreshUser()
-      toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!')
-      // Force a page reload to ensure clean state transition
-      // This is the most reliable way to ensure the dashboard loads
-      setTimeout(() => {
-        window.location.reload()
-      }, 300)
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'Something went wrong. Please try again.'
       setErrorMsg(msg)
