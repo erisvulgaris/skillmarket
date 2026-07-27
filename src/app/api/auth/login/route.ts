@@ -53,6 +53,14 @@ export const POST = strictLimit(async function POST(req: Request) {
     await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
     await writeAudit({ actorId: user.id, action: 'login', entityType: 'session', ip, userAgent: ua })
 
+    // Fetch full user with profile and wallet so the frontend has everything
+    const fullUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: { profile: true, wallet: true },
+    })
+    const profile = fullUser?.profile
+    const wallet = fullUser?.wallet
+
     return ok({
       user: {
         id: user.id,
@@ -60,6 +68,28 @@ export const POST = strictLimit(async function POST(req: Request) {
         email: user.email,
         role: user.role,
         status: user.status,
+        referralCode: user.referralCode,
+        twoFactorEnabled: user.twoFactorEnabled,
+        profile: profile ? {
+          displayName: profile.displayName,
+          bio: profile.bio,
+          avatarUrl: profile.avatarUrl,
+          coverUrl: profile.coverUrl,
+          location: profile.location,
+          isVerified: profile.isVerified,
+          verificationType: profile.verificationType,
+        } : null,
+        wallet: wallet ? {
+          availableBalance: wallet.availableBalance,
+          reservedBalance: wallet.reservedBalance,
+          pendingBalance: wallet.pendingBalance,
+          lifetimePurchased: wallet.lifetimePurchased,
+          lifetimeEarned: wallet.lifetimeEarned,
+          lifetimeSent: wallet.lifetimeSent,
+          lifetimeReceived: wallet.lifetimeReceived,
+          lifetimeSpent: wallet.lifetimeSpent,
+          frozen: wallet.frozen,
+        } : null,
       },
     })
   } catch (e) {

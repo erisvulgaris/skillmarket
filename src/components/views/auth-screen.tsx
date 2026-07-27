@@ -41,12 +41,10 @@ export function AuthScreen() {
           toast.info('Enter your 2FA code')
           return
         }
-        // Set user from login response then fetch full profile async
+        // Login response now includes full user data with profile+wallet
         useApp.getState().setUser(res.user)
         useApp.getState().setLoading(false)
         toast.success('Welcome back!')
-        // Fetch full user data in background
-        refreshUser()
       } else {
         await api.post('/api/auth/register', {
           email: form.email,
