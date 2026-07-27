@@ -1,6 +1,8 @@
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
+import { setCors } from '@/lib/cors'
+import { apiLimit } from '@/lib/rate-limit'
 import { writeAudit } from '@/lib/audit'
 import { z } from 'zod'
 
@@ -20,7 +22,15 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
 }
 
-export async function POST(req: Request) {
+function withCors<T extends (...args: any[]) => any>(handler: T): T {
+  return (async (...args: any[]) => {
+    const res = await handler(...args)
+    if (res instanceof Response) Object.entries(setCors()).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }) as T
+}
+
+export const POST = withCors(apiLimit(async function POST(req: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -52,4 +62,8 @@ export async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
+}))
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: setCors() })
 }

@@ -58,7 +58,7 @@ export function SellerProfileView() {
     <div className="min-h-screen slide-enter">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('marketplace')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('marketplace')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">Seller Profile</h1>
@@ -72,7 +72,7 @@ export function SellerProfileView() {
           <div className="px-4 -mt-12">
             <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto border-4 border-background overflow-hidden shadow-xl">
               {data.profile?.avatarUrl ? (
-                <img src={data.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                <img src={data.profile.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-primary-foreground text-3xl font-bold">
                   {data.username[0].toUpperCase()}
@@ -168,7 +168,7 @@ export function SellerProfileView() {
                 >
                   <Card className="p-3 flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-muted overflow-hidden flex-shrink-0">
-                      {s.images[0] ? <img src={s.images[0]} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xl">🎨</div>}
+                      {s.images[0] ? <img src={s.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="h-full w-full flex items-center justify-center text-xl">🎨</div>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold line-clamp-1">{s.title}</p>
@@ -190,7 +190,7 @@ export function SellerProfileView() {
                 <Card key={r.id} className="p-3">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                      {r.author.avatarUrl && <img src={r.author.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                      {r.author.avatarUrl && <img src={r.author.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                     </div>
                     <span className="text-xs font-semibold">@{r.author.username}</span>
                     <div className="ml-auto flex">

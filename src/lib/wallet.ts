@@ -1,5 +1,6 @@
 import { db } from './db'
 import { randomBytes } from 'crypto'
+import { getCommissionRate, calculateCommission } from './commission'
 
 // All amounts are integer units of SkillCredits (smallest unit).
 // Double-entry: every operation credits one account and debits another so the
@@ -76,7 +77,11 @@ export async function purchaseCredits(params: {
       },
     })
 
-    const wallet = await ensureWallet(userId)
+    // Use tx to find/create wallet inside the transaction (not global db)
+    let wallet = await tx.wallet.findUnique({ where: { userId } })
+    if (!wallet) {
+      wallet = await tx.wallet.create({ data: { userId } })
+    }
     const lockedWallet = await tx.wallet.update({
       where: { id: wallet.id },
       data: {
@@ -292,24 +297,28 @@ export async function releaseEscrow(params: {
   amount: number
 }) {
   const { orderId, buyerId, sellerId, amount } = params
+  if (amount <= 0) throw new Error('INVALID_AMOUNT')
+
+  const rate = await getCommissionRate(sellerId)
+  const commission = calculateCommission(amount, rate)
+  const netAmount = amount - commission
 
   return db.$transaction(async (tx) => {
     const buyerWallet = await tx.wallet.findUnique({ where: { userId: buyerId } })
     const sellerWallet = await tx.wallet.findUnique({ where: { userId: sellerId } })
     if (!buyerWallet || !sellerWallet) throw new Error('WALLET_NOT_FOUND')
+    if (sellerWallet.frozen) throw new Error('SELLER_WALLET_FROZEN')
 
-    // Free reserved from buyer
     await tx.wallet.update({
       where: { id: buyerWallet.id },
       data: { reservedBalance: { decrement: amount } },
     })
 
-    // Credit seller (earnings)
     const updatedSeller = await tx.wallet.update({
       where: { id: sellerWallet.id },
       data: {
-        availableBalance: { increment: amount },
-        lifetimeEarned: { increment: amount },
+        availableBalance: { increment: netAmount },
+        lifetimeEarned: { increment: netAmount },
       },
     })
 
@@ -318,19 +327,70 @@ export async function releaseEscrow(params: {
         walletId: sellerWallet.id,
         type: 'order_earnings',
         direction: 'credit',
-        amount,
+        amount: netAmount,
         balanceAfter: updatedSeller.availableBalance,
         referenceId: orderId,
         referenceType: 'order',
-        note: 'Earnings from completed order',
+        note: commission > 0 ? `Earnings from completed order (${commission} SC commission)` : 'Earnings from completed order',
       },
     })
 
-    // Double entry: debit escrow, credit seller wallet
-    await writeLedger(tx, [
-      { walletId: sellerWallet.id, entryType: 'debit', account: 'escrow', amount, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_release' },
-      { walletId: sellerWallet.id, entryType: 'credit', account: 'user_wallet', amount, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_release' },
-    ])
+    if (commission > 0) {
+      await tx.walletTransaction.create({
+        data: {
+          walletId: sellerWallet.id,
+          type: 'fee',
+          direction: 'debit',
+          amount: commission,
+          balanceAfter: updatedSeller.availableBalance,
+          referenceId: orderId,
+          referenceType: 'order',
+          note: `Platform commission (${rate}%)`,
+        },
+      })
+    }
+
+    const ledgerEntries: LedgerInput[] = [
+      { walletId: sellerWallet.id, entryType: 'debit', account: 'escrow', amount: netAmount, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_release' },
+      { walletId: sellerWallet.id, entryType: 'credit', account: 'user_wallet', amount: netAmount, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_release' },
+    ]
+    if (commission > 0) {
+      ledgerEntries.push(
+        { walletId: sellerWallet.id, entryType: 'debit', account: 'escrow', amount: commission, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_commission' },
+        { walletId: sellerWallet.id, entryType: 'credit', account: 'revenue', amount: commission, transactionId: sellerTx.id, referenceId: orderId, referenceType: 'order_commission' },
+      )
+    }
+    await writeLedger(tx, ledgerEntries)
+
+    await tx.auditLog.create({
+      data: {
+        actorId: 'system',
+        action: 'escrow_released',
+        entityType: 'order',
+        entityId: orderId,
+        after: JSON.stringify({ sellerId, gross: amount, commissionRate: rate, commission, net: netAmount }),
+      },
+    })
+
+    await tx.notification.create({
+      data: {
+        userId: sellerId,
+        type: 'wallet',
+        title: 'Payment Received',
+        body: `You received ${netAmount} SkillCredits${commission > 0 ? ` (${commission} SC commission)` : ''} for completing the order.`,
+        data: JSON.stringify({ orderId, amount: netAmount, commission, type: 'escrow_release' }),
+      },
+    })
+
+    await tx.notification.create({
+      data: {
+        userId: buyerId,
+        type: 'order',
+        title: 'Order Completed & Escrow Released',
+        body: `Your escrow of ${amount} SkillCredits has been released to the seller for the completed order.`,
+        data: JSON.stringify({ orderId, amount, type: 'escrow_release' }),
+      },
+    })
   })
 }
 
@@ -341,17 +401,18 @@ export async function refundEscrow(params: {
   amount: number
 }) {
   const { orderId, buyerId, amount } = params
+  if (amount <= 0) throw new Error('INVALID_AMOUNT')
 
   return db.$transaction(async (tx) => {
     const wallet = await tx.wallet.findUnique({ where: { userId: buyerId } })
     if (!wallet) throw new Error('WALLET_NOT_FOUND')
 
-    await tx.wallet.update({
+    const updated = await tx.wallet.update({
       where: { id: wallet.id },
       data: {
         reservedBalance: { decrement: amount },
         availableBalance: { increment: amount },
-        lifetimeSpent: { decrement: amount },
+        lifetimeSpent: { decrement: Math.min(amount, wallet.lifetimeSpent) },
       },
     })
 
@@ -361,7 +422,7 @@ export async function refundEscrow(params: {
         type: 'order_refund',
         direction: 'credit',
         amount,
-        balanceAfter: wallet.availableBalance + amount,
+        balanceAfter: updated.availableBalance,
         referenceId: orderId,
         referenceType: 'order',
         note: 'Refund from cancelled order',
@@ -372,6 +433,16 @@ export async function refundEscrow(params: {
       { walletId: wallet.id, entryType: 'debit', account: 'escrow', amount, transactionId: wt.id, referenceId: orderId, referenceType: 'order_refund' },
       { walletId: wallet.id, entryType: 'credit', account: 'user_wallet', amount, transactionId: wt.id, referenceId: orderId, referenceType: 'order_refund' },
     ])
+
+    await tx.notification.create({
+      data: {
+        userId: buyerId,
+        type: 'wallet',
+        title: 'Escrow Refunded',
+        body: `${amount} SkillCredits have been refunded to your wallet from the cancelled order.`,
+        data: JSON.stringify({ orderId, amount, type: 'escrow_refund' }),
+      },
+    })
   })
 }
 

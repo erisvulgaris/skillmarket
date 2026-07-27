@@ -5,9 +5,10 @@ import { api, type Service } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { SkillCredits } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
-import { Search as SearchIcon, X, Clock, ArrowLeft, SlidersHorizontal, Grid3x3 } from 'lucide-react'
+import { Search as SearchIcon, X, Clock, ArrowLeft, SlidersHorizontal, Grid3x3, SearchX } from 'lucide-react'
 import { clsx } from 'clsx'
 
 type SearchResult = {
@@ -37,7 +38,8 @@ export function SearchView() {
 
   useEffect(() => {
     try {
-      const r = JSON.parse(localStorage.getItem('sm_recent_searches') || '[]')
+      let r: string[] = []
+      try { r = JSON.parse(localStorage.getItem('sm_recent_searches') || '[]') } catch {}
       setRecent(r)
     } catch {}
   }, [])
@@ -99,7 +101,7 @@ export function SearchView() {
     doSearch(q)
     const next = [q, ...recent.filter((r) => r !== q)].slice(0, 8)
     setRecent(next)
-    localStorage.setItem('sm_recent_searches', JSON.stringify(next))
+    try { localStorage.setItem('sm_recent_searches', JSON.stringify(next)) } catch {}
   }
 
   const clearCategory = () => {
@@ -114,7 +116,7 @@ export function SearchView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('marketplace')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('marketplace')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 relative">
@@ -127,6 +129,7 @@ export function SearchView() {
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               onKeyDown={(e) => e.key === 'Enter' && submitSearch(query)}
               placeholder={isBrowsing ? `Search in ${categoryName}…` : "Search services, people…"}
+              aria-label="Search services"
               className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-9 text-sm outline-none focus:border-primary"
             />
             {query && (
@@ -141,10 +144,11 @@ export function SearchView() {
                   <button
                     key={s.id}
                     onClick={() => { setView('service-detail', { id: s.id }); setShowSuggestions(false) }}
+                    aria-label={`View service: ${s.title}`}
                     className="w-full flex items-center gap-2 p-2.5 hover:bg-accent transition text-left"
                   >
                     <div className="h-8 w-8 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                      {s.images[0] && <img src={s.images[0]} alt="" className="h-full w-full object-cover" />}
+                      {s.images[0] && <img src={s.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{s.title}</p>
@@ -156,12 +160,13 @@ export function SearchView() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={clsx('h-9 w-9 rounded-full flex items-center justify-center transition', showFilters || isBrowsing ? 'bg-primary text-primary-foreground' : 'hover:bg-accent')}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+                className={clsx('h-9 w-9 rounded-full flex items-center justify-center transition', showFilters || isBrowsing ? 'bg-primary text-primary-foreground' : 'hover:bg-accent')}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </button>
         </div>
 
         {/* Filter bar */}
@@ -203,6 +208,7 @@ export function SearchView() {
                 <button
                   key={s.k}
                   onClick={() => setSort(s.k)}
+                  aria-label={`Filter by ${s.label}`}
                   className={clsx(
                     'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition',
                     sort === s.k ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
@@ -242,11 +248,11 @@ export function SearchView() {
               <div className="grid grid-cols-2 gap-3">
                 {browseServices.map((s, i) => (
                   <div key={s.id} className="stagger-item" style={{ animationDelay: `${i * 30}ms` }}>
-                    <button onClick={() => setView('service-detail', { id: s.id })} className="w-full text-left active:scale-[0.98] transition">
+                    <button onClick={() => setView('service-detail', { id: s.id })} aria-label={`View service: ${s.title}`} className="w-full text-left active:scale-[0.98] transition">
                       <Card className="overflow-hidden p-0 gap-0 h-full">
                         <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                           {s.images[0] ? (
-                            <img src={s.images[0]} alt={s.title} className="h-full w-full object-cover" loading="lazy" />
+                            <img src={s.images[0]} alt={s.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-3xl">🎨</div>
                           )}
@@ -296,7 +302,7 @@ export function SearchView() {
                       <button key={u.id} onClick={() => setView('seller-profile', { username: u.username })} className="w-full text-left">
                         <Card className="p-3 flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                            {u.avatarUrl && <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                            {u.avatarUrl && <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-semibold">@{u.username}</p>
@@ -329,13 +335,33 @@ export function SearchView() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold uppercase text-muted-foreground">Services ({results.services.length})</p>
                   {results.services.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">No services found for "{query}"</p>
+                    <div className="text-center py-10">
+                      <div className="inline-flex h-16 w-16 rounded-2xl bg-muted items-center justify-center mb-3">
+                        <SearchX className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-sm font-semibold text-muted-foreground">No services found</p>
+                      <p className="text-xs text-muted-foreground mt-1">We couldn't find any services matching "{query}"</p>
+                      <div className="flex flex-wrap justify-center gap-2 mt-4">
+                        <button
+                          onClick={() => { setQuery(''); setResults(null); setSuggestions([]) }}
+                          className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition"
+                        >
+                          Clear search
+                        </button>
+                        <button
+                          onClick={() => setView('marketplace')}
+                          className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition"
+                        >
+                          Browse marketplace →
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     results.services.map((s) => (
                       <button key={s.id} onClick={() => setView('service-detail', { id: s.id })} className="w-full text-left active:scale-[0.99] transition">
                         <Card className="p-3 flex items-center gap-3">
                           <div className="h-14 w-14 rounded-xl bg-muted overflow-hidden flex-shrink-0">
-                            {s.images[0] && <img src={s.images[0]} alt="" className="h-full w-full object-cover" />}
+{s.images[0] && <img src={s.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold line-clamp-2">{s.title}</p>
@@ -353,10 +379,23 @@ export function SearchView() {
               </>
             )}
 
-            {!results && !loading && recent.length === 0 && (
-              <div className="text-center py-16">
-                <SearchIcon className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">Search for services, sellers, or categories</p>
+            {!results && !loading && recent.length === 0 && !query && (
+              <div className="text-center py-16 space-y-3">
+                <div className="inline-flex h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center mx-auto">
+                  <SearchIcon className="h-10 w-10 text-primary/40" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-foreground">Find what you need</p>
+                  <p className="text-sm text-muted-foreground mt-1">Search for services, sellers, or categories</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 pt-2">
+                  <button
+                    onClick={() => setView('marketplace')}
+                    className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition"
+                  >
+                    Browse categories
+                  </button>
+                </div>
               </div>
             )}
           </>

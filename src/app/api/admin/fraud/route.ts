@@ -1,8 +1,9 @@
 import { requireAdmin } from '@/lib/auth'
 import { ok, handleError } from '@/lib/api'
 import { getPlatformFraudAlerts } from '@/lib/fraud'
+import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET() {
+export const GET = adminLimit(async function GET() {
   try {
     await requireAdmin()
     const alerts = await getPlatformFraudAlerts()
@@ -16,4 +17,4 @@ export async function GET() {
   } catch (e) {
     return handleError(e)
   }
-}
+})

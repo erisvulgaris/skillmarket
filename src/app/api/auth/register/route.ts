@@ -26,7 +26,7 @@ export const POST = strictLimit(async function POST(req: Request) {
     const existingUsername = await db.user.findUnique({ where: { username } })
     if (existingUsername) return err('ALREADY_EXISTS', 409)
 
-    let referrer = null
+    let referrer: { id: string } | null = null
     if (referralCode) {
       referrer = await db.user.findUnique({ where: { referralCode } })
       if (!referrer) return err('Invalid referral code', 400)
@@ -36,7 +36,7 @@ export const POST = strictLimit(async function POST(req: Request) {
     const pinHash = await hashPin(transactionPin)
     const myReferralCode = generateReferralCode(username)
 
-    const user = await db.$transaction(async (tx) => {
+    const user = await db.$transaction(async (tx: any) => {
       const u = await tx.user.create({
         data: {
           email,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, memo } from 'react'
 import { api, type User } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
@@ -104,7 +104,7 @@ export function WalletView() {
           {(wallet?.reservedBalance || 0) > 0 && (
             <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur text-[10px] font-medium">
               <Lock className="h-3 w-3" />
-              {formatSC(wallet.reservedBalance)} SC in escrow
+              {formatSC(wallet?.reservedBalance || 0)} SC in escrow
             </div>
           )}
 
@@ -165,6 +165,7 @@ export function WalletView() {
             <button
               key={f.k}
               onClick={() => setFilter(f.k)}
+              aria-label={`Filter by ${f.label}`}
               className={clsx(
                 'flex-shrink-0 h-8 px-3 rounded-full text-xs font-semibold transition',
                 filter === f.k ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
@@ -183,6 +184,7 @@ export function WalletView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search transactions…"
+              aria-label="Search transactions"
               className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-3 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -215,6 +217,7 @@ function ActionBtn({ icon, label, onClick }: { icon: React.ReactNode; label: str
   return (
     <button
       onClick={onClick}
+      aria-label={label}
       className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl bg-white/15 backdrop-blur hover:bg-white/20 active:scale-95 transition"
     >
       <span className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">{icon}</span>
@@ -242,7 +245,7 @@ function LifetimeStat({ label, value, icon }: { label: string; value: number; ic
   )
 }
 
-function TxRow({ tx }: { tx: Tx }) {
+const TxRow = memo(function TxRow({ tx }: { tx: Tx }) {
   const meta = TYPE_META[tx.type] || TYPE_META.admin_adjustment
   const isCredit = tx.direction === 'credit'
   return (
@@ -267,7 +270,7 @@ function TxRow({ tx }: { tx: Tx }) {
       </div>
     </motion.div>
   )
-}
+})
 
 function MonthlySummary({ transactions }: { transactions: Tx[] }) {
   const now = new Date()

@@ -5,6 +5,7 @@ import { useApp } from '@/lib/store'
 import { AuthScreen } from '@/components/views/auth-screen'
 import { AppShell } from '@/components/app-shell'
 import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/lib/api-client'
 
 export default function Home() {
   const { user, loading, refreshUser, loadNotifications, loadUnreadMessages } = useApp()
@@ -21,15 +22,47 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
+      let mounted = true
       loadNotifications()
       loadUnreadMessages()
       const t = setInterval(() => {
+        if (!mounted) return
         loadNotifications()
         loadUnreadMessages()
       }, 30000)
-      return () => clearInterval(t)
+      return () => {
+        mounted = false
+        clearInterval(t)
+      }
     }
   }, [user, loadNotifications, loadUnreadMessages])
+
+  useEffect(() => {
+    if (!user || !('PushManager' in window) || !('serviceWorker' in navigator)) return
+    const registerPush = async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidPublicKey) return
+
+        const existing = await registration.pushManager.getSubscription()
+        if (existing) {
+          // const sub = existing.toJSON()
+          // await api.post('/api/push/subscribe', sub)
+          return
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidPublicKey,
+        })
+
+        const sub = subscription.toJSON()
+        await api.post('/api/push/subscribe', sub)
+      } catch {}
+    }
+    registerPush()
+  }, [user])
 
   // If loading is stuck for too long, force show auth screen
   if (loading && !loadingTimeout) {

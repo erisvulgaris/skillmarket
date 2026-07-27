@@ -3,17 +3,21 @@ import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { pushNotification } from '@/lib/audit'
 import { z } from 'zod'
+import { strictLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 
 const schema = z.object({
   reason: z.string().min(5).max(500),
   detail: z.string().max(2000).optional(),
 })
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = strictLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
     const { id } = await params
+    const ct = requireJson(req)
+    if (ct) return ct
     const { data, error } = await validateBody(schema, req)
     if (error) return err(error, 422)
 
@@ -70,4 +74,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})

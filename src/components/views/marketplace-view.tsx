@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, memo } from 'react'
 import { api, type Service } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
@@ -10,12 +10,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search, Crown, Activity, BarChart3 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import Link from 'next/link'
 
 type Category = { id: string; name: string; slug: string; icon?: string | null; children?: Category[] }
 
 export function MarketplaceView() {
   const { setView, user } = useApp()
+  const { prefersReduced } = useReducedMotion()
   const [services, setServices] = useState<Service[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,7 +26,8 @@ export function MarketplaceView() {
 
   useEffect(() => {
     try {
-      const ids: string[] = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]')
+      let ids: string[] = []
+      try { ids = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]') } catch {}
       if (ids.length > 0) {
         // Fetch each — lightweight; could be a single endpoint
         Promise.all(ids.slice(0, 6).map((id) => api.get<{ service: Service }>(`/api/services/${id}`).catch(() => null)))
@@ -103,6 +106,7 @@ export function MarketplaceView() {
       {/* Search bar */}
       <button
         onClick={() => setView('search')}
+        aria-label="Open search"
         className="w-full h-12 rounded-2xl bg-muted/60 border border-border/40 flex items-center gap-3 px-4 text-muted-foreground hover:bg-muted transition active:scale-[0.99]"
       >
         <Search className="h-4 w-4" />
@@ -122,6 +126,7 @@ export function MarketplaceView() {
               <button
                 key={c.id}
                 onClick={() => setView('search', { categoryId: c.id, categoryName: c.name })}
+                aria-label={`Category: ${c.name}`}
                 className="flex-shrink-0 h-10 px-4 rounded-full bg-secondary border border-border/50 flex items-center gap-2 text-sm font-medium hover:bg-accent active:scale-95 transition"
               >
                 <span className="text-base">{c.icon || '📁'}</span>
@@ -164,6 +169,7 @@ export function MarketplaceView() {
                 <button
                   key={tag}
                   onClick={() => setView('search', { initialQuery: tag })}
+                  aria-label={`Search ${tag}`}
                   className="px-3 py-1.5 rounded-full bg-secondary border border-border/40 text-xs font-medium hover:bg-accent active:scale-95 transition"
                 >
                   {tag} <span className="text-muted-foreground">{count}</span>
@@ -193,13 +199,14 @@ export function MarketplaceView() {
           { k: 'newest', label: 'Newest', icon: Clock },
           { k: 'popular', label: 'Popular', icon: Flame },
         ] as const).map((t) => (
-          <button
-            key={t.k}
-            onClick={() => setTab(t.k)}
-            className={clsx(
-              'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all',
-              tab === t.k ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
-            )}
+            <button
+              key={t.k}
+              onClick={() => setTab(t.k)}
+              aria-label={`${t.label} tab`}
+              className={clsx(
+                'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all',
+                tab === t.k ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
+              )}
           >
             <t.icon className="h-3.5 w-3.5" />
             {t.label}
@@ -229,7 +236,7 @@ export function MarketplaceView() {
 
       {/* Top sellers */}
       {!loading && services.length > 0 && (() => {
-        const sellerMap = new Map<string, { username: string; displayName?: string; avatarUrl?: string; isVerified?: boolean; serviceCount: number; ratingAvg: number }>()
+        const sellerMap = new Map<string, { username: string; displayName?: string | null; avatarUrl?: string | null; isVerified?: boolean; serviceCount: number; ratingAvg: number }>()
         for (const s of services) {
           const key = s.seller.id
           if (!sellerMap.has(key)) {
@@ -258,7 +265,7 @@ export function MarketplaceView() {
                 >
                   <div className="relative inline-block">
                     <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto flex items-center justify-center text-primary-foreground text-lg font-bold overflow-hidden">
-                      {seller.avatarUrl ? <img src={seller.avatarUrl} alt="" className="h-full w-full object-cover" /> : seller.username[0].toUpperCase()}
+                      {seller.avatarUrl ? <img src={seller.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : seller.username[0].toUpperCase()}
                     </div>
                     <span className={clsx('absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold', i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-gray-300 text-gray-700' : 'bg-amber-700 text-amber-100')}>
                       {i + 1}
@@ -278,7 +285,7 @@ export function MarketplaceView() {
 
       {/* Sell CTA */}
       <motion.button
-        whileTap={{ scale: 0.98 }}
+        whileTap={prefersReduced ? {} : { scale: 0.98 }}
         onClick={() => setView('create-service')}
         className="w-full rounded-2xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground p-4 flex items-center justify-between shadow-lg shadow-primary/20"
       >
@@ -320,6 +327,7 @@ function QuickLink({ icon, label, onClick }: { icon: React.ReactNode; label: str
   return (
     <button
       onClick={onClick}
+      aria-label={label}
       className="rounded-2xl bg-card border border-border/50 p-4 flex items-center gap-3 hover:bg-accent active:scale-95 transition"
     >
       <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">{icon}</span>
@@ -328,14 +336,14 @@ function QuickLink({ icon, label, onClick }: { icon: React.ReactNode; label: str
   )
 }
 
-function ServiceCard({ service, onClick }: { service: Service; onClick: () => void }) {
+const ServiceCard = memo(function ServiceCard({ service, onClick }: { service: Service; onClick: () => void }) {
   const img = service.images[0]
   return (
-    <button onClick={onClick} className="text-left active:scale-[0.98] transition">
+    <button onClick={onClick} aria-label={`View service: ${service.title}`} className="text-left active:scale-[0.98] transition">
       <Card className="overflow-hidden p-0 gap-0 h-full">
         <div className="aspect-[4/3] bg-muted relative overflow-hidden">
           {img ? (
-            <img src={img} alt={service.title} className="h-full w-full object-cover" loading="lazy" />
+            <img src={img} alt={service.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-3xl">🎨</div>
           )}
@@ -347,7 +355,7 @@ function ServiceCard({ service, onClick }: { service: Service; onClick: () => vo
           <p className="text-xs font-semibold line-clamp-2 leading-snug min-h-[2rem]">{service.title}</p>
           <div className="flex items-center gap-1.5">
             <div className="h-4 w-4 rounded-full bg-muted overflow-hidden flex-shrink-0">
-              {service.seller.avatarUrl && <img src={service.seller.avatarUrl} alt="" className="h-full w-full object-cover" />}
+              {service.seller.avatarUrl && <img src={service.seller.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
             </div>
             <span className="text-[10px] text-muted-foreground truncate">{service.seller.username}</span>
             {service.seller.isVerified && <span className="text-[9px] text-primary">✓</span>}
@@ -363,15 +371,15 @@ function ServiceCard({ service, onClick }: { service: Service; onClick: () => vo
       </Card>
     </button>
   )
-}
+})
 
-function ServiceCardHorizontal({ service, onClick }: { service: Service; onClick: () => void }) {
+const ServiceCardHorizontal = memo(function ServiceCardHorizontal({ service, onClick }: { service: Service; onClick: () => void }) {
   const img = service.images[0]
   return (
     <button onClick={onClick} className="flex-shrink-0 w-64 active:scale-[0.98] transition text-left">
       <Card className="overflow-hidden p-0 gap-0">
         <div className="aspect-video bg-muted relative">
-          {img ? <img src={img} alt={service.title} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-4xl">🎨</div>}
+          {img ? <img src={img} alt={service.title} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="h-full w-full flex items-center justify-center text-4xl">🎨</div>}
         </div>
         <div className="p-3 space-y-1">
           <p className="text-sm font-semibold line-clamp-1">{service.title}</p>
@@ -383,7 +391,7 @@ function ServiceCardHorizontal({ service, onClick }: { service: Service; onClick
       </Card>
     </button>
   )
-}
+})
 
 function ServiceCardSkeleton() {
   return (

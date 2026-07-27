@@ -1,10 +1,19 @@
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError } from '@/lib/api'
+import { setCors } from '@/lib/cors'
+import { apiLimit } from '@/lib/rate-limit'
 import { writeAudit } from '@/lib/audit'
 
-// Archive (soft-delete) a service — seller only
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+function withCors<T extends (...args: any[]) => any>(handler: T): T {
+  return (async (...args: any[]) => {
+    const res = await handler(...args)
+    if (res instanceof Response) Object.entries(setCors()).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }) as T
+}
+
+export const POST = withCors(apiLimit(async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -24,10 +33,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
-}
+}))
 
-// Restore (un-archive) a service
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withCors(apiLimit(async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -47,4 +55,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   } catch (e) {
     return handleError(e)
   }
+}))
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: setCors() })
 }

@@ -6,7 +6,9 @@ import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
 export function TopBar() {
-  const { user, setView, unreadCount } = useApp()
+  const user = useApp(s => s.user)
+  const setView = useApp(s => s.setView)
+  const unreadCount = useApp(s => s.unreadCount)
   const { theme, setTheme } = useTheme()
   const [mounted] = useState(() => typeof window !== 'undefined')
 

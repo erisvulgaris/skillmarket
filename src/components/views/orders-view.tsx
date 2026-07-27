@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, memo } from 'react'
 import { api, type Order } from '@/lib/api-client'
-import { useApp } from '@/lib/store'
+import { useApp, type View } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SkillCredits } from '@/components/sc-badge'
@@ -90,6 +90,7 @@ export function OrdersView() {
           <button
             key={t.k}
             onClick={() => setTab(t.k)}
+            aria-label={`${t.label} tab`}
             className={clsx(
               'flex-1 py-2 rounded-xl text-xs font-semibold transition',
               tab === t.k ? 'bg-card shadow-sm' : 'text-muted-foreground'
@@ -111,43 +112,46 @@ export function OrdersView() {
                 Browse services →
               </button>
             </div>
-          : orders.map((o) => {
-              const meta = STATUS_META[o.status] || STATUS_META.pending
-              const isBuyer = o.buyerId === user?.id
-              const counterparty = isBuyer ? o.seller : o.buyer
-              return (
-                <motion.button
-                  key={o.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={() => setView('order-detail', { id: o.id })}
-                  className="w-full text-left active:scale-[0.99] transition"
-                >
-                  <Card className="p-3 flex items-center gap-3">
-                    <div className={clsx('h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0', meta.bg)}>
-                      <span className={meta.color}>{meta.icon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{o.service.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isBuyer ? 'From' : 'To'} @{counterparty.username} · {new Date(o.createdAt).toLocaleDateString()}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={clsx('inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold', meta.bg, meta.color)}>
-                          {meta.icon}{meta.label}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{o.orderNo.slice(-8)}</span>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <SkillCredits amount={o.price} size="sm" />
-                      <ChevronRight className="h-4 w-4 text-muted-foreground mt-1 ml-auto" />
-                    </div>
-                  </Card>
-                </motion.button>
-              )
-            })}
+          : orders.map((o) => (
+              <OrderCard key={o.id} order={o} userId={user?.id || ''} setView={setView} />
+            ))}
       </div>
     </div>
   )
 }
+
+const OrderCard = memo(function OrderCard({ order, userId, setView }: { order: Order; userId: string; setView: (v: View, params?: Record<string, any>) => void }) {
+  const meta = STATUS_META[order.status] || STATUS_META.pending
+  const isBuyer = order.buyerId === userId
+  const counterparty = isBuyer ? order.seller : order.buyer
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={() => setView('order-detail', { id: order.id })}
+      className="w-full text-left active:scale-[0.99] transition"
+    >
+      <Card className="p-3 flex items-center gap-3">
+        <div className={clsx('h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0', meta.bg)}>
+          <span className={meta.color}>{meta.icon}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate">{order.service.title}</p>
+          <p className="text-xs text-muted-foreground">
+            {isBuyer ? 'From' : 'To'} @{counterparty.username} · {new Date(order.createdAt).toLocaleDateString()}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={clsx('inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold', meta.bg, meta.color)}>
+              {meta.icon}{meta.label}
+            </span>
+            <span className="text-[10px] text-muted-foreground">{order.orderNo.slice(-8)}</span>
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <SkillCredits amount={order.price} size="sm" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground mt-1 ml-auto" />
+        </div>
+      </Card>
+    </motion.button>
+  )
+})

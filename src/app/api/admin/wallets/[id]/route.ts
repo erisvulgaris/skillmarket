@@ -1,10 +1,17 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError } from '@/lib/api'
+import { ok, err, handleError, validateBody } from '@/lib/api'
 import { adminAdjust } from '@/lib/wallet'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
+import { z } from 'zod'
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+const schema = z.object({
+  action: z.string(),
+})
+
+export const GET = adminLimit(async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
@@ -22,14 +29,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = adminLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
-    const body = await req.json()
-    const { action } = body as { action: string }
+    const ct = requireJson(req); if (ct) return ct
+    const { data, error } = await validateBody(schema, req)
+    if (error) return err(error, 422)
+    const { action } = data!
     // action: freeze | unfreeze
     if (action === 'freeze' || action === 'unfreeze') {
       const updated = await db.wallet.update({ where: { id }, data: { frozen: action === 'freeze' } })
@@ -40,4 +49,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
-}
+})

@@ -135,7 +135,7 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
           <p className="text-[10px] text-muted-foreground">Updated {lastUpdated.toLocaleTimeString()}</p>
         </div>
         <div className="flex items-center gap-1">
-          <Button onClick={load} size="sm" variant="ghost" className="rounded-xl text-xs px-2">
+          <Button onClick={load} size="sm" variant="ghost" aria-label="Refresh analytics" className="rounded-xl text-xs px-2">
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
           <Button onClick={exportReport} size="sm" variant="outline" className="rounded-xl text-xs">
@@ -261,7 +261,7 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
                 {i + 1}
               </span>
               <div className="h-6 w-6 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                {s.avatarUrl && <img src={s.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                {s.avatarUrl && <img src={s.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
               </div>
               <p className="flex-1 truncate font-medium">
                 @{s.username}

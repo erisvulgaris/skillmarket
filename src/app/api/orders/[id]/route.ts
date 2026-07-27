@@ -1,8 +1,18 @@
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError } from '@/lib/api'
+import { ok, err, handleError, validateBody } from '@/lib/api'
 import { releaseEscrow, refundEscrow } from '@/lib/wallet'
 import { pushNotification } from '@/lib/audit'
+import { apiLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
+import { z } from 'zod'
+
+const deliverySchema = z.object({
+  note: z.string().optional(),
+  attachmentUrl: z.string().url().optional(),
+  filename: z.string().optional(),
+  fileType: z.string().optional(),
+})
 
 async function getOrder(id: string) {
   return db.order.findUnique({
@@ -11,7 +21,7 @@ async function getOrder(id: string) {
   })
 }
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = apiLimit(async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -19,9 +29,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const order = await db.order.findUnique({
       where: { id },
       include: {
-        service: { include: { seller: { include: { profile: true } } } },
-        buyer: { include: { profile: true } },
-        seller: { include: { profile: true } },
+        service: { include: { seller: { select: { id: true, username: true, profile: { select: { displayName: true, avatarUrl: true, isVerified: true } } } } } },
+        buyer: { select: { id: true, username: true, profile: { select: { displayName: true, avatarUrl: true, isVerified: true } } } },
+        seller: { select: { id: true, username: true, profile: { select: { displayName: true, avatarUrl: true, isVerified: true } } } },
         statusHistory: { orderBy: { createdAt: 'asc' } },
         activities: { orderBy: { createdAt: 'asc' } },
         attachments: true,
@@ -37,10 +47,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
 // Accept order (seller)
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = apiLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -70,16 +80,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (action === 'deliver') {
       if (order.sellerId !== user.id) return err('FORBIDDEN', 403)
       if (order.status !== 'in_progress') return err('Invalid order state', 400)
-      const body = await req.json().catch(() => ({}))
+      const ct = requireJson(req)
+      if (ct) return ct
+      const { data: delivery, error: deliveryError } = await validateBody(deliverySchema, req)
+      if (deliveryError) return err(deliveryError, 422)
       const updated = await db.$transaction(async (tx) => {
         const o = await tx.order.update({
           where: { id },
           data: { status: 'delivered', deliveredAt: new Date() },
         })
-        await tx.orderStatusHistory.create({ data: { orderId: id, status: 'delivered', note: body.note || 'Delivered' } })
-        await tx.orderActivity.create({ data: { orderId: id, actorId: user.id, action: 'order_delivered', detail: body.note } })
-        if (body.attachmentUrl) {
-          await tx.orderAttachment.create({ data: { orderId: id, url: body.attachmentUrl, filename: body.filename || 'deliverable', fileType: body.fileType || 'file', uploadedBy: user.id } })
+        await tx.orderStatusHistory.create({ data: { orderId: id, status: 'delivered', note: delivery!.note || 'Delivered' } })
+        await tx.orderActivity.create({ data: { orderId: id, actorId: user.id, action: 'order_delivered', detail: delivery!.note } })
+        if (delivery!.attachmentUrl) {
+          await tx.orderAttachment.create({ data: { orderId: id, url: delivery!.attachmentUrl, filename: delivery!.filename || 'deliverable', fileType: delivery!.fileType || 'file', uploadedBy: user.id } })
         }
         return o
       })
@@ -128,4 +141,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})

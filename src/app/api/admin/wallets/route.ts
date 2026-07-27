@@ -1,8 +1,9 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination } from '@/lib/api'
+import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET(req: Request) {
+export const GET = adminLimit(async function GET(req: Request) {
   try {
     await requireAdmin()
     const { skip, limit, page } = parsePagination(req)
@@ -17,7 +18,13 @@ export async function GET(req: Request) {
         where: { OR: [{ username: { contains: search } }, { email: { contains: search } }] },
         select: { id: true },
       })
-      where.userId = { in: users.map((u) => u.id) }
+      const userIds = users.map((u: { id: string }) => u.id)
+      if (userIds.length === 0) {
+        // No matching users — return empty results
+        where.userId = '__no_match__'
+      } else {
+        where.userId = { in: userIds }
+      }
     }
 
     const [items, total] = await Promise.all([
@@ -35,4 +42,4 @@ export async function GET(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})

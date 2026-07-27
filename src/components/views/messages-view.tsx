@@ -5,7 +5,7 @@ import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { MessageSquare, ShieldCheck, Search, X } from 'lucide-react'
+import { MessageSquare, ShieldCheck, Search, X, Mail, MailOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { clsx } from 'clsx'
 
@@ -26,11 +26,9 @@ type Convo = {
 }
 
 export function MessagesView() {
-  const { setView } = useApp()
+  const { setView, convoFilter, convoSearch, setConvoFilter, setConvoSearch } = useApp()
   const [convos, setConvos] = useState<Convo[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -45,47 +43,75 @@ export function MessagesView() {
 
   useEffect(() => { load() }, [load])
 
-  const filtered = search.trim()
-    ? convos.filter((c) => {
-        const q = search.toLowerCase()
-        return (
-          c.other?.username?.toLowerCase().includes(q) ||
-          c.other?.displayName?.toLowerCase().includes(q) ||
-          c.lastMessage?.content?.toLowerCase().includes(q)
-        )
-      })
-    : convos
+  // Apply filter + search
+  const filtered = convos
+    .filter((c) => {
+      if (convoFilter === 'unread' && !c.unread) return false
+      return true
+    })
+    .filter((c) => {
+      if (!convoSearch.trim()) return true
+      const q = convoSearch.toLowerCase()
+      return (
+        c.other?.username?.toLowerCase().includes(q) ||
+        c.other?.displayName?.toLowerCase().includes(q) ||
+        c.lastMessage?.content?.toLowerCase().includes(q)
+      )
+    })
 
   return (
     <div className="px-4 pt-4 space-y-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-bold flex-1">Messages</h1>
-        <button
-          onClick={() => setShowSearch(!showSearch)}
-          className={clsx('h-9 w-9 rounded-full flex items-center justify-center transition', showSearch ? 'bg-primary text-primary-foreground' : 'hover:bg-accent')}
-        >
-          {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-        </button>
       </div>
 
       {/* Search bar */}
-      {showSearch && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="relative"
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          value={convoSearch}
+          onChange={(e) => setConvoSearch(e.target.value)}
+          placeholder="Search conversations…"
+          className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-3 text-sm outline-none focus:border-primary"
+        />
+        {convoSearch && (
+          <button onClick={() => setConvoSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setConvoFilter('all')}
+          className={clsx(
+            'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition',
+            convoFilter === 'all'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted/60 text-muted-foreground hover:bg-accent'
+          )}
         >
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            autoFocus
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations…"
-            className="w-full h-10 rounded-xl bg-muted/60 border border-border/40 pl-9 pr-3 text-sm outline-none focus:border-primary"
-          />
-        </motion.div>
-      )}
+          <MailOpen className="h-3.5 w-3.5" />
+          All
+        </button>
+        <button
+          onClick={() => setConvoFilter('unread')}
+          className={clsx(
+            'flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition',
+            convoFilter === 'unread'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted/60 text-muted-foreground hover:bg-accent'
+          )}
+        >
+          <Mail className="h-3.5 w-3.5" />
+          Unread
+          {convos.filter((c) => c.unread).length > 0 && (
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
+        </button>
+      </div>
 
       <div className="space-y-2">
         {loading
@@ -93,8 +119,8 @@ export function MessagesView() {
           : filtered.length === 0
           ? <div className="text-center py-16">
               <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">{search ? 'No conversations match your search' : 'No conversations yet'}</p>
-              {!search && <p className="text-xs text-muted-foreground mt-1">Start a chat by placing an order</p>}
+              <p className="text-sm text-muted-foreground">{convoSearch ? 'No conversations match your search' : convoFilter === 'unread' ? 'No unread conversations' : 'No conversations yet'}</p>
+              {!convoSearch && convoFilter === 'all' && <p className="text-xs text-muted-foreground mt-1">Start a chat by placing an order</p>}
             </div>
           : filtered.map((c) => (
               <motion.button
@@ -106,7 +132,7 @@ export function MessagesView() {
               >
                 <Card className={clsx('p-3 flex items-center gap-3', c.unread && 'border-primary/40 bg-primary/5')}>
                   <div className="relative h-12 w-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                    {c.other?.avatarUrl && <img src={c.other.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                    {c.other?.avatarUrl && <img src={c.other.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                     {c.unread && (
                       <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary border-2 border-card" />
                     )}

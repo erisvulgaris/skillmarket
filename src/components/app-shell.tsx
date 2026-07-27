@@ -1,16 +1,16 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useApp } from '@/lib/store'
 import { BottomNav } from '@/components/bottom-nav'
 import { TopBar } from '@/components/top-bar'
-import { OnboardingTour } from '@/components/onboarding-tour'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { ViewErrorBoundary } from '@/components/error-boundary'
 import { MarketplaceView } from '@/components/views/marketplace-view'
 import { WalletView } from '@/components/views/wallet-view'
 import { OrdersView } from '@/components/views/orders-view'
 import { MessagesView } from '@/components/views/messages-view'
 import { ProfileView } from '@/components/views/profile-view'
-import { AdminView } from '@/components/views/admin-view'
 import { ServiceDetailView } from '@/components/views/service-detail-view'
 import { OrderDetailView } from '@/components/views/order-detail-view'
 import { ConversationView } from '@/components/views/conversation-view'
@@ -25,16 +25,22 @@ import { SellerProfileView } from '@/components/views/seller-profile-view'
 import { DisputeView } from '@/components/views/dispute-view'
 import { SettingsView } from '@/components/views/settings-view'
 import { ActivityView } from '@/components/views/activity-view'
-import { AnalyticsView } from '@/components/views/analytics-view'
 import { CmsPageView } from '@/components/views/cms-page-view'
 import { HelpView } from '@/components/views/help-view'
 import { MyServicesView } from '@/components/views/my-services-view'
 import { CompareView } from '@/components/views/compare-view'
 import { AnimatePresence } from 'framer-motion'
 import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
+
+const AdminView = dynamic(() => import('@/components/views/admin-view').then(m => m.AdminView), { ssr: false })
+const AnalyticsView = dynamic(() => import('@/components/views/analytics-view').then(m => m.AnalyticsView), { ssr: false })
+const OnboardingTour = dynamic(() => import('@/components/onboarding-tour').then(m => m.OnboardingTour), { ssr: false })
 
 export function AppShell() {
-  const { view, user } = useApp()
+  const view = useApp(s => s.view)
+  const user = useApp(s => s.user)
+  const { prefersReduced } = useReducedMotion()
 
   const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute', 'settings', 'activity', 'analytics', 'cms-page', 'help', 'my-services', 'compare']
   const isFullScreen = fullScreenViews.includes(view)
@@ -44,40 +50,42 @@ export function AppShell() {
       {!isFullScreen && view !== 'admin' && <TopBar />}
       {view === 'admin' && null}
 
-      <main className="flex-1 w-full mx-auto max-w-md pb-24">
+      <main className="flex-1 w-full mx-auto max-w-md pb-28">
         <AnimatePresence mode="wait">
           <motion.div
             key={view}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: prefersReduced ? 1 : 0, y: prefersReduced ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: prefersReduced ? 1 : 0, y: prefersReduced ? 0 : -8 }}
+            transition={{ duration: prefersReduced ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            {view === 'marketplace' && <MarketplaceView />}
-            {view === 'wallet' && <WalletView />}
-            {view === 'orders' && <OrdersView />}
-            {view === 'messages' && <MessagesView />}
-            {view === 'profile' && <ProfileView />}
-            {view === 'admin' && user?.role === 'admin' && <AdminView />}
-            {view === 'saved' && <SavedView />}
-            {view === 'search' && <SearchView />}
-            {view === 'service-detail' && <ServiceDetailView />}
-            {view === 'order-detail' && <OrderDetailView />}
-            {view === 'conversation' && <ConversationView />}
-            {view === 'create-service' && <CreateServiceView />}
-            {view === 'referrals' && <ReferralsView />}
-            {view === 'notifications' && <NotificationsView />}
-            {view === 'transfer' && <TransferView />}
-            {view === 'buy-credits' && <BuyCreditsView />}
-            {view === 'seller-profile' && <SellerProfileView />}
-            {view === 'dispute' && <DisputeView />}
-            {view === 'settings' && <SettingsView />}
-            {view === 'activity' && <ActivityView />}
-            {view === 'analytics' && <AnalyticsView />}
-            {view === 'cms-page' && <CmsPageView />}
-            {view === 'help' && <HelpView />}
-            {view === 'my-services' && <MyServicesView />}
-            {view === 'compare' && <CompareView />}
+            <ViewErrorBoundary key={view} label={view.replace(/-/g, ' ')}>
+              {view === 'marketplace' && <MarketplaceView />}
+              {view === 'wallet' && <WalletView />}
+              {view === 'orders' && <OrdersView />}
+              {view === 'messages' && <MessagesView />}
+              {view === 'profile' && <ProfileView />}
+              {view === 'admin' && user?.role === 'admin' && <AdminView />}
+              {view === 'saved' && <SavedView />}
+              {view === 'search' && <SearchView />}
+              {view === 'service-detail' && <ServiceDetailView />}
+              {view === 'order-detail' && <OrderDetailView />}
+              {view === 'conversation' && <ConversationView />}
+              {view === 'create-service' && <CreateServiceView />}
+              {view === 'referrals' && <ReferralsView />}
+              {view === 'notifications' && <NotificationsView />}
+              {view === 'transfer' && <TransferView />}
+              {view === 'buy-credits' && <BuyCreditsView />}
+              {view === 'seller-profile' && <SellerProfileView />}
+              {view === 'dispute' && <DisputeView />}
+              {view === 'settings' && <SettingsView />}
+              {view === 'activity' && <ActivityView />}
+              {view === 'analytics' && <AnalyticsView />}
+              {view === 'cms-page' && <CmsPageView />}
+              {view === 'help' && <HelpView />}
+              {view === 'my-services' && <MyServicesView />}
+              {view === 'compare' && <CompareView />}
+            </ViewErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>

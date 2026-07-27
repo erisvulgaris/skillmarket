@@ -56,7 +56,7 @@ export function MyServicesView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('profile')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">My Services</h1>
@@ -138,7 +138,7 @@ export function MyServicesView() {
                     <div className="flex items-center gap-3">
                       <div className="h-14 w-14 rounded-xl bg-muted overflow-hidden flex-shrink-0">
                         {s.images[0] ? (
-                          <img src={s.images[0]} alt="" className="h-full w-full object-cover" />
+                          <img src={s.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-xl">🎨</div>
                         )}

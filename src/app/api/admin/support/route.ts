@@ -1,8 +1,9 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination } from '@/lib/api'
+import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET(req: Request) {
+export const GET = adminLimit(async function GET(req: Request) {
   try {
     await requireAdmin()
     const { skip, limit, page } = parsePagination(req)
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     ])
 
     return ok({
-      items: items.map((t) => ({
+      items: items.map((t: any) => ({
         ...t,
         user: {
           id: t.user.id,
@@ -37,4 +38,4 @@ export async function GET(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})

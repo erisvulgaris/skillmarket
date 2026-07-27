@@ -377,3 +377,40 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .stagger-item {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .slide-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .fade-scale {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .ticker {
+    animation: none !important;
+  }
+
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  .animate-spin {
+    animation: none !important;
+  }
+}

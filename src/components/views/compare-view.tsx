@@ -78,7 +78,7 @@ export function CompareView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('marketplace')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('marketplace')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">Compare Services</h1>
@@ -98,7 +98,7 @@ export function CompareView() {
               {services.map((s) => (
                 <div key={s.id} className="text-center">
                   <div className="h-16 w-full rounded-xl bg-muted overflow-hidden mb-1">
-                    {s.images[0] ? <img src={s.images[0]} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-2xl">🎨</div>}
+                    {s.images[0] ? <img src={s.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="h-full w-full flex items-center justify-center text-2xl">🎨</div>}
                   </div>
                   <p className="text-[10px] font-semibold line-clamp-2 leading-tight">{s.title}</p>
                 </div>

@@ -1,14 +1,23 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError } from '@/lib/api'
+import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
+import { z } from 'zod'
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+const schema = z.object({
+  action: z.string(),
+})
+
+export const PATCH = adminLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
-    const body = await req.json()
-    const { action } = body as { action: string }
+    const ct = requireJson(req); if (ct) return ct
+    const { data, error } = await validateBody(schema, req)
+    if (error) return err(error, 422)
+    const { action } = data!
     // action: feature | unfeature | hide | activate | remove
 
     const service = await db.service.findUnique({ where: { id } })
@@ -27,4 +36,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
-}
+})

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useApp } from '@/lib/store'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/use-reduced-motion'
 import { Coins, Store, Wallet, MessageSquare, ShieldCheck, Sparkles, X } from 'lucide-react'
 
 const STEPS = [
@@ -51,28 +52,94 @@ const STEPS = [
 ]
 
 export function OnboardingTour() {
-  const { user, setView } = useApp()
+  const { user } = useApp()
+  const { prefersReduced } = useReducedMotion()
   const [step, setStep] = useState(0)
   const [dismissed, setDismissed] = useState(false)
-  const seen = typeof window !== 'undefined' && localStorage.getItem('sm_onboarding_seen')
+  let seen = false
+  try { seen = typeof window !== 'undefined' && !!localStorage.getItem('sm_onboarding_seen') } catch {}
   const visible = !!user && !seen && !dismissed
+  const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  const [mounted, setMounted] = useState(false)
 
-  const close = () => {
-    localStorage.setItem('sm_onboarding_seen', 'true')
+  useEffect(() => {
+    setMounted(true)
+    if (visible) {
+      triggerRef.current = document.activeElement as HTMLElement
+    }
+  }, [visible])
+
+  // Focus trap for keyboard users
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!visible || !containerRef.current) return
+    const focusable = containerRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    if (e.key === 'Escape') {
+      close()
+    }
+  }, [visible])
+
+  useEffect(() => {
+    if (visible) {
+      document.addEventListener('keydown', handleKeyDown)
+      // Focus the first focusable element in modal
+      setTimeout(() => {
+        const focusable = containerRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable && focusable.length > 0) {
+          focusable[0].focus()
+        }
+      }, 100)
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [visible, handleKeyDown])
+
+  // Return focus to trigger on close
+  useEffect(() => {
+    if (!visible && triggerRef.current) {
+      triggerRef.current.focus()
+      triggerRef.current = null
+    }
+  }, [visible])
+
+  const close = useCallback(() => {
+    try { localStorage.setItem('sm_onboarding_seen', 'true') } catch {}
     setDismissed(true)
-  }
+  }, [])
 
-  const next = () => {
+  const next = useCallback(() => {
     if (step < STEPS.length - 1) {
       setStep(step + 1)
     } else {
       close()
     }
-  }
+  }, [step, close])
 
-  const skip = () => close()
+  const skip = useCallback(() => close(), [close])
 
-  if (!visible) return null
+  if (!visible || !mounted) return null
 
   const current = STEPS[step]
   const Icon = current.icon
@@ -86,18 +153,23 @@ export function OnboardingTour() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
         onClick={close}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Onboarding tour"
+        ref={containerRef}
       >
         <motion.div
           initial={{ y: 100, opacity: 0, scale: 0.95 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          transition={prefersReduced ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-card rounded-3xl p-6 max-w-sm w-full space-y-5 shadow-2xl"
+          className="bg-card rounded-3xl p-6 max-w-sm w-full space-y-5 shadow-2xl relative"
         >
           {/* Skip button */}
           <button
             onClick={skip}
+            aria-label="Close onboarding"
             className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground"
           >
             <X className="h-4 w-4" />

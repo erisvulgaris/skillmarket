@@ -1,6 +1,8 @@
 import { db } from '@/lib/db'
 import { ok, err, handleError, safeJsonParse, validateBody } from '@/lib/api'
 import { getCurrentUser } from '@/lib/auth'
+import { setCors } from '@/lib/cors'
+import { apiLimit } from '@/lib/rate-limit'
 import { writeAudit } from '@/lib/audit'
 import { z } from 'zod'
 
@@ -17,7 +19,15 @@ const updateSchema = z.object({
   availability: z.enum(['available', 'paused', 'sold_out']).optional(),
 })
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+function withCors<T extends (...args: any[]) => any>(handler: T): T {
+  return (async (...args: any[]) => {
+    const res = await handler(...args)
+    if (res instanceof Response) Object.entries(setCors()).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }) as T
+}
+
+export const GET = withCors(apiLimit(async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const service = await db.service.findUnique({
@@ -36,7 +46,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     })
     if (!service || service.deletedAt) return err('NOT_FOUND', 404)
 
-    // increment views
     await db.service.update({ where: { id }, data: { views: { increment: 1 } } })
 
     const user = await getCurrentUser()
@@ -79,10 +88,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   } catch (e) {
     return handleError(e)
   }
-}
+}))
 
-// Update service (seller only)
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withCors(apiLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -113,4 +121,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
+}))
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: setCors() })
 }

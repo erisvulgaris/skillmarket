@@ -2,9 +2,11 @@ import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
-export async function GET() {
+export const GET = adminLimit(async function GET() {
   try {
     await requireAdmin()
     const settings = await db.setting.findMany({ orderBy: { key: 'asc' } })
@@ -12,7 +14,7 @@ export async function GET() {
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
 const schema = z.object({
   key: z.string(),
@@ -20,9 +22,10 @@ const schema = z.object({
   type: z.string().default('string'),
 })
 
-export async function PATCH(req: Request) {
+export const PATCH = adminLimit(async function PATCH(req: Request) {
   try {
     const admin = await requireAdmin()
+    const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(schema, req)
     if (error) return err(error, 422)
     const setting = await db.setting.upsert({
@@ -35,4 +38,4 @@ export async function PATCH(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-}
+})

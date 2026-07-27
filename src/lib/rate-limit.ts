@@ -9,7 +9,8 @@ interface RateLimitOptions {
   keyFn?: (req: Request) => string
 }
 
-const DEFAULT_KEY = (req: Request) => {
+const DEFAULT_KEY = (req: Request | undefined) => {
+  if (!req) return 'unknown'
   const fwd = req.headers.get('x-forwarded-for')
   const ip = fwd ? fwd.split(',')[0].trim() : 'unknown'
   return ip
@@ -18,9 +19,9 @@ const DEFAULT_KEY = (req: Request) => {
 export function rateLimit(options: RateLimitOptions) {
   return function <T extends (...args: any[]) => any>(handler: T): T {
     return (async (...args: Parameters<T>) => {
-      const req = args[0] as Request
-      const keyBase = options.keyFn ? options.keyFn(req) : DEFAULT_KEY(req)
-      const route = new URL(req.url).pathname
+      const req = args[0] as Request | undefined
+      const keyBase = options.keyFn ? options.keyFn(req as Request) : DEFAULT_KEY(req)
+      const route = req ? new URL(req.url).pathname : 'unknown'
       const key = `${route}:${keyBase}`
 
       const now = Date.now()
@@ -65,3 +66,4 @@ export const strictLimit = rateLimit({ windowMs: 60 * 1000, max: 10 }) // login,
 export const transferLimit = rateLimit({ windowMs: 60 * 1000, max: 20 }) // transfers, purchases
 export const messageLimit = rateLimit({ windowMs: 60 * 1000, max: 60 }) // messaging
 export const apiLimit = rateLimit({ windowMs: 60 * 1000, max: 120 }) // general
+export const adminLimit = rateLimit({ windowMs: 60 * 1000, max: 30 }) // admin endpoints

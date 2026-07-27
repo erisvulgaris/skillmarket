@@ -46,7 +46,7 @@ export function DisputeView() {
     <div className="min-h-screen slide-enter">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('order-detail', { id: orderId })} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('order-detail', { id: orderId })} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">File a Dispute</h1>

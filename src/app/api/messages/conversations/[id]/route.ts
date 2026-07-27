@@ -12,6 +12,11 @@ const sendSchema = z.object({
   attachmentName: z.string().optional(),
 })
 
+const editSchema = z.object({
+  messageId: z.string().min(1),
+  content: z.string().min(1).max(5000),
+})
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
@@ -102,3 +107,78 @@ export const POST = messageLimit(async function POST(req: Request, { params }: {
     return handleError(e)
   }
 })
+
+// PATCH — Edit a message (within 5 minutes of sending)
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return err('UNAUTHORIZED', 401)
+    const { id } = await params
+
+    const member = await db.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId: id, userId: user.id } },
+    })
+    if (!member) return err('FORBIDDEN', 403)
+
+    const { data, error } = await validateBody(editSchema, req)
+    if (error) return err(error, 422)
+
+    const message = await db.message.findUnique({
+      where: { id: data!.messageId },
+    })
+    if (!message) return err('NOT_FOUND', 404)
+    if (message.senderId !== user.id) return err('FORBIDDEN', 403)
+
+    // Must be within 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    if (message.createdAt < fiveMinutesAgo) return err('Edit window expired — messages can only be edited within 5 minutes', 403)
+
+    const updated = await db.message.update({
+      where: { id: data!.messageId },
+      data: {
+        content: data!.content,
+        editedAt: new Date(),
+      },
+    })
+
+    return ok({ message: updated })
+  } catch (e) {
+    return handleError(e)
+  }
+}
+
+// DELETE — Soft-delete a message
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return err('UNAUTHORIZED', 401)
+    const { id } = await params
+
+    const member = await db.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId: id, userId: user.id } },
+    })
+    if (!member) return err('FORBIDDEN', 403)
+
+    const url = new URL(req.url)
+    const messageId = url.searchParams.get('messageId')
+    if (!messageId) return err('messageId is required', 422)
+
+    const message = await db.message.findUnique({
+      where: { id: messageId },
+    })
+    if (!message) return err('NOT_FOUND', 404)
+    if (message.senderId !== user.id) return err('FORBIDDEN', 403)
+
+    const updated = await db.message.update({
+      where: { id: messageId },
+      data: {
+        content: '[deleted]',
+        deletedAt: new Date(),
+      },
+    })
+
+    return ok({ message: updated })
+  } catch (e) {
+    return handleError(e)
+  }
+}

@@ -8,7 +8,9 @@ export async function GET() {
       orderBy: { sortOrder: 'asc' },
       include: { children: { orderBy: { sortOrder: 'asc' } } },
     })
-    return ok({ categories: cats })
+    const res = ok({ categories: cats })
+    res.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
+    return res
   } catch (e) {
     return handleError(e)
   }

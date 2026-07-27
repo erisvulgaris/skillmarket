@@ -19,14 +19,14 @@ export function SettingsView() {
   const [section, setSection] = useState<'menu' | 'pin' | 'password' | 'profile' | '2fa' | 'notifications'>('menu')
   const [soundOn, setSoundOn] = useState(() => {
     if (typeof window === 'undefined') return true
-    return (localStorage.getItem('sm_message_sound') || 'on') === 'on'
+    try { return (localStorage.getItem('sm_message_sound') || 'on') === 'on' } catch { return true }
   })
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => section === 'menu' ? setView('profile') : setSection('menu')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => section === 'menu' ? setView('profile') : setSection('menu')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">
@@ -85,8 +85,9 @@ export function SettingsView() {
                   label="Message Sound"
                   desc="Play a beep on new messages"
                   onClick={() => {
-                    const current = localStorage.getItem('sm_message_sound') || 'on'
-                    localStorage.setItem('sm_message_sound', current === 'on' ? 'off' : 'on')
+                    let current = 'on'
+                    try { current = localStorage.getItem('sm_message_sound') || 'on' } catch {}
+                    try { localStorage.setItem('sm_message_sound', current === 'on' ? 'off' : 'on') } catch {}
                     setSoundOn(current === 'off')
                     toast.success(`Message sound ${current === 'off' ? 'enabled' : 'disabled'}`)
                   }}
@@ -134,7 +135,7 @@ export function SettingsView() {
 
 function SettingRow({ icon, label, desc, onClick, badge, trailing }: { icon: React.ReactNode; label: string; desc: string; onClick: () => void; badge?: string; trailing?: React.ReactNode }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 p-3.5 active:bg-accent/50 transition text-left">
+    <button onClick={onClick} aria-label={label} className="w-full flex items-center gap-3 p-3.5 active:bg-accent/50 transition text-left">
       <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -150,7 +151,12 @@ function SettingRow({ icon, label, desc, onClick, badge, trailing }: { icon: Rea
 
 function ToggleSwitch({ on }: { on: boolean }) {
   return (
-    <span className={`relative h-6 w-11 rounded-full transition ${on ? 'bg-primary' : 'bg-muted'}`}>
+    <span
+      role="switch"
+      aria-checked={on}
+      aria-label="Toggle switch"
+      className={`relative h-6 w-11 rounded-full transition ${on ? 'bg-primary' : 'bg-muted'}`}
+    >
       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${on ? 'left-5' : 'left-0.5'}`} />
     </span>
   )
@@ -344,7 +350,7 @@ function EditProfileSection({ onSaved }: { onSaved: () => void }) {
           className="relative h-24 w-24 rounded-full overflow-hidden bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-3xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition"
         >
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
             user?.username?.[0]?.toUpperCase() || '?'
           )}
@@ -530,7 +536,7 @@ function TwoFactorSection({ enabled, onChanged }: { enabled: boolean; onChanged:
         </div>
         <div className="flex justify-center">
           <div className="p-3 bg-white rounded-2xl">
-            <img src={qrUrl} alt="2FA QR Code" className="h-48 w-48" />
+            <img src={qrUrl} alt="2FA QR Code" className="h-48 w-48" loading="lazy" decoding="async" />
           </div>
         </div>
         {secret && (
@@ -630,6 +636,7 @@ function NotificationPrefsSection() {
           </div>
           <button
             onClick={() => toggle(t.key)}
+            aria-label={`${t.label} toggle`}
             className={`relative h-6 w-11 rounded-full transition flex-shrink-0 ${prefs[t.key] ? 'bg-primary' : 'bg-muted'}`}
           >
             <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${prefs[t.key] ? 'left-5' : 'left-0.5'}`} />

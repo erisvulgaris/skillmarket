@@ -14,7 +14,9 @@ const tabs = [
 ] as const
 
 export function BottomNav() {
-  const { view, setView, unreadMessages } = useApp()
+  const view = useApp(s => s.view)
+  const setView = useApp(s => s.setView)
+  const unreadMessages = useApp(s => s.unreadMessages)
 
   const activeTab = (() => {
     if (view === 'marketplace' || view === 'service-detail' || view === 'search' || view === 'saved' || view === 'seller-profile') return 'marketplace'
@@ -27,7 +29,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 glass border-t border-border/40 pb-safe">
-      <div className="max-w-md mx-auto px-2 h-16 flex items-center justify-around relative">
+      <div className="max-w-md mx-auto px-2 h-20 flex items-center justify-around relative">
         {tabs.map((tab, idx) => {
           const active = activeTab === tab.view
           const badge = tab.view === 'messages' ? unreadMessages : undefined
@@ -46,7 +48,7 @@ export function BottomNav() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setView('create-service')}
-          className="absolute -top-5 left-1/2 -translate-x-1/2 h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center fab-shadow"
+          className="absolute -top-5 left-1/2 -translate-x-1/2 h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center fab-shadow z-10"
           aria-label="Create service"
         >
           <Plus className="h-6 w-6" strokeWidth={2.5} />

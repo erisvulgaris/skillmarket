@@ -1,9 +1,18 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError } from '@/lib/api'
+import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
+import { z } from 'zod'
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+const schema = z.object({
+  action: z.string(),
+  reason: z.string().optional(),
+  value: z.unknown().optional(),
+})
+
+export const GET = adminLimit(async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
@@ -18,19 +27,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     })
     if (!user) return err('NOT_FOUND', 404)
     await writeAudit({ actorId: admin.id, action: 'admin_view_user', entityType: 'user', entityId: id })
-    return ok({ user })
+    const { passwordHash, twoFactorSecret, transactionPinHash, ...safeUser } = user
+    return ok({ user: safeUser })
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = adminLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
-    const body = await req.json()
-    const { action, reason } = body as { action: string; reason?: string }
-    // action: suspend | activate | ban | verify | unverify | reset_pin | make_admin | remove_admin
+    const ct = requireJson(req); if (ct) return ct
+    const { data, error } = await validateBody(schema, req)
+    if (error) return err(error, 422)
+    const { action, reason, value } = data!
+
+    const ALLOWED = ['suspend', 'activate', 'ban', 'verify', 'unverify', 'reset_pin', 'make_admin', 'remove_admin', 'set_commission']
+    if (!ALLOWED.includes(action)) return err('UNKNOWN_ACTION', 400)
 
     const user = await db.user.findUnique({ where: { id } })
     if (!user) return err('NOT_FOUND', 404)
@@ -43,6 +57,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (action === 'reset_pin') update.transactionPinHash = null
     if (action === 'make_admin') update.role = 'admin'
     if (action === 'remove_admin') update.role = 'user'
+    if (action === 'set_commission') {
+      const rate = value as number
+      if (typeof rate !== 'number' || isNaN(rate) || rate < 0 || rate > 95) {
+        return err('INVALID_COMMISSION_RATE', 400)
+      }
+      update.commissionRate = rate
+    }
 
     if (action === 'verify' || action === 'unverify') {
       await db.profile.update({ where: { userId: id }, data: { isVerified: action === 'verify', verificationType: action === 'verify' ? 'identity' : null } })
@@ -64,4 +85,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
-}
+})

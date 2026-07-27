@@ -38,9 +38,7 @@ export async function POST() {
     await writeAudit({ actorId: user.id, action: '2fa_setup_initiated', entityType: 'user', entityId: user.id })
 
     return ok({
-      secret: secret.base32,
       qrUrl: dataUrl,
-      uri,
     })
   } catch (e) {
     return handleError(e)

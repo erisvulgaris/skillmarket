@@ -1,8 +1,10 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, handleError, formatSC } from '@/lib/api'
+import { ok, handleError } from '@/lib/api'
+import { formatSC } from '@/components/sc-badge'
+import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET() {
+export const GET = adminLimit(async function GET() {
   try {
     await requireAdmin()
 
@@ -111,7 +113,7 @@ export async function GET() {
       by: ['status'],
       _count: { status: true },
     })
-    const orderDistribution = orderStatuses.map((s) => ({ status: s.status, count: s._count.status }))
+    const orderDistribution = orderStatuses.map((s: { status: string; _count: { status: number } }) => ({ status: s.status, count: s._count.status }))
 
     // Top services by views
     const topServices = await db.service.findMany({
@@ -128,10 +130,10 @@ export async function GET() {
       take: 20,
     })
     const topSellersSorted = topSellers
-      .filter((u) => u.wallet && u.wallet.lifetimeEarned > 0)
-      .sort((a, b) => (b.wallet?.lifetimeEarned || 0) - (a.wallet?.lifetimeEarned || 0))
+      .filter((u: any) => u.wallet && u.wallet.lifetimeEarned > 0)
+      .sort((a: any, b: any) => (b.wallet?.lifetimeEarned || 0) - (a.wallet?.lifetimeEarned || 0))
       .slice(0, 5)
-      .map((u) => ({
+      .map((u: any) => ({
         id: u.id,
         username: u.username,
         displayName: u.profile?.displayName,
@@ -145,8 +147,8 @@ export async function GET() {
       where: { status: 'succeeded', createdAt: { gte: thirtyDaysAgo } },
       select: { amountCredits: true, amountFiat: true, createdAt: true },
     })
-    const purchaseVolume = purchases30d.reduce((s, p) => s + p.amountCredits, 0)
-    const fiatVolume = purchases30d.reduce((s, p) => s + p.amountFiat, 0)
+    const purchaseVolume = purchases30d.reduce((s: number, p: { amountCredits: number }) => s + p.amountCredits, 0)
+    const fiatVolume = purchases30d.reduce((s: number, p: { amountFiat: number }) => s + p.amountFiat, 0)
 
     // Category distribution
     const categories = await db.service.groupBy({
@@ -155,14 +157,14 @@ export async function GET() {
       _count: { categoryId: true },
     })
     const categoryNames = await db.category.findMany({ select: { id: true, name: true, icon: true } })
-    const categoryMap = new Map(categoryNames.map((c) => [c.id, c]))
+    const categoryMap = new Map<string, any>(categoryNames.map((c: any) => [c.id, c]))
     const categoryDistribution = categories
-      .map((c) => ({
-        name: categoryMap.get(c.categoryId)?.name || 'Uncategorized',
-        icon: categoryMap.get(c.categoryId)?.icon || '📁',
+      .map((c: any) => ({
+        name: categoryMap.get(c.categoryId || '')?.name || 'Uncategorized',
+        icon: categoryMap.get(c.categoryId || '')?.icon || '📁',
         count: c._count.categoryId,
       }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a: { count: number }, b: { count: number }) => b.count - a.count)
 
     return ok({
       kpis: {
@@ -202,4 +204,4 @@ export async function GET() {
   } catch (e) {
     return handleError(e)
   }
-}
+})

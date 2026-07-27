@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
@@ -13,7 +14,8 @@ import { clsx } from 'clsx'
 import { formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { EnterpriseDashboard } from '@/components/views/enterprise-dashboard'
+
+const EnterpriseDashboard = dynamic(() => import('@/components/views/enterprise-dashboard').then(m => m.EnterpriseDashboard), { ssr: false })
 
 type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'support' | 'settings' | 'flags' | 'cms' | 'broadcast'
 
@@ -225,7 +227,7 @@ export function AdminView() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('profile')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <p className="text-sm font-bold flex items-center gap-1.5 flex-1">

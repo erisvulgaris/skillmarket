@@ -49,7 +49,7 @@ export function ReferralsView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('profile')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">Refer & Earn</h1>
@@ -98,17 +98,29 @@ export function ReferralsView() {
         {/* Referral list */}
         <div className="space-y-2">
           <h3 className="text-sm font-bold">Your referrals</h3>
-          {loading ? (
+            {loading ? (
             Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)
           ) : data?.referrals?.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-sm text-muted-foreground">No referrals yet. Share your code to start earning!</p>
-            </Card>
+            <div className="text-center py-10 space-y-3">
+              <div className="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center mx-auto">
+                <Users className="h-8 w-8 text-primary/40" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">No referrals yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Share your referral code with friends and earn 50 SC each!</p>
+              </div>
+              <button
+                onClick={share}
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-95 transition"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Share your link
+              </button>
+            </div>
           ) : (
             data?.referrals?.map((r: any) => (
               <Card key={r.id} className="p-3 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                  {r.profile?.avatarUrl && <img src={r.profile.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                  {r.profile?.avatarUrl && <img src={r.profile.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold">@{r.username}</p>

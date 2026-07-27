@@ -62,19 +62,23 @@ export function SavedView() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="text-center py-16 space-y-3"
           >
-            <div className="inline-flex h-16 w-16 rounded-2xl bg-muted items-center justify-center mb-4">
-              <Bookmark className="h-8 w-8 text-muted-foreground/50" />
+            <div className="inline-flex h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center mx-auto">
+              <Bookmark className="h-10 w-10 text-primary/40" />
             </div>
-            <p className="text-sm font-semibold text-muted-foreground">No saved services yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Bookmark services to find them here</p>
-            <button
-              onClick={() => setView('marketplace')}
-              className="mt-4 text-sm font-semibold text-primary"
-            >
-              Browse services →
-            </button>
+            <div>
+              <p className="text-base font-semibold text-foreground">No saved services yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Bookmark services you like to find them here later</p>
+            </div>
+            <div className="pt-2">
+              <button
+                onClick={() => setView('marketplace')}
+                className="inline-flex items-center h-10 px-5 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-95 transition shadow-lg shadow-primary/20"
+              >
+                Browse services →
+              </button>
+            </div>
           </motion.div>
         ) : (
           <div className="space-y-2">
@@ -93,7 +97,7 @@ export function SavedView() {
                   <Card className="p-2.5 flex items-center gap-3 pr-10">
                     <div className="h-14 w-14 rounded-xl bg-muted overflow-hidden flex-shrink-0">
                       {service.images[0] ? (
-                        <img src={service.images[0]} alt="" className="h-full w-full object-cover" />
+                        <img src={service.images[0]} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-2xl">🎨</div>
                       )}

@@ -197,7 +197,7 @@ export function TransferView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('wallet')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('wallet')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">SkillCredits Transfer</h1>
@@ -246,7 +246,7 @@ export function TransferView() {
                 {preview && (
                   <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50">
                     <div className="h-12 w-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
-                      {preview.avatarUrl && <img src={preview.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                      {preview.avatarUrl && <img src={preview.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
@@ -292,7 +292,7 @@ export function TransferView() {
                 <p className="text-xs text-muted-foreground">Share this code to receive instant transfers</p>
                 {qrUrl ? (
                   <div className="inline-block p-3 bg-white rounded-2xl">
-                    <img src={qrUrl} alt="My QR" className="h-48 w-48" />
+                    <img src={qrUrl} alt="My QR" className="h-48 w-48" loading="lazy" decoding="async" />
                   </div>
                 ) : (
                   <div className="h-48 w-48 mx-auto bg-muted rounded-2xl animate-pulse" />

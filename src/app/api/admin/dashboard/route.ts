@@ -1,8 +1,9 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
+import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET() {
+export const GET = adminLimit(async function GET() {
   try {
     await requireAdmin()
     const [
@@ -91,7 +92,7 @@ export async function GET() {
         walletReserved: walletBalances._sum.reservedBalance || 0,
       },
       dailyTransfers,
-      recentActivity: recentActivity.map((a) => ({
+      recentActivity: recentActivity.map((a: any) => ({
         id: a.id,
         action: a.action,
         entityType: a.entityType,
@@ -103,4 +104,4 @@ export async function GET() {
   } catch (e) {
     return handleError(e)
   }
-}
+})

@@ -1,16 +1,57 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { setCors } from '@/lib/cors'
+
+// Error rate monitoring (CHANGELOG 088)
+const errorCounts = new Map<string, { count: number; lastReset: number }>()
+const ERROR_WINDOW_MS = 60_000 // 1 minute window
+
+export function getErrorStats() {
+  const now = Date.now()
+  const stats: Record<string, number> = {}
+  for (const [key, val] of errorCounts) {
+    if (now - val.lastReset > ERROR_WINDOW_MS) {
+      errorCounts.delete(key)
+      continue
+    }
+    stats[key] = val.count
+  }
+  return stats
+}
+
+function trackError(message: string) {
+  const now = Date.now()
+  const entry = errorCounts.get(message)
+  if (!entry || now - entry.lastReset > ERROR_WINDOW_MS) {
+    errorCounts.set(message, { count: 1, lastReset: now })
+  } else {
+    entry.count++
+  }
+}
+
+// Periodic cleanup of stale error entries (every 5 minutes)
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now()
+    for (const [key, val] of errorCounts) {
+      if (now - val.lastReset > ERROR_WINDOW_MS) {
+        errorCounts.delete(key)
+      }
+    }
+  }, 300_000).unref?.()
+}
 
 export function ok(data: unknown, status = 200) {
-  return NextResponse.json({ success: true, data }, { status })
+  return NextResponse.json({ success: true, data }, { status, headers: setCors() })
 }
 
 export function err(message: string, status = 400, extra?: Record<string, unknown>) {
-  return NextResponse.json({ success: false, error: message, ...extra }, { status })
+  return NextResponse.json({ success: false, error: message, ...extra }, { status, headers: setCors() })
 }
 
 export function handleError(e: unknown) {
   const message = e instanceof Error ? e.message : 'Unknown error'
+  trackError(message)
   const known = [
     'UNAUTHORIZED',
     'FORBIDDEN',
@@ -20,6 +61,7 @@ export function handleError(e: unknown) {
     'RECEIVER_WALLET_NOT_FOUND',
     'SENDER_WALLET_FROZEN',
     'RECEIVER_WALLET_FROZEN',
+    'SELLER_WALLET_FROZEN',
     'INSUFFICIENT_BALANCE',
     'SENDER_INACTIVE',
     'RECEIVER_INACTIVE',
@@ -33,6 +75,13 @@ export function handleError(e: unknown) {
     'CANNOT_REVIEW',
     'ORDER_NOT_DELIVERABLE',
     'INVALID_CREDENTIALS',
+    'RAZORPAY_KEY_NOT_FOUND',
+    'RAZORPAY_API_ERROR',
+    'CANNOT_DELETE_LAST_ACTIVE_KEY',
+    'UNKNOWN_ACTION',
+    'CANNOT_MODIFY_SELF',
+    'INVALID_ROLE',
+    'INVALID_COMMISSION_RATE',
   ]
   if (known.includes(message)) {
     const status =
@@ -40,6 +89,8 @@ export function handleError(e: unknown) {
       message === 'FORBIDDEN' ? 403 :
       message === 'NOT_FOUND' ? 404 :
       message === 'ALREADY_EXISTS' ? 409 :
+      message === 'RAZORPAY_KEY_NOT_FOUND' || message === 'CANNOT_DELETE_LAST_ACTIVE_KEY' ? 503 :
+      message === 'UNKNOWN_ACTION' || message === 'INVALID_ROLE' || message === 'INVALID_COMMISSION_RATE' || message === 'CANNOT_MODIFY_SELF' ? 400 :
       400
     return err(message, status)
   }
@@ -80,9 +131,22 @@ export async function validateBody<T>(schema: z.ZodType<T>, req: Request): Promi
     return { data }
   } catch (e) {
     if (e instanceof z.ZodError) {
-      const issues = (e.issues || e.errors || []) as any[]
+      const issues = (e.issues || []) as any[]
       return { error: issues.map((x) => `${(x.path || []).join('.')}: ${x.message}`).join('; ') }
     }
     return { error: 'Invalid request body' }
   }
+}
+
+// Response timing (CHANGELOG 087) — wrap any handler to add X-Response-Time header
+export function withResponseTiming<T extends (...args: any[]) => Promise<Response>>(handler: T): T {
+  return (async (...args: any[]) => {
+    const start = performance.now()
+    const res = await handler(...args)
+    const elapsed = Math.round((performance.now() - start) * 100) / 100
+    if (res instanceof Response) {
+      res.headers.set('X-Response-Time', `${elapsed}ms`)
+    }
+    return res
+  }) as T
 }

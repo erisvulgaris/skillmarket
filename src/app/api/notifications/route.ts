@@ -1,8 +1,18 @@
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, parsePagination } from '@/lib/api'
+import { setCors } from '@/lib/cors'
+import { apiLimit } from '@/lib/rate-limit'
 
-export async function GET(req: Request) {
+function withCors<T extends (...args: any[]) => any>(handler: T): T {
+  return (async (...args: any[]) => {
+    const res = await handler(...args)
+    if (res instanceof Response) Object.entries(setCors()).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }) as T
+}
+
+export const GET = withCors(apiLimit(async function GET(req: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -20,4 +30,8 @@ export async function GET(req: Request) {
   } catch (e) {
     return handleError(e)
   }
+}))
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: setCors() })
 }

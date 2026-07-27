@@ -44,10 +44,11 @@ export function ServiceDetailView() {
   useEffect(() => {
     if (id) {
       try {
-        const ids: string[] = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]')
+        let ids: string[] = []
+        try { ids = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]') } catch {}
         const filtered = ids.filter((x) => x !== id)
         filtered.unshift(id)
-        localStorage.setItem('sm_recently_viewed', JSON.stringify(filtered.slice(0, 10)))
+        try { localStorage.setItem('sm_recently_viewed', JSON.stringify(filtered.slice(0, 10))) } catch {}
       } catch {}
     }
   }, [id])
@@ -116,12 +117,43 @@ export function ServiceDetailView() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="pb-32">
+        {/* Image skeleton */}
         <Skeleton className="aspect-video w-full rounded-none" />
-        <div className="px-4 space-y-3">
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-20 w-full" />
+        <div className="px-4 pt-4 space-y-5">
+          {/* Title + price skeleton */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-7 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+            <div className="flex-shrink-0 space-y-2">
+              <Skeleton className="h-8 w-20 rounded-xl" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+          {/* Seller card skeleton */}
+          <Skeleton className="h-16 w-full rounded-2xl" />
+          {/* Description skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          {/* Package skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="h-28 w-full rounded-2xl" />
+            <Skeleton className="h-28 w-full rounded-2xl" />
+          </div>
+          {/* Reviews skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-20 w-full rounded-2xl" />
+          </div>
         </div>
       </div>
     )
@@ -137,13 +169,14 @@ export function ServiceDetailView() {
       <div className="relative aspect-video bg-muted">
         {data.images.length > 0 ? (
           <>
-            <img src={data.images[activeImage]} alt={data.title} className="h-full w-full object-cover" />
+            <img src={data.images[activeImage]} alt={data.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
             {data.images.length > 1 && (
               <>
                 {/* Navigation arrows */}
                 {activeImage > 0 && (
                   <button
                     onClick={() => setActiveImage(activeImage - 1)}
+                    aria-label="Previous image"
                     className="absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full glass flex items-center justify-center active:scale-90"
                   >
                     <ChevronRight className="h-4 w-4 rotate-180" />
@@ -152,6 +185,7 @@ export function ServiceDetailView() {
                 {activeImage < data.images.length - 1 && (
                   <button
                     onClick={() => setActiveImage(activeImage + 1)}
+                    aria-label="Next image"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full glass flex items-center justify-center active:scale-90"
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -163,6 +197,7 @@ export function ServiceDetailView() {
                     <button
                       key={i}
                       onClick={() => setActiveImage(i)}
+                      aria-label={`Image ${i + 1} of ${data.images.length}`}
                       className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
                     />
                   ))}
@@ -179,6 +214,7 @@ export function ServiceDetailView() {
         )}
         <button
           onClick={() => setView('marketplace')}
+          aria-label="Go back"
           className="absolute top-4 left-4 h-10 w-10 rounded-full glass flex items-center justify-center active:scale-90 transition"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -186,12 +222,14 @@ export function ServiceDetailView() {
         <div className="absolute top-4 right-4 flex gap-2">
           <button
             onClick={shareService}
+            aria-label="Share service"
             className="h-10 w-10 rounded-full glass flex items-center justify-center active:scale-90 transition"
           >
             <Share2 className="h-4 w-4" />
           </button>
           <button
             onClick={toggleSave}
+            aria-label={saved ? 'Unsave service' : 'Save service'}
             className="h-10 w-10 rounded-full glass flex items-center justify-center active:scale-90 transition"
           >
             <Bookmark className={`h-4 w-4 ${saved ? 'fill-primary text-primary' : ''}`} />
@@ -219,10 +257,11 @@ export function ServiceDetailView() {
         {/* Seller card */}
         <button
           onClick={() => setView('seller-profile', { username: data.seller.username })}
+          aria-label={`View seller profile: ${data.seller.username}`}
           className="w-full flex items-center gap-3 p-3 rounded-2xl bg-card border border-border/40 active:scale-[0.99] transition"
         >
           <div className="h-12 w-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
-            {data.seller.avatarUrl ? <img src={data.seller.avatarUrl} alt="" className="h-full w-full object-cover" /> : null}
+            {data.seller.avatarUrl ? <img src={data.seller.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : null}
           </div>
           <div className="flex-1 text-left">
             <div className="flex items-center gap-1">
@@ -252,6 +291,7 @@ export function ServiceDetailView() {
                   <button
                     key={pkg.id}
                     onClick={() => setSelectedPackageId(pkg.id)}
+                    aria-label={`Select ${pkg.name} package: ${pkg.price} SC`}
                     className={`w-full text-left p-3 rounded-2xl border-2 transition relative overflow-hidden ${
                       isSelected || isDefault ? 'border-primary bg-primary/5' : 'border-border'
                     }`}
@@ -343,7 +383,7 @@ export function ServiceDetailView() {
                 <div key={r.id} className="p-3 rounded-xl bg-card border border-border/40">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-muted overflow-hidden">
-                      {r.author.avatarUrl && <img src={r.author.avatarUrl} alt="" className="h-full w-full object-cover" />}
+                      {r.author.avatarUrl && <img src={r.author.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
                     </div>
                     <span className="text-xs font-semibold">@{r.author.username}</span>
                     <div className="ml-auto flex">
@@ -407,6 +447,7 @@ export function ServiceDetailView() {
               onClick={order}
               disabled={ordering}
               size="lg"
+              aria-label="Order this service"
               className="rounded-2xl px-6 shadow-lg shadow-primary/20"
             >
               {ordering ? 'Placing…' : 'Order Now'}

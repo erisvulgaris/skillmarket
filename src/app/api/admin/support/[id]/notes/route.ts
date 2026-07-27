@@ -2,10 +2,12 @@ import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
 // Get ticket with notes
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = adminLimit(async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin()
     const { id } = await params
@@ -23,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
 const noteSchema = z.object({
   body: z.string().min(1).max(2000),
@@ -31,10 +33,11 @@ const noteSchema = z.object({
 })
 
 // Add a note to a ticket
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = adminLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
+    const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(noteSchema, req)
     if (error) return err(error, 422)
 
@@ -56,4 +59,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})

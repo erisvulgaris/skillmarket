@@ -6,7 +6,17 @@ import { randomBytes } from 'crypto'
 
 const SESSION_COOKIE = 'sm_session'
 const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'skillmarket-dev-secret-change-me-in-production-please'
+  (() => {
+    const secret = process.env.SESSION_SECRET
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('SESSION_SECRET environment variable is required in production')
+      }
+      console.warn('[auth] No SESSION_SECRET set — using insecure dev fallback')
+      return 'skillmarket-dev-secret-change-me-in-production-please'
+    }
+    return secret
+  })()
 )
 const SESSION_TTL_DAYS = 30
 

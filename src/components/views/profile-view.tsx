@@ -45,7 +45,7 @@ export function ProfileView() {
       <Card className="p-5 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent -z-10" />
         <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto flex items-center justify-center text-primary-foreground text-2xl font-bold shadow-lg shadow-primary/20 overflow-hidden">
-          {user.profile?.avatarUrl ? <img src={user.profile.avatarUrl} alt="" className="h-full w-full object-cover" /> : user.username[0].toUpperCase()}
+          {user.profile?.avatarUrl ? <img src={user.profile.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : user.username[0].toUpperCase()}
         </div>
         <div className="flex items-center justify-center gap-1 mt-3">
           <h2 className="text-lg font-bold">{user.profile?.displayName || user.username}</h2>
@@ -57,7 +57,7 @@ export function ProfileView() {
         {/* QR */}
         {qrUrl && (
           <div className="mt-4 inline-block p-2 bg-white rounded-xl">
-            <img src={qrUrl} alt="My QR" className="h-28 w-28" />
+            <img src={qrUrl} alt="My QR" className="h-28 w-28" loading="lazy" decoding="async" />
           </div>
         )}
         <p className="text-[10px] text-muted-foreground mt-1">Scan to send you SkillCredits</p>
@@ -110,10 +110,13 @@ export function ProfileView() {
 }
 
 function StatBox({ value, label }: { value: number; label: string }) {
+  const formatted = value < 0
+    ? `-${Math.abs(value) > 999 ? `${(Math.abs(value) / 1000).toFixed(1)}k` : Math.abs(value)}`
+    : value > 999 ? `${(value / 1000).toFixed(1)}k` : String(value)
   return (
     <Card className="p-3 text-center">
-      <p className="text-base font-bold tabular-nums">
-        {value > 999 ? `${(value / 1000).toFixed(1)}k` : value}
+      <p className={clsx('text-base font-bold tabular-nums', value < 0 && 'text-destructive')}>
+        {formatted}
       </p>
       <p className="text-[10px] text-muted-foreground">{label}</p>
     </Card>
@@ -122,7 +125,7 @@ function StatBox({ value, label }: { value: number; label: string }) {
 
 function MenuItem({ icon, label, onClick, badge }: { icon: React.ReactNode; label: string; onClick: () => void; badge?: string }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border/40 active:scale-[0.99] transition">
+    <button onClick={onClick} aria-label={label} className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border/40 active:scale-[0.99] transition">
       <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">{icon}</span>
       <span className="flex-1 text-left text-sm font-semibold">{label}</span>
       {badge && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{badge}</span>}

@@ -142,7 +142,7 @@ export function CreateServiceView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('profile')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold">{isEdit ? 'Edit Service' : 'Create Service'}</h1>
@@ -273,7 +273,7 @@ export function CreateServiceView() {
               <div className="grid grid-cols-3 gap-2">
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                     <button onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })} className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center">
                       <X className="h-3 w-3" />
                     </button>

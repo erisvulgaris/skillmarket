@@ -1,6 +1,8 @@
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -9,7 +11,7 @@ const schema = z.object({
   published: z.boolean().default(true),
 })
 
-export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export const GET = adminLimit(async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params
     const page = await db.cmsPage.findUnique({ where: { slug } })
@@ -18,12 +20,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   } catch (e) {
     return handleError(e)
   }
-}
+})
 
-export async function PUT(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export const PUT = adminLimit(async function PUT(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     await requireAdmin()
     const { slug } = await params
+    const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(schema, req)
     if (error) return err(error, 422)
     const page = await db.cmsPage.upsert({
@@ -35,4 +38,4 @@ export async function PUT(req: Request, { params }: { params: Promise<{ slug: st
   } catch (e) {
     return handleError(e)
   }
-}
+})

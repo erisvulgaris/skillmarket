@@ -29,10 +29,13 @@ model User {
   referredById      String?
   referredBy        User?    @relation("Referrals", fields: [referredById], references: [id])
   referrals         User[]   @relation("Referrals")
+  commissionRate    Float?   // nullable = use global default (e.g. 0.10 = 10%)
   emailVerifiedAt   DateTime?
   lastLoginAt       DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  razorpayOrders    RazorpayOrder[]
+  razorpayPayments  RazorpayPayment[]
   deletedAt         DateTime?
 
   profile           Profile?
@@ -59,6 +62,8 @@ model User {
   auditLogs         AuditLog[]
   referralRewards   ReferralReward[]
   announcementAcks  AnnouncementAck[]
+  blocksPlaced      UserBlock[]  @relation("Blocker")
+  blocksReceived    UserBlock[]  @relation("Blocked")
 
   @@index([status])
   @@index([role])
@@ -393,17 +398,19 @@ model ConversationMember {
 }
 
 model Message {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   conversationId  String
   conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId        String
-  sender          User     @relation(fields: [senderId], references: [id])
-  type            String   @default("text") // text | image | file | voice | system
+  sender          User      @relation(fields: [senderId], references: [id])
+  type            String    @default("text") // text | image | file | voice | system
   content         String
   attachmentUrl   String?
   attachmentName  String?
-  status          String   @default("sent") // sent | delivered | read
-  createdAt       DateTime @default(now())
+  status          String    @default("sent") // sent | delivered | read
+  editedAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
 
   @@index([conversationId, createdAt])
 }
@@ -470,6 +477,24 @@ model AnnouncementAck {
   ackedAt         DateTime @default(now())
 
   @@unique([announcementId, userId])
+}
+
+// ─────────────────────────────────────────────
+// Blocks & Mutes
+// ─────────────────────────────────────────────
+
+model UserBlock {
+  id          String   @id @default(cuid())
+  blockerId   String
+  blocker     User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId   String
+  blocked     User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  type        String   @default("block") // block | mute
+  createdAt   DateTime @default(now())
+
+  @@unique([blockerId, blockedId, type])
+  @@index([blockerId])
+  @@index([blockedId])
 }
 
 // ─────────────────────────────────────────────
@@ -587,6 +612,22 @@ model AuditLog {
 }
 
 // ─────────────────────────────────────────────
+// Push Notifications
+// ─────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
 // Platform Config
 // ─────────────────────────────────────────────
 
@@ -614,4 +655,58 @@ model CmsPage {
   body      String
   published Boolean  @default(true)
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Razorpay
+// ─────────────────────────────────────────────
+
+model RazorpayKey {
+  id        String   @id @default(cuid())
+  label     String   @default("default")
+  keyId     String
+  keySecret String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RazorpayOrder {
+  id              String   @id @default(cuid())
+  razorpayOrderId String   @unique
+  amount          Int      // in paise
+  currency        String   @default("INR")
+  status          String   @default("created") // created | paid | failed | refunded
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  walletActionId  String?  // links to credit purchase tx
+  serviceId       String?  // links to direct service payment
+  notes           String?  // JSON string for extra metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([razorpayOrderId])
+}
+
+model RazorpayPayment {
+  id               String   @id @default(cuid())
+  razorpayPaymentId String  @unique
+  orderId          String
+  razorpayOrderId  String
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  amount           Int      // paise
+  currency         String   @default("INR")
+  status           String   // captured | failed | refunded
+  method           String?  // card | upi | netbanking | wallet
+  bank             String?
+  vpa              String?
+  fee              Int?     // paise — razorpay fee
+  tax              Int?     // paise — razorpay tax
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([razorpayPaymentId])
+  @@index([orderId])
 }

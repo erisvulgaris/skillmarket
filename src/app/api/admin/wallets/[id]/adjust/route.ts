@@ -1,6 +1,8 @@
 import { requireAdmin } from '@/lib/auth'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { adminAdjust } from '@/lib/wallet'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -8,10 +10,11 @@ const schema = z.object({
   reason: z.string().min(3).max(200),
 })
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = adminLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
+    const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(schema, req)
     if (error) return err(error, 422)
 
@@ -26,4 +29,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
-}
+})

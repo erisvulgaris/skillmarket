@@ -33,8 +33,8 @@ export async function GET(req: Request) {
         skip,
         take: limit,
         include: {
-          service: { include: { seller: { include: { profile: true } } } },
-          buyer: { include: { profile: true } },
+          service: { include: { seller: { select: { id: true, username: true, profile: { select: { displayName: true, avatarUrl: true, isVerified: true } } } } } },
+          buyer: { select: { id: true, username: true, profile: { select: { displayName: true, avatarUrl: true, isVerified: true } } } },
         },
       }),
       db.order.count({ where }),
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
       })
 
       await tx.orderActivity.create({
-        data: { orderId: o.id, actorId: user.id, action: 'payment_escrowed', detail: `${service.price} SkillCredits escrowed` },
+        data: { orderId: o.id, actorId: user.id, action: 'payment_escrowed', detail: `${orderPrice} SkillCredits escrowed` },
       })
 
       return { order: o, conversationId: convoId }

@@ -66,7 +66,7 @@ export function ActivityView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('settings')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('settings')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">Activity Log</h1>
@@ -105,6 +105,7 @@ export function ActivityView() {
             <button
               key={f.k}
               onClick={() => setFilter(f.k)}
+              aria-label={`Filter by ${f.label}`}
               className={clsx(
                 'flex-shrink-0 h-8 px-3 rounded-full text-xs font-semibold transition',
                 filter === f.k ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
@@ -121,9 +122,22 @@ export function ActivityView() {
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
           </div>
         ) : Object.keys(grouped).length === 0 ? (
-          <div className="text-center py-12">
-            <ActivityIcon className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">No activity yet</p>
+          <div className="text-center py-16 space-y-3">
+            <div className="inline-flex h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center mx-auto">
+              <ActivityIcon className="h-10 w-10 text-primary/40" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-foreground">No activity yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Your transactions and actions will show up here</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <button
+                onClick={() => setView('marketplace')}
+                className="text-xs font-semibold text-primary px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition"
+              >
+                Browse services
+              </button>
+            </div>
           </div>
         ) : (
           Object.entries(grouped).map(([day, dayTxs]) => (

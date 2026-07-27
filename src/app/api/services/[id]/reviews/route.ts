@@ -1,9 +1,19 @@
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody, safeJsonParse, parsePagination } from '@/lib/api'
+import { setCors } from '@/lib/cors'
+import { apiLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+function withCors<T extends (...args: any[]) => any>(handler: T): T {
+  return (async (...args: any[]) => {
+    const res = await handler(...args)
+    if (res instanceof Response) Object.entries(setCors()).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }) as T
+}
+
+export const GET = withCors(apiLimit(async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const { skip, limit, page } = parsePagination(req)
@@ -33,7 +43,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   } catch (e) {
     return handleError(e)
   }
-}
+}))
 
 const reviewSchema = z.object({
   orderId: z.string(),
@@ -42,7 +52,7 @@ const reviewSchema = z.object({
   images: z.array(z.string().url()).max(5).default([]),
 })
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withCors(apiLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -71,7 +81,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           images: JSON.stringify(data!.images),
         },
       })
-      // recompute service rating
       const agg = await tx.review.aggregate({
         where: { serviceId: id, status: 'published' },
         _avg: { rating: true },
@@ -84,7 +93,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           ratingCount: agg._count.rating || 0,
         },
       })
-      // notify seller
       await tx.notification.create({
         data: {
           userId: order.sellerId,
@@ -101,4 +109,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   } catch (e) {
     return handleError(e)
   }
+}))
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: setCors() })
 }

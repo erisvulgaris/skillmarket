@@ -2,6 +2,8 @@ import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
+import { adminLimit } from '@/lib/rate-limit'
+import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -9,10 +11,11 @@ const schema = z.object({
   resolution: z.string().optional(),
 })
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = adminLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await requireAdmin()
     const { id } = await params
+    const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(schema, req)
     if (error) return err(error, 422)
     const dispute = await db.dispute.update({ where: { id }, data: { status: data!.status, resolution: data!.resolution } })
@@ -21,4 +24,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   } catch (e) {
     return handleError(e)
   }
-}
+})

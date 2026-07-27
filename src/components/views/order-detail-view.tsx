@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { SkillCredits } from '@/components/sc-badge'
+import { clsx } from 'clsx'
 import { ArrowLeft, Clock, Package, CheckCircle2, XCircle, MessageSquare, Star, ShieldCheck, AlertTriangle, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -108,7 +109,7 @@ export function OrderDetailView() {
     <div className="pb-32 slide-enter">
       <header className="sticky top-0 z-20 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('orders')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('orders')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1">

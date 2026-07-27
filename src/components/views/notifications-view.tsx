@@ -28,7 +28,7 @@ export function NotificationsView() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
         <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('marketplace')} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
+          <button onClick={() => setView('marketplace')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-bold flex-1">Notifications</h1>
@@ -38,10 +38,15 @@ export function NotificationsView() {
 
       <div className="max-w-md mx-auto px-4 py-4 space-y-2 pb-24">
         {notifications.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Bell className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">You're all caught up!</p>
-          </Card>
+          <div className="text-center py-16 space-y-3">
+            <div className="inline-flex h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 items-center justify-center mx-auto">
+              <Bell className="h-10 w-10 text-primary/40" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-foreground">You're all caught up!</p>
+              <p className="text-sm text-muted-foreground mt-1">No notifications yet. We'll let you know when something arrives.</p>
+            </div>
+          </div>
         ) : (
           notifications.map((n) => {
             const meta = TYPE_META[n.type] || TYPE_META.announcement
