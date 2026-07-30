@@ -39,16 +39,17 @@ export const POST = transferLimit(async function POST(req: Request) {
     const filename = `${Date.now()}-${randomBytes(4).toString('hex')}.${finalExt}`
     const filepath = path.join(UPLOAD_DIR, filename)
 
-    let buffer = Buffer.from(await file.arrayBuffer())
+    let buffer: Buffer = Buffer.from(await file.arrayBuffer())
 
     // Auto-compress and convert images using Sharp
     if (isImage) {
       try {
         const sharp = (await import('sharp')).default
-        buffer = await sharp(buffer)
+        const processed = await sharp(buffer as any)
           .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
           .webp({ quality: 82 })
           .toBuffer()
+        buffer = Buffer.from(processed)
       } catch (err) {
         console.warn('[upload] sharp image compression failed, storing raw buffer', err)
       }
