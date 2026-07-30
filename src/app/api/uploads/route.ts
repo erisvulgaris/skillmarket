@@ -34,9 +34,26 @@ export const POST = transferLimit(async function POST(req: Request) {
     }
 
     const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
-    const filename = `${Date.now()}-${randomBytes(4).toString('hex')}.${ext}`
+    const isImage = file.type.startsWith('image/') && !file.type.includes('gif') && !file.type.includes('svg')
+    const finalExt = isImage ? 'webp' : ext
+    const filename = `${Date.now()}-${randomBytes(4).toString('hex')}.${finalExt}`
     const filepath = path.join(UPLOAD_DIR, filename)
-    const buffer = Buffer.from(await file.arrayBuffer())
+
+    let buffer = Buffer.from(await file.arrayBuffer())
+
+    // Auto-compress and convert images using Sharp
+    if (isImage) {
+      try {
+        const sharp = (await import('sharp')).default
+        buffer = await sharp(buffer)
+          .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer()
+      } catch (err) {
+        console.warn('[upload] sharp image compression failed, storing raw buffer', err)
+      }
+    }
+
     await writeFile(filepath, buffer)
 
     const url = `/uploads/${filename}`

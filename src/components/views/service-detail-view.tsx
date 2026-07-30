@@ -68,7 +68,15 @@ export function ServiceDetailView() {
   const order = async () => {
     const orderPrice = selectedPackageId ? (data.packages?.find((p: any) => p.id === selectedPackageId)?.price || data.price) : data.price
     if (!user?.wallet || user.wallet.availableBalance < orderPrice) {
-      toast.error('Insufficient balance. Buy more credits first.')
+      toast.info('Insufficient credits. Redirecting to top-up wallet…')
+      try {
+        localStorage.setItem('sm_pending_order', JSON.stringify({
+          serviceId: id,
+          packageId: selectedPackageId || null,
+          requirements: requirements || null,
+          price: orderPrice
+        }))
+      } catch {}
       setView('buy-credits')
       return
     }

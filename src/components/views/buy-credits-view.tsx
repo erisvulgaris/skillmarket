@@ -38,6 +38,25 @@ export function BuyCreditsView() {
       await refreshUser()
       setSuccess(true)
       toast.success(`+${formatSC(pkg.credits + pkg.bonus)} SC added to your wallet!`)
+
+      // Auto-fulfill pending order if stored
+      try {
+        const rawPending = localStorage.getItem('sm_pending_order')
+        if (rawPending) {
+          const pending = JSON.parse(rawPending)
+          localStorage.removeItem('sm_pending_order')
+          toast.info('Completing your pending service purchase…')
+          const res = await api.post<{ order: any; conversationId: string }>('/api/orders', {
+            serviceId: pending.serviceId,
+            packageId: pending.packageId || undefined,
+            requirements: pending.requirements || undefined,
+          })
+          toast.success('Service ordered successfully!')
+          setTimeout(() => setView('order-detail', { id: res.order.id }), 1200)
+        }
+      } catch (e) {
+        console.error('Pending order auto-completion failed:', e)
+      }
     } catch (e: any) {
       toast.error(e.message || 'Purchase failed')
     } finally {
