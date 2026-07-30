@@ -216,14 +216,6 @@ export function AuthScreen() {
               </motion.div>
             )}
 
-            {/* Demo credentials hint */}
-            {mode === 'login' && !errorMsg && (
-              <div className="text-[10px] text-muted-foreground/60 text-center leading-relaxed">
-                Admin: admin@skillmarket.app / admin12345<br />
-                Buyer: buyer@example.com / password123
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
