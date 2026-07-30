@@ -1,5 +1,5 @@
 #!/bin/sh
 mkdir -p /data
 npx prisma db push --accept-data-loss
-npx tsx src/scripts/create-admin.ts
+node src/scripts/create-admin.js
 node .next/standalone/server.js
