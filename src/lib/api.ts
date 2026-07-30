@@ -126,15 +126,20 @@ export function getUserAgent(req: Request): string | undefined {
 
 export async function validateBody<T>(schema: z.ZodType<T>, req: Request): Promise<{ data?: T; error?: string }> {
   try {
-    const body = await req.json()
+    let body: any
+    try {
+      body = await req.clone().json()
+    } catch {
+      body = await req.json()
+    }
     const data = schema.parse(body)
     return { data }
-  } catch (e) {
+  } catch (e: any) {
     if (e instanceof z.ZodError) {
       const issues = (e.issues || []) as any[]
       return { error: issues.map((x) => `${(x.path || []).join('.')}: ${x.message}`).join('; ') }
     }
-    return { error: 'Invalid request body' }
+    return { error: e?.message || 'Invalid request body' }
   }
 }
 
