@@ -7,7 +7,9 @@ export async function ensureTelegramServicesSeeded() {
   if (isSeeding) return
   try {
     const existingSection = await db.category.findFirst({ where: { slug: 'telegram-services' } })
-    if (existingSection) return // Already seeded!
+    const serviceCount = await db.service.count()
+
+    if (existingSection && serviceCount > 0) return // Already populated!
 
     isSeeding = true
     console.log('[AutoSeed] Seeding Telegram Services section & UPSC listings on live database...')
