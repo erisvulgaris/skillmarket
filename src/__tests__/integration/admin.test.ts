@@ -8,7 +8,7 @@ vi.mock('@/lib/auth', () => ({
 
 import { requireAdmin, getCurrentUser } from '@/lib/auth'
 
-const mockAdmin = { id: 'admin-001', username: 'admin', email: 'admin@skillmarket.com', role: 'admin' as const, status: 'active' as const, profile: null, wallet: { id: 'wallet-admin', userId: 'admin-001', availableBalance: 10000, reservedBalance: 0, pendingBalance: 0, lifetimePurchased: 50000, lifetimeEarned: 25000, lifetimeSent: 0, lifetimeReceived: 0, lifetimeSpent: 0, frozen: false, createdAt: new Date(), updatedAt: new Date() } }
+const mockAdmin = { id: 'admin-001', username: 'admin', email: 'admin@skillcart.com', role: 'admin' as const, status: 'active' as const, profile: null, wallet: { id: 'wallet-admin', userId: 'admin-001', availableBalance: 10000, reservedBalance: 0, pendingBalance: 0, lifetimePurchased: 50000, lifetimeEarned: 25000, lifetimeSent: 0, lifetimeReceived: 0, lifetimeSpent: 0, frozen: false, createdAt: new Date(), updatedAt: new Date() } }
 
 const mockUsers = [
   { id: 'user-001', username: 'alice', email: 'alice@test.com', role: 'user' as const, status: 'active' as const, createdAt: new Date('2026-06-01'), updatedAt: new Date('2026-07-20'), deletedAt: null, lastLoginAt: new Date('2026-07-25'),

@@ -1,6 +1,6 @@
 {
-  "name": "SkillMarket",
-  "short_name": "SkillMarket",
+  "name": "SkillCart",
+  "short_name": "SkillCart",
   "description": "P2P Digital Service Marketplace",
   "start_url": "/",
   "display": "standalone",

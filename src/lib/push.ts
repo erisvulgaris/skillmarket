@@ -33,7 +33,7 @@ export async function sendPushNotification(userId: string, title: string, body: 
     // Check if VAPID keys are configured
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     const privateKey = process.env.VAPID_PRIVATE_KEY
-    const subject = process.env.VAPID_SUBJECT || 'mailto:admin@skillmarket.app'
+    const subject = process.env.VAPID_SUBJECT || 'mailto:admin@skillcart.app'
 
     if (!publicKey || !privateKey) {
       console.log(`[PUSH DEV] VAPID keys not configured. Would send to user ${userId}: ${title} - ${body}`)

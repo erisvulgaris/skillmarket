@@ -63,7 +63,7 @@ export function TransferView() {
         return
       }
     }
-    toast.error('Invalid QR code. Expected a SkillMarket wallet QR.')
+    toast.error('Invalid QR code. Expected a SkillCart wallet QR.')
   }, [])
 
   const lookupRecipientById = async (id: string) => {
@@ -393,7 +393,7 @@ export function TransferView() {
               </Button>
 
               <p className="text-[10px] text-muted-foreground text-center">
-                Point your camera at a SkillMarket wallet QR code to instantly fill the recipient.
+                Point your camera at a SkillCart wallet QR code to instantly fill the recipient.
               </p>
             </motion.div>
           </motion.div>

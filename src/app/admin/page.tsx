@@ -4,7 +4,7 @@ import { SkeletonCard } from './_components/skeleton-card'
 import { DashboardClient } from './_components/dashboard-client'
 import { Suspense } from 'react'
 
-export const metadata = { title: 'Dashboard · Admin · SkillMarket' }
+export const metadata = { title: 'Dashboard · Admin · SkillCart' }
 
 export default async function AdminDashboardPage() {
   await requireAdmin()

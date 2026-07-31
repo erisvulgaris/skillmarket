@@ -20,7 +20,7 @@ export const POST = strictLimit(async function POST(req: Request) {
     if (!user.twoFactorEnabled || !user.twoFactorSecret) return err('2FA not enabled', 400)
 
     const totp = new OTPAuth.TOTP({
-      issuer: 'SkillMarket',
+      issuer: 'SkillCart',
       label: user.username,
       algorithm: 'SHA1',
       digits: 6,

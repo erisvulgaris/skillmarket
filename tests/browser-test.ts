@@ -237,7 +237,7 @@ async function runTests() {
     
     const adminEmail = page.locator('input[placeholder*="Email or username"]')
     if (await adminEmail.isVisible()) {
-      await adminEmail.fill('admin@skillmarket.app')
+      await adminEmail.fill('admin@skillcart.app')
       await page.fill('input[placeholder*="Password"]', 'admin12345')
       await page.locator('form button[type="submit"]').click()
       await page.waitForTimeout(3000)

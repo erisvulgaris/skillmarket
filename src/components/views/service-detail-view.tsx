@@ -110,7 +110,7 @@ export function ServiceDetailView() {
   const shareService = async () => {
     const shareData = {
       title: data.title,
-      text: `Check out this service on SkillMarket: ${data.title}`,
+      text: `Check out this service on SkillCart: ${data.title}`,
       url: window.location.href,
     }
     if (navigator.share) {

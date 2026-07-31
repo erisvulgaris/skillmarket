@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { PaymentsClient } from './payments-client'
 import { Suspense } from 'react'
 
-export const metadata = { title: 'Payments · Admin · SkillMarket' }
+export const metadata = { title: 'Payments · Admin · SkillCart' }
 
 export default async function AdminPaymentsPage() {
   await requireAdmin()

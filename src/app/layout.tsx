@@ -18,14 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SkillMarket — P2P Digital Service Marketplace",
+  title: "SkillCart — P2P Digital Service Marketplace",
   description: "Buy and sell digital services with SkillCredits. A premium peer-to-peer marketplace.",
   keywords: ["marketplace", "SkillCredits", "freelance", "services", "P2P"],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SkillMarket",
+    title: "SkillCart",
   },
   icons: {
     icon: "/logo.svg",

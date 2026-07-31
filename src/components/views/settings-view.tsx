@@ -118,7 +118,7 @@ export function SettingsView() {
             </Button>
 
             <p className="text-center text-[10px] text-muted-foreground/60 pt-4">
-              SkillMarket v1.0 · User ID: {user?.id.slice(-8)}
+              SkillCart v1.0 · User ID: {user?.id.slice(-8)}
             </p>
           </div>
         )}

@@ -38,7 +38,7 @@ export function QuickAuthModal({
     try {
       const res = await api.post<{ user: any }>('/api/auth/quick', { email: email.trim() })
       setUser(res.user)
-      toast.success(`Welcome to SkillMarket, ${res.user.username}!`)
+      toast.success(`Welcome to SkillCart, ${res.user.username}!`)
       onClose()
       if (onSuccess) onSuccess()
     } catch (e: any) {

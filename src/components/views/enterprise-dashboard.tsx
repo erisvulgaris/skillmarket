@@ -43,7 +43,7 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
     if (!data) return
     const now = new Date().toISOString()
     const csv = [
-      'SkillMarket Platform Report',
+      'SkillCart Platform Report',
       `Generated,${now}`,
       '',
       '=== KPI Summary ===',
@@ -103,7 +103,7 @@ export function EnterpriseDashboard({ onBack }: { onBack: () => void }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `skillmarket-report-${now.slice(0, 10)}.csv`
+    a.download = `skillcart-report-${now.slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
     toast.success('Detailed report exported')

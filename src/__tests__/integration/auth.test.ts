@@ -16,7 +16,7 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('otpauth', () => {
   const mockTotpInstance = {
     validate: vi.fn().mockReturnValue(0),
-    toString: vi.fn().mockReturnValue('otpauth://totp/SkillMarket:testuser?secret=TEST'),
+    toString: vi.fn().mockReturnValue('otpauth://totp/SkillCart:testuser?secret=TEST'),
   }
   const MockTOTP = vi.fn(() => mockTotpInstance)
   MockTOTP.prototype = mockTotpInstance

@@ -1,4 +1,4 @@
-# Changelog — SkillMarket
+# Changelog — SkillCart
 
 > All significant improvements, fixes, and optimizations are tracked here.
 > Each entry describes the change, the reason, and the files affected.
@@ -33,7 +33,7 @@
 - **Files**: `tsconfig.json`
 
 ### 003: Remove hardcoded SESSION_SECRET fallback ✅
-- **Why**: Fallback `'skillmarket-dev-secret-change-me-in-production-please'` is hardcoded in source — anyone reading the code can forge JWTs
+- **Why**: Fallback `'skillcart-dev-secret-change-me-in-production-please'` is hardcoded in source — anyone reading the code can forge JWTs
 - **What**: Made SESSION_SECRET required in production; added validation that crashes if missing
 - **Files**: `src/lib/auth.ts`, `.env`
 

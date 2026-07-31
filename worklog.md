@@ -1,10 +1,10 @@
-# SkillMarket — Project Worklog
+# SkillCart — Project Worklog
 
 ## Project Overview
 A production-ready, mobile-first P2P digital service marketplace PWA powered by an internal virtual currency called **SkillCredits**. Built with Next.js 16 (App Router), TypeScript, Tailwind CSS 4, shadcn/ui, Prisma (SQLite), and a socket.io mini-service for real-time messaging.
 
 ## 🔑 Admin Credentials
-- **Email:** admin@skillmarket.app
+- **Email:** admin@skillcart.app
 - **Password:** admin12345
 - **Transaction PIN:** 1234
 
@@ -37,7 +37,7 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 8. **Admin user CSV export** — Export button on Users tab, downloads username/email/status/role/balance/verified/joined
 
 ### GitHub
-- **Repository:** https://github.com/erisvulgaris/skillmarket
+- **Repository:** https://github.com/erisvulgaris/skillcart
 - **Latest commits:** Login fix + 8 iterations pushed
 - **Status:** All code pushed, tested, and working
 
@@ -69,7 +69,7 @@ A production-ready, mobile-first P2P digital service marketplace PWA powered by 
 **Iteration 10:** Final QA + GitHub push
 
 ### GitHub Repository
-- **URL:** https://github.com/erisvulgaris/skillmarket
+- **URL:** https://github.com/erisvulgaris/skillcart
 - **Branch:** main
 - **Status:** Code pushed successfully
 
@@ -761,7 +761,7 @@ Phase 4 was stable with 2FA, fraud detection, seller analytics, admin orders, an
 
 #### Onboarding Tour
 - New `OnboardingTour` component with 6-step intro:
-  1. Welcome to SkillMarket
+  1. Welcome to SkillCart
   2. Browse the Marketplace
   3. Your Wallet
   4. Real-time Messaging
@@ -1159,7 +1159,7 @@ SupportTicket, SupportTicketNote, ReferralReward, AuditLog, FeatureFlag, Setting
 
 ### Seed Data
 Run `bun run prisma/seed.ts` — creates admin, 5 sellers, 1 buyer, 8 services, categories, feature flags, settings, CMS pages.
-- Admin: admin@skillmarket.app / admin12345 (PIN 1234)
+- Admin: admin@skillcart.app / admin12345 (PIN 1234)
 - Buyer: buyer@example.com / password123 (PIN 1234)
 - Seller: maya@example.com / password123 (PIN 1234)
 

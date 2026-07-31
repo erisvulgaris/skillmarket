@@ -104,7 +104,7 @@ export function ProfileView() {
         <LogOut className="h-4 w-4 mr-2" /> Sign Out
       </Button>
 
-      <p className="text-center text-[10px] text-muted-foreground/60">SkillMarket v1.0 · User ID: {user.id.slice(-8)}</p>
+      <p className="text-center text-[10px] text-muted-foreground/60">SkillCart v1.0 · User ID: {user.id.slice(-8)}</p>
     </div>
   )
 }

@@ -13,7 +13,7 @@ const SESSION_SECRET = new TextEncoder().encode(
         throw new Error('SESSION_SECRET environment variable is required in production')
       }
       console.warn('[auth] No SESSION_SECRET set — using insecure dev fallback')
-      return 'skillmarket-dev-secret-change-me-in-production-please'
+      return 'skillcart-dev-secret-change-me-in-production-please'
     }
     return secret
   })()

@@ -238,7 +238,7 @@ export function AdminView() {
           <span className="text-slate-600">|</span>
           <span className="text-slate-400 font-mono">Node: 152.53.111.217 (Dokploy Swarm)</span>
           <span className="text-slate-600">|</span>
-          <span className="text-slate-400 font-mono">DB: SQLite (/data/skillmarket.db)</span>
+          <span className="text-slate-400 font-mono">DB: SQLite (/data/skillcart.db)</span>
           <span className="text-slate-600">|</span>
           <span className="text-emerald-400 font-mono font-semibold">SSL: Forced (Let's Encrypt)</span>
         </div>

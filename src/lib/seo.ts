@@ -2,7 +2,7 @@ export function generateOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'SkillMarket',
+    name: 'SkillCart',
     url: 'https://skillcart.shop',
     logo: 'https://skillcart.shop/logo.svg',
     description: 'Peer-to-Peer Digital Service & Product Marketplace powered by SkillCredits.',

@@ -15,7 +15,7 @@ const subscribeSchema = z.object({
 // Vapid keys should be in env vars:
 // NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
 // VAPID_PRIVATE_KEY=...
-// VAPID_SUBJECT=mailto:admin@skillmarket.app
+// VAPID_SUBJECT=mailto:admin@skillcart.app
 
 export async function POST(req: Request) {
   try {

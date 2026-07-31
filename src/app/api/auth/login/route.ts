@@ -34,7 +34,7 @@ export const POST = strictLimit(async function POST(req: Request) {
         return ok({ requiresTwoFactor: true, userId: user.id }, 200)
       }
       const totp = new OTPAuth.TOTP({
-        issuer: 'SkillMarket',
+        issuer: 'SkillCart',
         label: user.username,
         algorithm: 'SHA1',
         digits: 6,

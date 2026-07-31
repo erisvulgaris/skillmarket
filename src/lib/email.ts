@@ -19,10 +19,10 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 }
 
 export function formatNotificationEmail(type: string, title: string, body: string): { subject: string; text: string } {
-  const prefix = '[SkillMarket] '
+  const prefix = '[SkillCart] '
   return {
     subject: prefix + title,
-    text: `${title}\n\n${body}\n\n---\nSkillMarket - P2P Digital Service Marketplace`,
+    text: `${title}\n\n${body}\n\n---\nSkillCart - P2P Digital Service Marketplace`,
   }
 }
 

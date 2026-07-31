@@ -26,7 +26,7 @@ export function TopBar({ onOpenAuth }: { onOpenAuth?: () => void }) {
             <span className="text-white font-black text-base">S</span>
           </div>
           <div className="text-left">
-            <span className="font-black text-lg tracking-tight block leading-none">SkillMarket</span>
+            <span className="font-black text-lg tracking-tight block leading-none">SkillCart</span>
             <span className="text-[10px] text-muted-foreground hidden sm:block">Digital Marketplace & SkillCredits</span>
           </div>
         </button>

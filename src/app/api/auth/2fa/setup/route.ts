@@ -13,7 +13,7 @@ export async function POST() {
     // Generate a new TOTP secret
     const secret = new OTPAuth.Secret({ size: 20 })
     const totp = new OTPAuth.TOTP({
-      issuer: 'SkillMarket',
+      issuer: 'SkillCart',
       label: user.username,
       algorithm: 'SHA1',
       digits: 6,

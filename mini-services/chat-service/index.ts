@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
 
 const PORT = 3003
 httpServer.listen(PORT, () => {
-  console.log(`[chat] SkillMarket chat service running on port ${PORT}`)
+  console.log(`[chat] SkillCart chat service running on port ${PORT}`)
 })
 
 process.on('SIGTERM', () => httpServer.close(() => process.exit(0)))

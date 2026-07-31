@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { ServicesClient } from './services-client'
 import { Suspense } from 'react'
 
-export const metadata = { title: 'Services · Admin · SkillMarket' }
+export const metadata = { title: 'Services · Admin · SkillCart' }
 
 export default async function AdminServicesPage() {
   await requireAdmin()

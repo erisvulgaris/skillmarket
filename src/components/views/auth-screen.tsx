@@ -84,7 +84,7 @@ export function AuthScreen() {
           <div className="inline-flex h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 items-center justify-center shadow-xl shadow-primary/30 mb-4">
             <Coins className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight">SkillMarket</h1>
+          <h1 className="text-3xl font-black tracking-tight">SkillCart</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Buy & sell digital services with SkillCredits
           </p>
@@ -245,7 +245,7 @@ export function AuthScreen() {
         </motion.div>
 
         <p className="text-center text-[11px] text-muted-foreground/70 mt-6 leading-relaxed px-6">
-          SkillCredits are a virtual currency used only within SkillMarket. They cannot be withdrawn as cash.
+          SkillCredits are a virtual currency used only within SkillCart. They cannot be withdrawn as cash.
         </p>
       </div>
     </div>

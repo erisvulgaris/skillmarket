@@ -9,7 +9,7 @@ import { Coins, Store, Wallet, MessageSquare, ShieldCheck, Sparkles, X } from 'l
 const STEPS = [
   {
     icon: Sparkles,
-    title: 'Welcome to SkillMarket',
+    title: 'Welcome to SkillCart',
     desc: 'Buy and sell digital services using SkillCredits — our internal virtual currency.',
     color: 'text-primary',
     bg: 'bg-primary/10',

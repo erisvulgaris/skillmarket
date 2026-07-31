@@ -55,14 +55,14 @@ async function main() {
   const adminPin = await bcrypt.hash('1234', 10)
   const admin = await db.user.create({
     data: {
-      email: 'admin@skillmarket.app',
+      email: 'admin@skillcart.app',
       username: 'admin',
       passwordHash: adminPass,
       transactionPinHash: adminPin,
       role: 'admin',
       referralCode: 'ADMIN0001',
       emailVerifiedAt: new Date(),
-      profile: { create: { displayName: 'Platform Admin', bio: 'SkillMarket administrator', languages: '["en"]', skills: '[]' } },
+      profile: { create: { displayName: 'Platform Admin', bio: 'SkillCart administrator', languages: '["en"]', skills: '[]' } },
     },
   })
   await createWalletWithLedger(admin.id, { availableBalance: 100000, lifetimePurchased: 100000 })
@@ -173,17 +173,17 @@ async function main() {
     db.setting.create({ data: { key: 'max_transfer', value: '10000', type: 'number' } }),
     db.setting.create({ data: { key: 'referral_reward', value: '50', type: 'number' } }),
     db.setting.create({ data: { key: 'signup_bonus', value: '0', type: 'number' } }),
-    db.setting.create({ data: { key: 'platform_name', value: 'SkillMarket', type: 'string' } }),
+    db.setting.create({ data: { key: 'platform_name', value: 'SkillCart', type: 'string' } }),
   ])
 
   await Promise.all([
-    db.cmsPage.create({ data: { slug: 'terms', title: 'Terms of Service', body: '# Terms of Service\n\n## 1. Acceptance of Terms\nBy accessing or using SkillMarket, you agree to be bound by these Terms of Service.\n\n## 2. Description of Service\nSkillMarket is a peer-to-peer marketplace for digital services. Users can buy and sell services using SkillCredits, a virtual currency.\n\n## 3. User Obligations\n- You must provide accurate registration information\n- You are responsible for maintaining the confidentiality of your account\n- You may not use the platform for any illegal purpose\n\n## 4. Payments and Fees\nAll transactions are processed in SkillCredits. SkillCredits are a virtual currency with no cash value and are non-refundable.\n\n## 5. Dispute Resolution\nDisputes between buyers and sellers should first be resolved through direct communication. If unresolved, either party may file a dispute through our platform.\n\n## 6. Limitation of Liability\nSkillMarket is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the platform.', published: true } }),
+    db.cmsPage.create({ data: { slug: 'terms', title: 'Terms of Service', body: '# Terms of Service\n\n## 1. Acceptance of Terms\nBy accessing or using SkillCart, you agree to be bound by these Terms of Service.\n\n## 2. Description of Service\nSkillCart is a peer-to-peer marketplace for digital services. Users can buy and sell services using SkillCredits, a virtual currency.\n\n## 3. User Obligations\n- You must provide accurate registration information\n- You are responsible for maintaining the confidentiality of your account\n- You may not use the platform for any illegal purpose\n\n## 4. Payments and Fees\nAll transactions are processed in SkillCredits. SkillCredits are a virtual currency with no cash value and are non-refundable.\n\n## 5. Dispute Resolution\nDisputes between buyers and sellers should first be resolved through direct communication. If unresolved, either party may file a dispute through our platform.\n\n## 6. Limitation of Liability\nSkillCart is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the platform.', published: true } }),
     db.cmsPage.create({ data: { slug: 'privacy', title: 'Privacy Policy', body: '# Privacy Policy\n\n## Information We Collect\n- Account information (email, username, profile data)\n- Transaction records\n- Communication data (messages, support tickets)\n- Device and usage information\n\n## How We Use Your Information\n- To provide and improve our services\n- To process transactions\n- To communicate with you about your account\n- To detect and prevent fraud\n\n## Data Protection\nWe implement industry-standard security measures to protect your data. Your password is hashed and never stored in plain text.\n\n## Third-Party Services\nWe do not sell your personal data to third parties. We may share data with service providers who assist in platform operations.\n\n## Contact\nFor privacy concerns, please contact support within the platform.', published: true } }),
-    db.cmsPage.create({ data: { slug: 'faq', title: 'Frequently Asked Questions', body: '# Frequently Asked Questions\n\n## What are SkillCredits?\nSkillCredits (SC) are the virtual currency used on SkillMarket. They can be purchased and used to buy services from sellers.\n\n## How do I buy SkillCredits?\nGo to your Wallet and tap "Buy Credits". Choose a package and complete the purchase. Credits are added to your wallet immediately.\n\n## How do transfers work?\nYou can send SkillCredits to any other user. A transaction PIN is required for security. Transfers are instant and irreversible.\n\n## Is there an escrow system?\nYes. When you place an order, the payment is held in escrow. It is released to the seller only after you confirm receipt of the service.\n\n## How do I become a seller?\nTap the + button on the bottom nav and create your first service listing. Fill in details, set your price, and publish.\n\n## How do I reset my PIN?\nGo to Settings → Security → Change Transaction PIN. You will need your current PIN to set a new one.\n\n## Are refunds possible?\nIf a seller cannot deliver, you can cancel the order and the escrowed funds will be returned to your wallet. Disputes can be filed through the order page.\n\n## Can I withdraw SkillCredits as cash?\nNo. SkillCredits are a virtual currency that can only be used within SkillMarket. They have no cash value.', published: true } }),
+    db.cmsPage.create({ data: { slug: 'faq', title: 'Frequently Asked Questions', body: '# Frequently Asked Questions\n\n## What are SkillCredits?\nSkillCredits (SC) are the virtual currency used on SkillCart. They can be purchased and used to buy services from sellers.\n\n## How do I buy SkillCredits?\nGo to your Wallet and tap "Buy Credits". Choose a package and complete the purchase. Credits are added to your wallet immediately.\n\n## How do transfers work?\nYou can send SkillCredits to any other user. A transaction PIN is required for security. Transfers are instant and irreversible.\n\n## Is there an escrow system?\nYes. When you place an order, the payment is held in escrow. It is released to the seller only after you confirm receipt of the service.\n\n## How do I become a seller?\nTap the + button on the bottom nav and create your first service listing. Fill in details, set your price, and publish.\n\n## How do I reset my PIN?\nGo to Settings → Security → Change Transaction PIN. You will need your current PIN to set a new one.\n\n## Are refunds possible?\nIf a seller cannot deliver, you can cancel the order and the escrowed funds will be returned to your wallet. Disputes can be filed through the order page.\n\n## Can I withdraw SkillCredits as cash?\nNo. SkillCredits are a virtual currency that can only be used within SkillCart. They have no cash value.', published: true } }),
   ])
 
   console.log('✓ Seed complete')
-  console.log('  Admin login:  admin@skillmarket.app / admin12345 (PIN 1234)')
+  console.log('  Admin login:  admin@skillcart.app / admin12345 (PIN 1234)')
   console.log('  Buyer login:   buyer@example.com / password123 (PIN 1234)')
   console.log('  Seller login:  maya@example.com / password123 (PIN 1234)')
 }

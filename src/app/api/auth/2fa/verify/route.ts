@@ -21,7 +21,7 @@ export const POST = strictLimit(async function POST(req: Request) {
     if (user.twoFactorEnabled) return err('2FA already enabled', 400)
 
     const totp = new OTPAuth.TOTP({
-      issuer: 'SkillMarket',
+      issuer: 'SkillCart',
       label: user.username,
       algorithm: 'SHA1',
       digits: 6,

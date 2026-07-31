@@ -20,7 +20,7 @@ const FAQS = [
   { q: 'How do I become a seller?', a: 'Every account can buy and sell. Just go to Profile → Create a Service to list your first offering.' },
   { q: 'What is a transaction PIN?', a: 'Your 4-digit PIN secures all wallet transfers and purchases. Set it during registration and change it in Settings → Security.' },
   { q: 'How do refunds work?', a: 'If you cancel an order before delivery, your escrowed credits are instantly refunded. For disputes, our team reviews and may issue refunds.' },
-  { q: 'Can I withdraw SkillCredits as cash?', a: 'No. SkillCredits are a virtual currency used only within SkillMarket and cannot be withdrawn as real money.' },
+  { q: 'Can I withdraw SkillCredits as cash?', a: 'No. SkillCredits are a virtual currency used only within SkillCart and cannot be withdrawn as real money.' },
   { q: 'How do I enable 2FA?', a: 'Go to Settings → Security → Two-Factor Auth. Scan the QR code with an authenticator app and enter the 6-digit code to verify.' },
 ]
 

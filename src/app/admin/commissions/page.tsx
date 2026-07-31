@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { CommissionsClient } from './commissions-client'
 import { Suspense } from 'react'
 
-export const metadata = { title: 'Commissions · Admin · SkillMarket' }
+export const metadata = { title: 'Commissions · Admin · SkillCart' }
 
 export default async function AdminCommissionsPage() {
   await requireAdmin()

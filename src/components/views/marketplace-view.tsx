@@ -371,7 +371,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
       {/* 6. WHY SKILLMARKET — VALUE PROPOSITIONS */}
       <section className="p-8 sm:p-12 rounded-3xl bg-muted/30 border border-border/50 space-y-8">
         <div className="text-center max-w-xl mx-auto space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Why SkillMarket</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Why SkillCart</span>
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Built for Seamless Digital Commerce</h2>
         </div>
 
@@ -408,8 +408,8 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
 
         <div className="space-y-3">
           {[
-            { q: 'Do I need an account to browse SkillMarket?', a: 'No! SkillMarket is completely public. You can browse, search, compare, and inspect all products and creator profiles without creating an account.' },
-            { q: 'What are SkillCredits?', a: 'SkillCredits (SC) are the internal virtual currency used for instant, fee-free transactions across SkillMarket.' },
+            { q: 'Do I need an account to browse SkillCart?', a: 'No! SkillCart is completely public. You can browse, search, compare, and inspect all products and creator profiles without creating an account.' },
+            { q: 'What are SkillCredits?', a: 'SkillCredits (SC) are the internal virtual currency used for instant, fee-free transactions across SkillCart.' },
             { q: 'How does buyer escrow protection work?', a: 'When you purchase a service, funds are placed into an escrow lock. The seller receives credits only after you confirm and approve delivery.' },
             { q: 'How do I top up SkillCredits?', a: 'You can buy SkillCredits instantly using Razorpay (UPI, Credit/Debit Cards, Net Banking) via the Buy Credits panel.' },
           ].map((faq, i) => (
@@ -436,7 +436,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
       <section className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-center space-y-4 shadow-xl">
         <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Ready to sell your digital products or services?</h2>
         <p className="text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto">
-          Join thousands of creators earning SkillCredits on SkillMarket. 1-click email registration and 100 free bonus credits!
+          Join thousands of creators earning SkillCredits on SkillCart. 1-click email registration and 100 free bonus credits!
         </p>
         <button
           onClick={() => onRequireAuth?.(() => {})}

@@ -28,7 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
             <div>
               <p className="text-sm font-bold leading-tight">Admin Panel</p>
-              <p className="text-[10px] text-muted-foreground">SkillMarket</p>
+              <p className="text-[10px] text-muted-foreground">SkillCart</p>
             </div>
           </Link>
         </div>

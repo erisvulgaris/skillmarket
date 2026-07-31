@@ -110,7 +110,7 @@ export function PwaInstallPrompt() {
               <Download className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold">Install SkillMarket</p>
+              <p className="text-sm font-bold">Install SkillCart</p>
               <p className="text-xs text-muted-foreground">Add to home screen for a better experience</p>
             </div>
             <button onClick={install} aria-label="Install app" className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold active:scale-95 transition">

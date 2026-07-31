@@ -37,7 +37,7 @@ export function ReferralsView() {
     const link = `${window.location.origin}/register?ref=${user?.referralCode}`
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Join SkillMarket', text: `Use my referral code ${user?.referralCode} and get 50 SC bonus!`, url: link })
+        await navigator.share({ title: 'Join SkillCart', text: `Use my referral code ${user?.referralCode} and get 50 SC bonus!`, url: link })
       } catch {}
     } else {
       navigator.clipboard.writeText(link)
