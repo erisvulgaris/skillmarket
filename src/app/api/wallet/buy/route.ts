@@ -33,7 +33,7 @@ export const POST = withCors(apiLimit(async function POST(req: Request) {
       userId: user.id,
       amountCredits: data!.amountCredits,
       amountFiat: data!.amountFiat,
-      currency: data!.currency,
+      currency: data!.currency || 'INR',
       idempotencyKey,
       gatewayRef: `sim_payment_${Date.now()}`,
     })

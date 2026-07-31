@@ -12,12 +12,12 @@ import { motion } from 'framer-motion'
 import { clsx } from 'clsx'
 
 const PACKAGES = [
-  { credits: 100, price: 0.99, bonus: 0, popular: false },
-  { credits: 500, price: 4.5, bonus: 25, popular: false },
-  { credits: 1000, price: 8.5, bonus: 100, popular: true },
-  { credits: 2500, price: 19, bonus: 350, popular: false },
-  { credits: 5000, price: 35, bonus: 800, popular: false },
-  { credits: 10000, price: 65, bonus: 2000, popular: false },
+  { credits: 100, price: 100, bonus: 0, popular: false },
+  { credits: 500, price: 500, bonus: 25, popular: false },
+  { credits: 1000, price: 1000, bonus: 100, popular: true },
+  { credits: 2500, price: 2500, bonus: 350, popular: false },
+  { credits: 5000, price: 5000, bonus: 800, popular: false },
+  { credits: 10000, price: 10000, bonus: 2000, popular: false },
 ]
 
 export function BuyCreditsView() {
@@ -33,7 +33,7 @@ export function BuyCreditsView() {
       await api.post('/api/wallet/buy', {
         amountCredits: pkg.credits + pkg.bonus,
         amountFiat: pkg.price,
-        currency: 'USD',
+        currency: 'INR',
       })
       await refreshUser()
       setSuccess(true)
@@ -96,7 +96,7 @@ export function BuyCreditsView() {
                 <Zap className="h-8 w-8 text-primary-foreground" />
               </div>
               <h2 className="text-xl font-bold">Top up your wallet</h2>
-              <p className="text-sm text-muted-foreground mt-1">Choose a package to get started</p>
+              <p className="text-xs text-emerald-500 font-semibold mt-1">Exchange Rate: 1 SC = ₹1 (1 SkillCredit = ₹1 INR)</p>
             </div>
 
             <div className="space-y-2">
@@ -124,8 +124,8 @@ export function BuyCreditsView() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold">${pkg.price.toFixed(2)}</p>
-                      <p className="text-[10px] text-muted-foreground">${(pkg.price / pkg.credits).toFixed(3)}/SC</p>
+                      <p className="text-lg font-bold text-emerald-500">₹{pkg.price.toLocaleString('en-IN')}</p>
+                      <p className="text-[10px] text-muted-foreground">1 SC = ₹1</p>
                     </div>
                   </div>
                 </motion.button>
@@ -147,16 +147,16 @@ export function BuyCreditsView() {
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Total</span>
-                <span className="font-bold text-lg">${PACKAGES[selected].price.toFixed(2)}</span>
+                <span className="font-bold text-lg text-emerald-500">₹{PACKAGES[selected].price.toLocaleString('en-IN')}</span>
               </div>
             </Card>
 
             <Button onClick={buy} disabled={loading} className="w-full rounded-2xl h-12">
-              {loading ? 'Processing…' : `Pay $${PACKAGES[selected].price.toFixed(2)} & Get ${formatSC(PACKAGES[selected].credits + PACKAGES[selected].bonus)} SC`}
+              {loading ? 'Processing…' : `Pay ₹${PACKAGES[selected].price.toLocaleString('en-IN')} & Get ${formatSC(PACKAGES[selected].credits + PACKAGES[selected].bonus)} SC`}
             </Button>
 
             <p className="text-center text-[10px] text-muted-foreground px-6 leading-relaxed">
-              SkillCredits are a virtual currency with no cash value. Purchases are non-refundable. By continuing you agree to our Terms of Service.
+              1 SkillCredit = ₹1 INR. SkillCredits are virtual currency used within SkillCart. Purchases are instant. By continuing you agree to our Terms of Service.
             </p>
           </>
         )}

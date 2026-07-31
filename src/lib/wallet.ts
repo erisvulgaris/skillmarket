@@ -53,7 +53,7 @@ export async function purchaseCredits(params: {
   idempotencyKey: string
   gatewayRef?: string
 }) {
-  const { userId, amountCredits, amountFiat, currency = 'USD', idempotencyKey, gatewayRef } = params
+  const { userId, amountCredits, amountFiat, currency = 'INR', idempotencyKey, gatewayRef } = params
   if (amountCredits <= 0) throw new Error('INVALID_AMOUNT')
 
   return db.$transaction(async (tx) => {
