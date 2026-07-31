@@ -1,8 +1,10 @@
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination, safeJsonParse } from '@/lib/api'
+import { ensureTelegramServicesSeeded } from '@/lib/auto-seed'
 
 export async function GET(req: Request) {
   try {
+    await ensureTelegramServicesSeeded()
     const { skip, limit, page } = parsePagination(req)
     const url = new URL(req.url)
     const categoryId = url.searchParams.get('categoryId')
