@@ -15,7 +15,7 @@ import Link from 'next/link'
 
 type Category = { id: string; name: string; slug: string; icon?: string | null; children?: Category[] }
 
-export function MarketplaceView() {
+export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: () => void) => void }) {
   const { setView, user } = useApp()
   const { prefersReduced } = useReducedMotion()
   const [services, setServices] = useState<Service[]>([])
@@ -23,13 +23,13 @@ export function MarketplaceView() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'trending' | 'newest' | 'popular' | 'featured'>('trending')
   const [recentlyViewed, setRecentlyViewed] = useState<Service[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     try {
       let ids: string[] = []
       try { ids = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]') } catch {}
       if (ids.length > 0) {
-        // Fetch each — lightweight; could be a single endpoint
         Promise.all(ids.slice(0, 6).map((id) => api.get<{ service: Service }>(`/api/services/${id}`).catch(() => null)))
           .then((results) => {
             const valid = results.filter(Boolean).map((r: any) => r.service) as Service[]
@@ -44,7 +44,7 @@ export function MarketplaceView() {
     try {
       const sort = tab === 'trending' ? 'trending' : tab === 'newest' ? 'newest' : tab === 'popular' ? 'popular' : 'newest'
       const [svc, cats] = await Promise.all([
-        api.get<{ items: Service[] }>(`/api/marketplace/services?sort=${sort}&limit=20`),
+        api.get<{ items: Service[] }>(`/api/marketplace/services?sort=${sort}&limit=24`),
         api.get<{ categories: Category[] }>('/api/marketplace/categories'),
       ])
       setServices(svc.items)
@@ -57,48 +57,84 @@ export function MarketplaceView() {
 
   useEffect(() => { load() }, [load])
 
-  const featured = services.filter((s) => s.featured).slice(0, 5)
-  const trending = [...services].sort((a, b) => b.views - a.views).slice(0, 6)
+  const featured = services.filter((s) => s.featured).slice(0, 6)
+  const trending = [...services].sort((a, b) => b.views - a.views).slice(0, 8)
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      setView('search', { q: searchQuery.trim() })
+    }
+  }
 
   return (
-    <div className="px-4 pt-4 space-y-6">
-      {/* Hero greeting */}
+    <div className="space-y-10 pt-2 pb-12">
+      {/* Public Storefront Hero Section */}
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white border border-slate-800 p-6 sm:p-10 shadow-2xl"
       >
-        <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-primary/20 blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-chart-3/10 blur-2xl" />
-        <div className="relative">
-          <p className="text-xs text-muted-foreground font-medium">Welcome back</p>
-          <h2 className="text-xl font-bold mt-0.5">{user?.profile?.displayName || user?.username}</h2>
-          <div className="flex items-center gap-3 mt-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/60 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <SkillCredits amount={user?.wallet?.availableBalance || 0} size="sm" />
-            </div>
-            <button
-              onClick={() => setView('buy-credits')}
-              className="text-xs font-semibold text-primary active:scale-95 transition"
-            >
-              + Buy Credits
-            </button>
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-3xl space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Public Peer-to-Peer Digital Marketplace</span>
           </div>
-          {/* Mini stats */}
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
-              <p className="text-sm font-bold tabular-nums">{services.length}</p>
-              <p className="text-[9px] text-muted-foreground">Services</p>
-            </div>
-            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
-              <p className="text-sm font-bold tabular-nums">{featured.length}</p>
-              <p className="text-[9px] text-muted-foreground">Featured</p>
-            </div>
-            <div className="text-center p-2 rounded-xl bg-background/40 backdrop-blur">
-              <p className="text-sm font-bold tabular-nums">{categories.length}</p>
-              <p className="text-[9px] text-muted-foreground">Categories</p>
-            </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            Discover & Buy Digital Products, AI Tools & Expert Services
+          </h1>
+
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+            The modern storefront for creators, developers, designers, and digital sellers. Browse thousands of verified offerings with zero sign-in required.
+          </p>
+
+          {/* Quick Hero Search Input */}
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-slate-700 shadow-xl max-w-xl">
+            <Search className="h-5 w-5 text-slate-400 ml-3 flex-shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search UI kits, AI prompts, courses, logos..."
+              className="w-full bg-transparent text-sm text-white placeholder-slate-400 outline-none px-2 py-1"
+            />
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-xs text-white transition active:scale-95 flex-shrink-0 shadow-md shadow-emerald-500/20"
+            >
+              Search
+            </button>
+          </form>
+
+          {/* User Status / Quick CTAs */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="px-3.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-200">
+                  Welcome, <span className="text-emerald-400 font-bold">{user.profile?.displayName || user.username}</span>
+                </div>
+                <button
+                  onClick={() => setView('buy-credits')}
+                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                >
+                  + Buy Credits ({formatSC(user.wallet?.availableBalance || 0)} SC)
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onRequireAuth?.(() => {})}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-xs text-white shadow-lg transition active:scale-95"
+                >
+                  Start Selling as Creator
+                </button>
+                <span className="text-xs text-slate-400">100 Free Bonus SkillCredits on Quick Signup</span>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
