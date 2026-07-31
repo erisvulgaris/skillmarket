@@ -26,40 +26,100 @@ export function BuyCreditsView() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) return resolve(true)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   const buy = async () => {
     const pkg = PACKAGES[selected]
     setLoading(true)
     try {
-      await api.post('/api/wallet/buy', {
+      const isLoaded = await loadRazorpayScript()
+      if (!isLoaded) {
+        toast.error('Failed to load Razorpay payment SDK')
+        setLoading(false)
+        return
+      }
+
+      // 1. Create order on server
+      const order = await api.post<{ orderId: string; amount: number; currency: string; key: string }>('/api/wallet/razorpay/create-order', {
         amountCredits: pkg.credits + pkg.bonus,
         amountFiat: pkg.price,
-        currency: 'INR',
       })
-      await refreshUser()
-      setSuccess(true)
-      toast.success(`+${formatSC(pkg.credits + pkg.bonus)} SC added to your wallet!`)
 
-      // Auto-fulfill pending order if stored
-      try {
-        const rawPending = localStorage.getItem('sm_pending_order')
-        if (rawPending) {
-          const pending = JSON.parse(rawPending)
-          localStorage.removeItem('sm_pending_order')
-          toast.info('Completing your pending service purchase…')
-          const res = await api.post<{ order: any; conversationId: string }>('/api/orders', {
-            serviceId: pending.serviceId,
-            packageId: pending.packageId || undefined,
-            requirements: pending.requirements || undefined,
-          })
-          toast.success('Service ordered successfully!')
-          setTimeout(() => setView('order-detail', { id: res.order.id }), 1200)
-        }
-      } catch (e) {
-        console.error('Pending order auto-completion failed:', e)
+      // 2. Launch Razorpay Checkout Modal
+      const options = {
+        key: order.key || 'rzp_live_RyhshDxLuZASF6',
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'SkillCart Marketplace',
+        description: `Top up ${formatSC(pkg.credits + pkg.bonus)} SkillCredits`,
+        order_id: order.orderId,
+        handler: async function (response: any) {
+          try {
+            setLoading(true)
+            toast.loading('Verifying Razorpay payment signature…')
+            await api.post('/api/wallet/razorpay/verify-payment', {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              amountCredits: pkg.credits + pkg.bonus,
+              amountFiat: pkg.price,
+            })
+            await refreshUser()
+            setSuccess(true)
+            toast.dismiss()
+            toast.success(`+${formatSC(pkg.credits + pkg.bonus)} SC added to your wallet!`)
+
+            // Auto-fulfill pending order if stored
+            try {
+              const rawPending = localStorage.getItem('sm_pending_order')
+              if (rawPending) {
+                const pending = JSON.parse(rawPending)
+                localStorage.removeItem('sm_pending_order')
+                toast.info('Completing your pending service purchase…')
+                const res = await api.post<{ order: any; conversationId: string }>('/api/orders', {
+                  serviceId: pending.serviceId,
+                  packageId: pending.packageId || undefined,
+                  requirements: pending.requirements || undefined,
+                })
+                toast.success('Service ordered successfully!')
+                setTimeout(() => setView('order-detail', { id: res.order.id }), 1200)
+              }
+            } catch (e) {
+              console.error('Pending order auto-completion failed:', e)
+            }
+          } catch (err: any) {
+            toast.dismiss()
+            toast.error(err.message || 'Payment verification failed')
+          } finally {
+            setLoading(false)
+          }
+        },
+        prefill: {
+          email: user?.email || '',
+          name: user?.profile?.displayName || user?.username || '',
+        },
+        theme: {
+          color: '#10b981',
+        },
       }
+
+      const rzp = new (window as any).Razorpay(options)
+      rzp.on('payment.failed', function (resp: any) {
+        toast.error(`Payment Failed: ${resp.error?.description || 'Transaction cancelled'}`)
+        setLoading(false)
+      })
+      rzp.open()
     } catch (e: any) {
-      toast.error(e.message || 'Purchase failed')
-    } finally {
+      toast.error(e.message || 'Payment initiation failed')
       setLoading(false)
     }
   }

@@ -1,7 +1,6 @@
 import json
 import urllib.request
 import urllib.parse
-import time
 import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -19,18 +18,21 @@ def post(endpoint, payload):
     req = urllib.request.Request(url, data=data, headers=HEADERS, method='POST')
     with urllib.request.urlopen(req, timeout=30) as resp:
         res_data = json.loads(resp.read().decode('utf-8'))
-        return res_data
+        return res_data['result']['data']['json']
 
 if __name__ == '__main__':
     app_id = "D2WEVGcagZDHunlcBmc-U"
-    print("Updating git settings & clearing cache...")
-    post("application.update", {
+    print("Setting NIXPACKS_NODE_VERSION=20 via application.update...")
+    
+    env_str = "NIXPACKS_NODE_VERSION=20\nDATABASE_URL=file:/data/skillmarket.db\nNODE_ENV=production\nNEXT_PUBLIC_BASE_URL=https://skillcart.shop"
+
+    res1 = post("application.update", {
         "applicationId": app_id,
-        "customGitUrl": "https://github.com/erisvulgaris/skillmarket.git",
-        "customGitBranch": "main",
+        "env": env_str,
         "cleanCache": True
     })
+    print("Update response:", res1.get("appName"), res1.get("env"))
     
     print("Triggering fresh deploy...")
-    res = post("application.deploy", {"applicationId": app_id})
-    print("Deploy response:", res)
+    res2 = post("application.deploy", {"applicationId": app_id})
+    print("Deploy response:", res2)
