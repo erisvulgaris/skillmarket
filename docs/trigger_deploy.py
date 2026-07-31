@@ -22,6 +22,11 @@ def post(endpoint, payload):
 
 if __name__ == '__main__':
     app_id = "D2WEVGcagZDHunlcBmc-U"
+    print("Calling application.update with cleanCache=True...")
+    post("application.update", {
+        "applicationId": app_id,
+        "cleanCache": True
+    })
     print("Calling application.deploy...")
     res = post("application.deploy", {"applicationId": app_id})
-    print("Response:", res)
+    print("Deploy Response:", res)
