@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import urllib.parse
+import time
 import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -22,11 +23,17 @@ def post(endpoint, payload):
 
 if __name__ == '__main__':
     app_id = "D2WEVGcagZDHunlcBmc-U"
-    print("Calling application.update with cleanCache=True...")
+    print("Calling application.update with customGitBranch=main and cleanCache=True...")
     post("application.update", {
         "applicationId": app_id,
+        "customGitUrl": "https://github.com/erisvulgaris/skillmarket.git",
+        "customGitBranch": "main",
         "cleanCache": True
     })
-    print("Calling application.deploy...")
-    res = post("application.deploy", {"applicationId": app_id})
-    print("Deploy Response:", res)
+    
+    print("Calling application.deploy with title...")
+    res = post("application.deploy", {
+        "applicationId": app_id,
+        "title": "Deploy commit 5f189c6"
+    })
+    print("Deploy response:", res)

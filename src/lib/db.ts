@@ -15,6 +15,12 @@ export const db =
     transactionOptions: { timeout: 15000, maxWait: 10000 },
   })
 
+// Enable SQLite WAL mode & busy timeout for high concurrency performance
+if (db) {
+  db.$executeRawUnsafe('PRAGMA journal_mode=WAL;').catch(() => {})
+  db.$executeRawUnsafe('PRAGMA busy_timeout=5000;').catch(() => {})
+}
+
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 
 // Graceful shutdown (CHANGELOG 090)
