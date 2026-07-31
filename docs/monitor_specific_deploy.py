@@ -25,7 +25,7 @@ def get(endpoint, params=None):
 
 if __name__ == '__main__':
     app_id = "D2WEVGcagZDHunlcBmc-U"
-    target_id = "NYc2hgJ4ZFZ1GG08oDiWp"
+    target_id = "-hZCGPG8CxexaOivHKOwy"
     for i in range(40):
         try:
             app_details = get("application.one", {"applicationId": app_id})
