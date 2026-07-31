@@ -2,6 +2,8 @@ import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
 import { ensureTelegramServicesSeeded } from '@/lib/auto-seed'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     await ensureTelegramServicesSeeded()

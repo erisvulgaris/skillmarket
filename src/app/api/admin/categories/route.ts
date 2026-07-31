@@ -2,6 +2,8 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, err, handleError } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const user = await getCurrentUser()
