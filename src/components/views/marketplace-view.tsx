@@ -1,43 +1,35 @@
 'use client'
 
-import { useEffect, useState, useCallback, memo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, type Service } from '@/lib/api-client'
 import { useApp } from '@/lib/store'
+import { useGuestStore } from '@/lib/guest-store'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search, Crown, Activity, BarChart3 } from 'lucide-react'
+import {
+  TrendingUp, Flame, Sparkles, Clock, Star, Bookmark, ChevronRight, Search,
+  Crown, Activity, ShieldCheck, Zap, ArrowRight, Code, Layout, Video, FileText,
+  Brain, CheckCircle2, MessageSquare, Heart, ShoppingCart, HelpCircle, UserCheck
+} from 'lucide-react'
 import { clsx } from 'clsx'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/use-reduced-motion'
-import Link from 'next/link'
 
-type Category = { id: string; name: string; slug: string; icon?: string | null; children?: Category[] }
+type Category = { id: string; name: string; slug: string; icon?: string | null }
 
 export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: () => void) => void }) {
   const { setView, user } = useApp()
   const { prefersReduced } = useReducedMotion()
+  const { wishlist, toggleWishlist, addToCart } = useGuestStore()
+
   const [services, setServices] = useState<Service[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'trending' | 'newest' | 'popular' | 'featured'>('trending')
-  const [recentlyViewed, setRecentlyViewed] = useState<Service[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    try {
-      let ids: string[] = []
-      try { ids = JSON.parse(localStorage.getItem('sm_recently_viewed') || '[]') } catch {}
-      if (ids.length > 0) {
-        Promise.all(ids.slice(0, 6).map((id) => api.get<{ service: Service }>(`/api/services/${id}`).catch(() => null)))
-          .then((results) => {
-            const valid = results.filter(Boolean).map((r: any) => r.service) as Service[]
-            setRecentlyViewed(valid)
-          })
-      }
-    } catch {}
-  }, [])
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -57,7 +49,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
 
   useEffect(() => { load() }, [load])
 
-  const featured = services.filter((s) => s.featured).slice(0, 6)
+  const featured = services.filter((s) => s.featured).slice(0, 4)
   const trending = [...services].sort((a, b) => b.views - a.views).slice(0, 8)
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -67,377 +59,392 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
     }
   }
 
+  const handleBuyNow = (service: Service) => {
+    const action = () => setView('service-detail', { id: service.id })
+    if (!user && onRequireAuth) {
+      onRequireAuth(action)
+    } else {
+      action()
+    }
+  }
+
   return (
-    <div className="space-y-10 pt-2 pb-12">
-      {/* Public Storefront Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white border border-slate-800 p-6 sm:p-10 shadow-2xl"
-      >
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+    <div className="space-y-16 pt-2 pb-16">
+      {/* 1. HERO SECTION — Stripe / Linear / Vercel Narrative Aesthetic */}
+      <section className="relative overflow-hidden rounded-3xl bg-slate-950 text-white border border-slate-800 p-6 sm:p-12 shadow-2xl">
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-teal-500/15 blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-3xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Public Peer-to-Peer Digital Marketplace</span>
-          </div>
+        <div className="relative max-w-4xl space-y-8">
+          {/* Floating Pill Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-slate-700 text-xs font-bold text-emerald-400 backdrop-blur-md shadow-md"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Verified Digital Assets, AI Tools & Expert Services</span>
+          </motion.div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-            Discover & Buy Digital Products, AI Tools & Expert Services
-          </h1>
+          {/* Main Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.1]"
+          >
+            The Premier Storefront for Digital Creators & Developers.
+          </motion.h1>
 
-          <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
-            The modern storefront for creators, developers, designers, and digital sellers. Browse thousands of verified offerings with zero sign-in required.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-normal"
+          >
+            Discover code templates, UI kits, AI prompts, and freelance services. Explore freely without signing in. Instant checkout with escrow protection.
+          </motion.p>
 
-          {/* Quick Hero Search Input */}
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-slate-700 shadow-xl max-w-xl">
+          {/* Search Bar Input */}
+          <motion.form
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            onSubmit={handleSearchSubmit}
+            className="flex items-center gap-2 bg-slate-900/95 backdrop-blur-xl p-2.5 rounded-2xl border border-slate-700 shadow-2xl max-w-2xl"
+          >
             <Search className="h-5 w-5 text-slate-400 ml-3 flex-shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search UI kits, AI prompts, courses, logos..."
-              className="w-full bg-transparent text-sm text-white placeholder-slate-400 outline-none px-2 py-1"
+              placeholder="Search UI kits, React boilerplates, AI tools, logos..."
+              className="w-full bg-transparent text-sm sm:text-base text-white placeholder-slate-400 outline-none px-3 py-1 font-medium"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-xs text-white transition active:scale-95 flex-shrink-0 shadow-md shadow-emerald-500/20"
+              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-xs sm:text-sm text-white transition active:scale-95 flex-shrink-0 shadow-lg shadow-emerald-500/25"
             >
-              Search
+              Search Marketplace
             </button>
-          </form>
+          </motion.form>
 
-          {/* User Status / Quick CTAs */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            {user ? (
-              <div className="flex items-center gap-3">
-                <div className="px-3.5 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-semibold text-slate-200">
-                  Welcome, <span className="text-emerald-400 font-bold">{user.profile?.displayName || user.username}</span>
-                </div>
-                <button
-                  onClick={() => setView('buy-credits')}
-                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-                >
-                  + Buy Credits ({formatSC(user.wallet?.availableBalance || 0)} SC)
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onRequireAuth?.(() => {})}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 font-bold text-xs text-white shadow-lg transition active:scale-95"
-                >
-                  Start Selling as Creator
-                </button>
-                <span className="text-xs text-slate-400">100 Free Bonus SkillCredits on Quick Signup</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Search bar */}
-      <button
-        onClick={() => setView('search')}
-        aria-label="Open search"
-        className="w-full h-12 rounded-2xl bg-muted/60 border border-border/40 flex items-center gap-3 px-4 text-muted-foreground hover:bg-muted transition active:scale-[0.99]"
-      >
-        <Search className="h-4 w-4" />
-        <span className="text-sm">Search services, people, categories…</span>
-      </button>
-
-      {/* Categories */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold">Browse Categories</h3>
-        </div>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 w-24 rounded-full flex-shrink-0" />)
-          ) : (
-            categories.map((c) => (
+          {/* Popular Tag Pills */}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 pt-1">
+            <span className="font-semibold text-slate-300">Popular:</span>
+            {['UI Kits', 'Next.js Templates', 'AI Prompts', 'Logo Design', 'Video Editing', 'Python Scripts'].map((tag) => (
               <button
-                key={c.id}
-                onClick={() => setView('search', { categoryId: c.id, categoryName: c.name })}
-                aria-label={`Category: ${c.name}`}
-                className="flex-shrink-0 h-10 px-4 rounded-full bg-secondary border border-border/50 flex items-center gap-2 text-sm font-medium hover:bg-accent active:scale-95 transition"
+                key={tag}
+                onClick={() => setView('search', { q: tag })}
+                className="px-3 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition text-[11px]"
               >
-                <span className="text-base">{c.icon || '📁'}</span>
-                {c.name}
+                {tag}
               </button>
-            ))
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Featured carousel */}
+      {/* 2. CREATOR TRUST MARQUEE */}
+      <section className="py-4 border-y border-border/40 bg-muted/20 rounded-2xl px-6 flex flex-wrap items-center justify-between gap-6 text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+        <div className="flex items-center gap-2">
+          <UserCheck className="h-4 w-4 text-emerald-500" />
+          <span>10,000+ Verified Creators</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-amber-500" />
+          <span>Instant Digital Delivery</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-violet-500" />
+          <span>100% Escrow Protection</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-blue-500" />
+          <span>Razorpay Instant Top-Up</span>
+        </div>
+      </section>
+
+      {/* 3. FEATURED EDITORIAL COLLECTIONS SHOWCASE */}
       {featured.length > 0 && (
-        <div className="space-y-3">
-          <SectionHeader icon={<Star className="h-4 w-4 fill-amber-400 text-amber-400" />} title="Featured" onSeeAll={() => setView('search', { featured: true })} />
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-            {featured.map((s) => (
-              <ServiceCardHorizontal key={s.id} service={s} onClick={() => setView('service-detail', { id: s.id })} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Trending tags */}
-      {!loading && services.length > 0 && (() => {
-        const tagCount = new Map<string, number>()
-        for (const s of services) {
-          for (const t of s.tags || []) {
-            tagCount.set(t, (tagCount.get(t) || 0) + 1)
-          }
-        }
-        const sorted = Array.from(tagCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8)
-        if (sorted.length === 0) return null
-        return (
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold flex items-center gap-2">
-              <Flame className="h-4 w-4 text-orange-500" /> Trending Tags
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {sorted.map(([tag, count]) => (
-                <button
-                  key={tag}
-                  onClick={() => setView('search', { initialQuery: tag })}
-                  aria-label={`Search ${tag}`}
-                  className="px-3 py-1.5 rounded-full bg-secondary border border-border/40 text-xs font-medium hover:bg-accent active:scale-95 transition"
-                >
-                  {tag} <span className="text-muted-foreground">{count}</span>
-                </button>
-              ))}
+        <section className="space-y-6">
+          <div className="flex items-end justify-between">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Curated Offerings</span>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">Featured Collections</h2>
             </div>
+            <button onClick={() => setView('search')} className="text-xs font-bold text-emerald-500 hover:underline flex items-center gap-1">
+              View All <ChevronRight className="h-3.5 w-3.5" />
+            </button>
           </div>
-        )
-      })()}
 
-      {/* Recently viewed */}
-      {recentlyViewed.length > 0 && (
-        <div className="space-y-3">
-          <SectionHeader icon={<Clock className="h-4 w-4 text-muted-foreground" />} title="Recently Viewed" />
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-            {recentlyViewed.map((s) => (
-              <ServiceCardHorizontal key={s.id} service={s} onClick={() => setView('service-detail', { id: s.id })} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-muted rounded-2xl">
-        {([
-          { k: 'trending', label: 'Trending', icon: TrendingUp },
-          { k: 'newest', label: 'Newest', icon: Clock },
-          { k: 'popular', label: 'Popular', icon: Flame },
-        ] as const).map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k)}
-              aria-label={`${t.label} tab`}
-              className={clsx(
-                'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all',
-                tab === t.k ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
-              )}
-          >
-            <t.icon className="h-3.5 w-3.5" />
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Service grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => <ServiceCardSkeleton key={i} />)
-          : services.map((s, i) => (
-              <div key={s.id} className="stagger-item" style={{ animationDelay: `${i * 40}ms` }}>
-                <ServiceCard service={s} onClick={() => setView('service-detail', { id: s.id })} />
-              </div>
-            ))}
-      </div>
-
-      {services.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <p className="text-sm text-muted-foreground">No services found yet.</p>
-          <button onClick={() => setView('create-service')} className="mt-3 text-sm font-semibold text-primary">
-            Be the first to list a service →
-          </button>
-        </div>
-      )}
-
-      {/* Top sellers */}
-      {!loading && services.length > 0 && (() => {
-        const sellerMap = new Map<string, { username: string; displayName?: string | null; avatarUrl?: string | null; isVerified?: boolean; serviceCount: number; ratingAvg: number }>()
-        for (const s of services) {
-          const key = s.seller.id
-          if (!sellerMap.has(key)) {
-            sellerMap.set(key, {
-              username: s.seller.username,
-              displayName: s.seller.displayName,
-              avatarUrl: s.seller.avatarUrl,
-              isVerified: s.seller.isVerified,
-              serviceCount: 0,
-              ratingAvg: s.ratingAvg,
-            })
-          }
-          sellerMap.get(key)!.serviceCount++
-        }
-        const topSellers = Array.from(sellerMap.values()).slice(0, 3)
-        if (topSellers.length === 0) return null
-        return (
-          <div className="space-y-3">
-            <SectionHeader icon={<Crown className="h-4 w-4 text-amber-400" />} title="Top Sellers" />
-            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-              {topSellers.map((seller, i) => (
-                <button
-                  key={seller.username}
-                  onClick={() => setView('seller-profile', { username: seller.username })}
-                  className="flex-shrink-0 w-40 p-3 rounded-2xl bg-card border border-border/40 active:scale-[0.98] transition text-center"
-                >
-                  <div className="relative inline-block">
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/60 mx-auto flex items-center justify-center text-primary-foreground text-lg font-bold overflow-hidden">
-                      {seller.avatarUrl ? <img src={seller.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : seller.username[0].toUpperCase()}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {featured.map((service, idx) => (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <Card className="group overflow-hidden border border-border/60 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl rounded-3xl bg-card">
+                  <div className="relative aspect-[16/9] overflow-hidden bg-slate-900">
+                    <img
+                      src={service.coverUrl || '/logo.svg'}
+                      alt={service.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500 text-white shadow-md">
+                        FEATURED
+                      </span>
+                      {service.category && (
+                        <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-950/80 text-white backdrop-blur-md">
+                          {service.category.name}
+                        </span>
+                      )}
                     </div>
-                    <span className={clsx('absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold', i === 0 ? 'bg-amber-400 text-amber-950' : i === 1 ? 'bg-gray-300 text-gray-700' : 'bg-amber-700 text-amber-100')}>
-                      {i + 1}
-                    </span>
+                    <button
+                      onClick={() => toggleWishlist(service.id)}
+                      className="absolute top-3 right-3 h-9 w-9 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-md transition active:scale-90"
+                    >
+                      <Heart className={clsx('h-4 w-4', wishlist.includes(service.id) ? 'fill-rose-500 text-rose-500' : 'text-white')} />
+                    </button>
                   </div>
-                  <p className="text-xs font-bold mt-2 truncate">{seller.displayName || seller.username}</p>
-                  <p className="text-[10px] text-muted-foreground">@{seller.username}</p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-[10px] text-muted-foreground">{seller.serviceCount} services</span>
+
+                  <div className="p-6 space-y-4">
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="font-semibold">By @{service.seller.username}</span>
+                      <Rating rating={service.rating} count={service.reviewsCount} />
+                    </div>
+
+                    <h3
+                      onClick={() => setView('service-detail', { id: service.id })}
+                      className="text-lg font-extrabold tracking-tight hover:text-emerald-500 transition cursor-pointer line-clamp-2"
+                    >
+                      {service.title}
+                    </h3>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Price</p>
+                        <SkillCredits amount={service.price} size="md" />
+                      </div>
+
+                      <button
+                        onClick={() => handleBuyNow(service)}
+                        className="px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition flex items-center gap-1.5"
+                      >
+                        Buy Now <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </button>
-              ))}
-            </div>
+                </Card>
+              </motion.div>
+            ))}
           </div>
-        )
-      })()}
-
-      {/* Sell CTA */}
-      <motion.button
-        whileTap={prefersReduced ? {} : { scale: 0.98 }}
-        onClick={() => setView('create-service')}
-        className="w-full rounded-2xl bg-gradient-to-r from-primary to-primary/70 text-primary-foreground p-4 flex items-center justify-between shadow-lg shadow-primary/20"
-      >
-        <div className="text-left">
-          <p className="text-sm font-bold">Have a skill to sell?</p>
-          <p className="text-xs opacity-80">List your service in minutes</p>
-        </div>
-        <ChevronRight className="h-5 w-5" />
-      </motion.button>
-
-      {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3">
-        <QuickLink icon={<Bookmark className="h-4 w-4" />} label="Saved Services" onClick={() => setView('saved')} />
-        <QuickLink icon={<Sparkles className="h-4 w-4" />} label="Refer & Earn" onClick={() => setView('referrals')} />
-        <QuickLink icon={<Activity className="h-4 w-4" />} label="Activity Log" onClick={() => setView('activity')} />
-        <QuickLink icon={<BarChart3 className="h-4 w-4" />} label="Analytics" onClick={() => setView('analytics')} />
-      </div>
-    </div>
-  )
-}
-
-function SectionHeader({ icon, title, onSeeAll }: { icon: React.ReactNode; title: string; onSeeAll?: () => void }) {
-  return (
-    <div className="flex items-center justify-between">
-      <h3 className="text-sm font-bold flex items-center gap-2">
-        {icon}
-        {title}
-      </h3>
-      {onSeeAll && (
-        <button onClick={onSeeAll} className="text-xs font-semibold text-primary active:scale-95 transition">
-          See all
-        </button>
+        </section>
       )}
+
+      {/* 4. TRENDING CATALOG GRID (WITH FILTER TABS) */}
+      <section className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Live Catalog</span>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">Explore Marketplace Offerings</h2>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-2xl border border-border/50 overflow-x-auto no-scrollbar">
+            {[
+              { k: 'trending', label: '🔥 Trending' },
+              { k: 'newest', label: '✨ Newest' },
+              { k: 'popular', label: '⭐ Popular' },
+              { k: 'featured', label: '👑 Featured' },
+            ].map((t) => (
+              <button
+                key={t.k}
+                onClick={() => setTab(t.k as any)}
+                className={clsx(
+                  'px-3.5 py-1.5 rounded-xl text-xs font-semibold transition',
+                  tab === t.k ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Card key={i} className="p-4 space-y-3 rounded-3xl">
+                <Skeleton className="aspect-[4/3] w-full rounded-2xl" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((s, idx) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card className="group overflow-hidden rounded-3xl border border-border/60 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg bg-card flex flex-col h-full">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
+                    <img
+                      src={s.coverUrl || '/logo.svg'}
+                      alt={s.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <button
+                      onClick={() => toggleWishlist(s.id)}
+                      className="absolute top-2.5 right-2.5 h-8 w-8 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-md transition active:scale-90"
+                    >
+                      <Heart className={clsx('h-3.5 w-3.5', wishlist.includes(s.id) ? 'fill-rose-500 text-rose-500' : 'text-white')} />
+                    </button>
+                  </div>
+
+                  <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span className="font-semibold truncate">@{s.seller.username}</span>
+                        <Rating rating={s.rating} count={s.reviewsCount} />
+                      </div>
+                      <h4
+                        onClick={() => setView('service-detail', { id: s.id })}
+                        className="text-sm font-bold tracking-tight line-clamp-2 hover:text-emerald-500 transition cursor-pointer"
+                      >
+                        {s.title}
+                      </h4>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/40 flex items-center justify-between gap-2 mt-auto">
+                      <SkillCredits amount={s.price} size="sm" />
+                      <button
+                        onClick={() => handleBuyNow(s)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white dark:text-emerald-400 text-xs font-bold transition"
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 5. VISUAL CATEGORIES SECTION */}
+      {categories.length > 0 && (
+        <section className="space-y-6">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Browse Catalog</span>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">Explore by Category</h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.slice(0, 6).map((cat) => (
+              <Card
+                key={cat.id}
+                onClick={() => setView('search', { category: cat.slug })}
+                className="p-5 text-center rounded-3xl border border-border/60 hover:border-emerald-500/50 hover:shadow-md cursor-pointer transition group"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Code className="h-6 w-6" />
+                </div>
+                <h3 className="text-xs font-extrabold tracking-tight group-hover:text-emerald-500 transition">{cat.name}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Explore Products →</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 6. WHY SKILLMARKET — VALUE PROPOSITIONS */}
+      <section className="p-8 sm:p-12 rounded-3xl bg-muted/30 border border-border/50 space-y-8">
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Why SkillMarket</span>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Built for Seamless Digital Commerce</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-6 rounded-2xl bg-card border border-border/40 space-y-2 text-center">
+            <ShieldCheck className="h-8 w-8 text-emerald-500 mx-auto mb-1" />
+            <h4 className="text-sm font-bold">100% Escrow Protection</h4>
+            <p className="text-xs text-muted-foreground">Funds are securely locked in escrow until you verify and approve the work.</p>
+          </div>
+          <div className="p-6 rounded-2xl bg-card border border-border/40 space-y-2 text-center">
+            <Zap className="h-8 w-8 text-amber-500 mx-auto mb-1" />
+            <h4 className="text-sm font-bold">Instant Delivery</h4>
+            <p className="text-xs text-muted-foreground">Download code, templates, and digital assets immediately after purchase.</p>
+          </div>
+          <div className="p-6 rounded-2xl bg-card border border-border/40 space-y-2 text-center">
+            <UserCheck className="h-8 w-8 text-violet-500 mx-auto mb-1" />
+            <h4 className="text-sm font-bold">Verified Creators</h4>
+            <p className="text-xs text-muted-foreground">Work with vetted top sellers, instructors, and skilled developers.</p>
+          </div>
+          <div className="p-6 rounded-2xl bg-card border border-border/40 space-y-2 text-center">
+            <CheckCircle2 className="h-8 w-8 text-blue-500 mx-auto mb-1" />
+            <h4 className="text-sm font-bold">Zero Hidden Fees</h4>
+            <p className="text-xs text-muted-foreground">Transparent pricing powered by SkillCredits virtual currency.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FAQ ACCORDION SECTION */}
+      <section className="max-w-3xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Got Questions?</span>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Frequently Asked Questions</h2>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { q: 'Do I need an account to browse SkillMarket?', a: 'No! SkillMarket is completely public. You can browse, search, compare, and inspect all products and creator profiles without creating an account.' },
+            { q: 'What are SkillCredits?', a: 'SkillCredits (SC) are the internal virtual currency used for instant, fee-free transactions across SkillMarket.' },
+            { q: 'How does buyer escrow protection work?', a: 'When you purchase a service, funds are placed into an escrow lock. The seller receives credits only after you confirm and approve delivery.' },
+            { q: 'How do I top up SkillCredits?', a: 'You can buy SkillCredits instantly using Razorpay (UPI, Credit/Debit Cards, Net Banking) via the Buy Credits panel.' },
+          ].map((faq, i) => (
+            <Card
+              key={i}
+              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              className="p-5 rounded-2xl border border-border/60 cursor-pointer transition hover:border-emerald-500/40"
+            >
+              <div className="flex items-center justify-between gap-4 font-bold text-sm">
+                <span>{faq.q}</span>
+                <span className="text-emerald-500 text-lg font-mono">{openFaq === i ? '−' : '+'}</span>
+              </div>
+              {openFaq === i && (
+                <p className="text-xs text-muted-foreground mt-3 leading-relaxed border-t border-border/30 pt-3">
+                  {faq.a}
+                </p>
+              )}
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* 8. HIGH-CONVERTING CTA BANNER */}
+      <section className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-center space-y-4 shadow-xl">
+        <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Ready to sell your digital products or services?</h2>
+        <p className="text-xs sm:text-sm text-emerald-100 max-w-xl mx-auto">
+          Join thousands of creators earning SkillCredits on SkillMarket. 1-click email registration and 100 free bonus credits!
+        </p>
+        <button
+          onClick={() => onRequireAuth?.(() => {})}
+          className="px-8 py-3.5 rounded-2xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm shadow-xl transition active:scale-95 inline-flex items-center gap-2"
+        >
+          Start Selling Today <ArrowRight className="h-4 w-4" />
+        </button>
+      </section>
     </div>
-  )
-}
-
-function QuickLink({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="rounded-2xl bg-card border border-border/50 p-4 flex items-center gap-3 hover:bg-accent active:scale-95 transition"
-    >
-      <span className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">{icon}</span>
-      <span className="text-sm font-semibold text-left">{label}</span>
-    </button>
-  )
-}
-
-const ServiceCard = memo(function ServiceCard({ service, onClick }: { service: Service; onClick: () => void }) {
-  const img = service.images[0]
-  return (
-    <button onClick={onClick} aria-label={`View service: ${service.title}`} className="text-left active:scale-[0.98] transition">
-      <Card className="overflow-hidden p-0 gap-0 h-full">
-        <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-          {img ? (
-            <img src={img} alt={service.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-3xl">🎨</div>
-          )}
-          {service.featured && (
-            <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-amber-400/90 text-amber-950 text-[10px] font-bold">FEATURED</span>
-          )}
-        </div>
-        <div className="p-3 space-y-1.5">
-          <p className="text-xs font-semibold line-clamp-2 leading-snug min-h-[2rem]">{service.title}</p>
-          <div className="flex items-center gap-1.5">
-            <div className="h-4 w-4 rounded-full bg-muted overflow-hidden flex-shrink-0">
-              {service.seller.avatarUrl && <img src={service.seller.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />}
-            </div>
-            <span className="text-[10px] text-muted-foreground truncate">{service.seller.username}</span>
-            {service.seller.isVerified && <span className="text-[9px] text-primary">✓</span>}
-          </div>
-          <div className="flex items-center justify-between pt-0.5">
-            <Rating value={service.ratingAvg} count={service.ratingCount} size="sm" />
-          </div>
-          <div className="flex items-center justify-between pt-0.5">
-            <SkillCredits amount={service.price} size="sm" />
-            <span className="text-[10px] text-muted-foreground">{service.deliveryDays}d</span>
-          </div>
-        </div>
-      </Card>
-    </button>
-  )
-})
-
-const ServiceCardHorizontal = memo(function ServiceCardHorizontal({ service, onClick }: { service: Service; onClick: () => void }) {
-  const img = service.images[0]
-  return (
-    <button onClick={onClick} className="flex-shrink-0 w-64 active:scale-[0.98] transition text-left">
-      <Card className="overflow-hidden p-0 gap-0">
-        <div className="aspect-video bg-muted relative">
-          {img ? <img src={img} alt={service.title} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="h-full w-full flex items-center justify-center text-4xl">🎨</div>}
-        </div>
-        <div className="p-3 space-y-1">
-          <p className="text-sm font-semibold line-clamp-1">{service.title}</p>
-          <div className="flex items-center justify-between">
-            <Rating value={service.ratingAvg} count={service.ratingCount} size="sm" />
-            <SkillCredits amount={service.price} size="sm" />
-          </div>
-        </div>
-      </Card>
-    </button>
-  )
-})
-
-function ServiceCardSkeleton() {
-  return (
-    <Card className="overflow-hidden p-0 gap-0">
-      <Skeleton className="aspect-[4/3] rounded-none" />
-      <div className="p-3 space-y-2">
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-2/3" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-    </Card>
   )
 }
