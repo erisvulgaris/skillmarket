@@ -7,16 +7,16 @@ export async function GET() {
 
     // 1. Ensure 10 Section Categories exist
     const sectionCategories = [
-      { name: 'Telegram Services', slug: 'telegram-services', icon: 'telegram' },
-      { name: 'Software & Scripts', slug: 'software-scripts', icon: 'code' },
-      { name: 'AI Prompts & Models', slug: 'ai-prompts-models', icon: 'bot' },
-      { name: 'UI/UX Design Kits', slug: 'ui-ux-design-kits', icon: 'palette' },
-      { name: 'E-Books & Guides', slug: 'e-books-guides', icon: 'book' },
-      { name: 'Video Tutorials & Courses', slug: 'video-tutorials-courses', icon: 'video' },
-      { name: 'Templates & Themes', slug: 'templates-themes', icon: 'layout' },
-      { name: 'Audio & Music Assets', slug: 'audio-music-assets', icon: 'music' },
-      { name: 'Memberships & Subscriptions', slug: 'memberships-subscriptions', icon: 'star' },
-      { name: 'Data & Analytics Datasets', slug: 'data-analytics-datasets', icon: 'bar-chart' },
+      { name: 'Telegram Services', slug: 'telegram-services', icon: 'telegram', enabled: false },
+      { name: 'Software & Scripts', slug: 'software-scripts', icon: 'code', enabled: true },
+      { name: 'AI Prompts & Models', slug: 'ai-prompts-models', icon: 'bot', enabled: true },
+      { name: 'UI/UX Design Kits', slug: 'ui-ux-design-kits', icon: 'palette', enabled: true },
+      { name: 'E-Books & Guides', slug: 'e-books-guides', icon: 'book', enabled: true },
+      { name: 'Video Tutorials & Courses', slug: 'video-tutorials-courses', icon: 'video', enabled: true },
+      { name: 'Templates & Themes', slug: 'templates-themes', icon: 'layout', enabled: true },
+      { name: 'Audio & Music Assets', slug: 'audio-music-assets', icon: 'music', enabled: true },
+      { name: 'Memberships & Subscriptions', slug: 'memberships-subscriptions', icon: 'star', enabled: true },
+      { name: 'Data & Analytics Datasets', slug: 'data-analytics-datasets', icon: 'bar-chart', enabled: true },
     ]
 
     const categoryMap: Record<string, any> = {}
@@ -25,7 +25,13 @@ export async function GET() {
       let dbCat = await db.category.findUnique({ where: { slug: cat.slug } })
       if (!dbCat) {
         dbCat = await db.category.create({
-          data: { name: cat.name, slug: cat.slug, icon: cat.icon }
+          data: { name: cat.name, slug: cat.slug, icon: cat.icon, enabled: cat.enabled }
+        })
+      } else {
+        // Enforce enabled status update
+        dbCat = await db.category.update({
+          where: { id: dbCat.id },
+          data: { enabled: cat.enabled }
         })
       }
       categoryMap[cat.slug] = dbCat

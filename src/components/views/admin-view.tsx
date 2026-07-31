@@ -17,13 +17,14 @@ import { motion } from 'framer-motion'
 
 const EnterpriseDashboard = dynamic(() => import('@/components/views/enterprise-dashboard').then(m => m.EnterpriseDashboard), { ssr: false })
 
-type Tab = 'dashboard' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'support' | 'settings' | 'flags' | 'cms' | 'broadcast'
+type Tab = 'dashboard' | 'sections' | 'users' | 'wallets' | 'services' | 'orders' | 'audit' | 'disputes' | 'reports' | 'fraud' | 'support' | 'settings' | 'flags' | 'cms' | 'broadcast'
 
 export function AdminView() {
   const { setView } = useApp()
   const [tab, setTab] = useState<Tab>('dashboard')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [wallets, setWallets] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
@@ -46,6 +47,43 @@ export function AdminView() {
     } catch { toast.error('Failed to load dashboard') }
     finally { setLoading(false) }
   }, [])
+
+  const loadCategories = useCallback(async () => {
+    setLoading(true)
+    try {
+      const d = await api.get<{ categories: any[] }>('/api/admin/categories')
+      setCategories(d.categories)
+    } catch { toast.error('Failed to load sections') }
+    finally { setLoading(false) }
+  }, [])
+
+  const toggleCategory = async (catId: string, currentEnabled: boolean, name: string) => {
+    try {
+      await api.patch(`/api/admin/categories/${catId}`, { enabled: !currentEnabled })
+      toast.success(`Section "${name}" turned ${!currentEnabled ? 'ON' : 'OFF'}`)
+      loadCategories()
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to toggle section')
+    }
+  }
+
+  const TABS: { k: Tab; label: string }[] = [
+    { k: 'dashboard', label: 'Dashboard' },
+    { k: 'sections', label: 'Marketplace Sections' },
+    { k: 'users', label: 'Users' },
+    { k: 'wallets', label: 'Wallets' },
+    { k: 'services', label: 'Services' },
+    { k: 'orders', label: 'Orders' },
+    { k: 'disputes', label: 'Disputes' },
+    { k: 'reports', label: 'Reports' },
+    { k: 'fraud', label: 'Fraud' },
+    { k: 'support', label: 'Support' },
+    { k: 'flags', label: 'Flags' },
+    { k: 'settings', label: 'Settings' },
+    { k: 'cms', label: 'CMS' },
+    { k: 'broadcast', label: 'Broadcast' },
+    { k: 'audit', label: 'Audit' },
+  ]
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -121,13 +159,13 @@ export function AdminView() {
 
   useEffect(() => {
     const loaders: Record<Tab, () => void> = {
-      dashboard: loadDashboard, users: loadUsers, wallets: loadWallets,
+      dashboard: loadDashboard, sections: loadCategories, users: loadUsers, wallets: loadWallets,
       services: loadServices, orders: loadOrders, audit: loadAudit, disputes: loadDisputes,
       reports: loadReports, fraud: loadFraud, support: loadSupport, settings: loadSettings, flags: loadFlags, cms: loadCms,
       broadcast: () => setLoading(false),
     }
     loaders[tab]?.()
-  }, [tab, loadDashboard, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSupport, loadSettings, loadFlags, loadCms])
+  }, [tab, loadDashboard, loadCategories, loadUsers, loadWallets, loadServices, loadOrders, loadAudit, loadDisputes, loadReports, loadFraud, loadSupport, loadSettings, loadFlags, loadCms])
 
   const exportUsers = () => {
     const csv = ['Username,Email,Status,Role,Balance,Verified,Joined',
@@ -304,6 +342,10 @@ export function AdminView() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24">
         {tab === 'dashboard' && <EnterpriseDashboard onBack={() => setView('profile')} />}
+
+        {tab === 'sections' && (
+          <AdminSectionsTab categories={categories} loading={loading} onToggle={toggleCategory} />
+        )}
 
         {tab === 'users' && (
           <AdminUsersTab users={users} loading={loading} onAction={userAction} onExport={exportUsers} />
@@ -1547,6 +1589,88 @@ function DashboardSkeleton() {
       </div>
       <Skeleton className="h-32 rounded-2xl" />
       <Skeleton className="h-48 rounded-2xl" />
+    </div>
+  )
+}
+
+function AdminSectionsTab({ categories, loading, onToggle }: {
+  categories: any[]
+  loading: boolean
+  onToggle: (catId: string, currentEnabled: boolean, name: string) => void
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-card border border-border/60 shadow-sm">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-widest text-violet-500">Global Governance</span>
+          <h3 className="text-xl font-black tracking-tight mt-1">Marketplace Sections Visibility</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+            Toggle visibility for any section across the entire platform. Turning off a section completely hides it from public marketplace navigation, category pills, search filters, and product feeds.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1.5 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-bold border border-violet-500/20">
+            {categories.filter(c => c.enabled !== false).length} Active / {categories.length} Total
+          </span>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-3xl" />)}
+        </div>
+      ) : categories.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">No marketplace sections configured</Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {categories.map((cat) => {
+            const isEnabled = cat.enabled !== false
+            return (
+              <Card
+                key={cat.id}
+                className={clsx(
+                  'p-5 rounded-3xl border transition-all duration-200 flex flex-col justify-between gap-4',
+                  isEnabled ? 'border-border/60 bg-card hover:border-violet-500/30' : 'border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/10 opacity-80'
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={clsx('h-11 w-11 rounded-2xl flex items-center justify-center font-bold text-lg', isEnabled ? 'bg-violet-500/10 text-violet-500' : 'bg-rose-500/10 text-rose-500')}>
+                      {cat.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base font-bold tracking-tight">{cat.name}</h4>
+                        <span className={clsx('px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider', isEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20')}>
+                          {isEnabled ? 'ACTIVE' : 'OFF'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">/{cat.slug} · {cat._count?.services || 0} listings</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/40 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {isEnabled ? 'Visible on public marketplace' : 'Hidden from public & admin frontend views'}
+                  </span>
+                  <button
+                    onClick={() => onToggle(cat.id, isEnabled, cat.name)}
+                    className={clsx(
+                      'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 active:scale-95 shadow-xs',
+                      isEnabled
+                        ? 'bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/20'
+                        : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
+                    )}
+                  >
+                    {isEnabled ? 'Turn OFF Section' : 'Turn ON Section'}
+                  </button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

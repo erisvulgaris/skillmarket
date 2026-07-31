@@ -14,7 +14,11 @@ export async function GET(req: Request) {
     const deliveryDays = url.searchParams.get('deliveryDays')
     const tag = url.searchParams.get('tag')
 
-    const where: any = { status: 'active', deletedAt: null }
+    const where: any = {
+      status: 'active',
+      deletedAt: null,
+      category: { enabled: true },
+    }
     if (categoryId) where.categoryId = categoryId
     if (minPrice || maxPrice) {
       where.price = {}

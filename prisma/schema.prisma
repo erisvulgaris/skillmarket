@@ -234,6 +234,7 @@ model Category {
   children    Category[] @relation("CategoryTree")
   sortOrder   Int       @default(0)
   featured    Boolean   @default(false)
+  enabled     Boolean   @default(true)
   createdAt   DateTime  @default(now())
   services    Service[]
 }
