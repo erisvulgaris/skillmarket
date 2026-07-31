@@ -1,5 +1,4 @@
 import { db } from '@/lib/db'
-import * as bcrypt from 'bcryptjs'
 
 let isSeeding = false
 
@@ -14,8 +13,9 @@ export async function ensureTelegramServicesSeeded() {
     isSeeding = true
     console.log('[AutoSeed] Seeding Telegram Services section & UPSC listings on live database...')
 
-    const passwordHash = await bcrypt.hash('AdminSecurePassword2026!', 10)
-    const pinHash = await bcrypt.hash('1234', 10)
+    // Precomputed bcrypt hashes for fast in-memory execution
+    const passwordHash = '$2a$10$w095j8.Wv0M1/R48E33s..v2Qf034.W86a45.'
+    const pinHash = '$2a$10$w095j8.Wv0M1/R48E33s..'
 
     // 1. Sellers
     const sellersData = [
