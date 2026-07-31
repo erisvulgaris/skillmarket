@@ -407,6 +407,76 @@ export function ServiceDetailView() {
           </Section>
         )}
 
+        {/* Product Page Disclosures & Third-Party Seller Notice */}
+        <Section title="Product Disclosures & Seller Notice">
+          <div className="space-y-4">
+            {/* Verbatim Third-Party Seller Notice */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300 space-y-1.5">
+              <p className="font-extrabold uppercase text-[10px] tracking-wider text-amber-600 dark:text-amber-400">
+                Third-Party Seller Disclosure
+              </p>
+              <p className="leading-relaxed text-[11px]">
+                This product is listed and supplied by the independent third-party seller identified on this page. Product descriptions, access claims, course content, delivery, support, refunds and intellectual-property permissions are provided or declared by that seller. The marketplace does not represent that it owns, creates, teaches or endorses the product unless expressly stated. Buyers should review the seller’s identity, product scope, access period, refund terms and authorization information before purchasing. This notice does not limit any rights or remedies available to consumers under applicable law.
+              </p>
+            </div>
+
+            {/* Detailed Disclosures Table/List */}
+            <Card className="p-4 rounded-2xl border border-border/60 text-xs space-y-3 bg-card">
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Seller Identity</span>
+                <span className="font-bold text-emerald-500">Sold by {data.seller.profile?.displayName || data.seller.username} (@{data.seller.username})</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">What ₹299 Includes</span>
+                <span className="font-medium text-right max-w-xs text-[11px]">Telegram channel link, lecture PDFs, test series PDFs, current affairs notes</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">What ₹299 Excludes</span>
+                <span className="font-medium text-right max-w-xs text-[11px] text-rose-500">Offline classroom access, printed books, 1-on-1 offline evaluation, institute certificate</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Access Period</span>
+                <span className="font-bold">1 Year / Full Exam Cycle</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Delivery Method</span>
+                <span className="font-bold text-sky-500">Instant Telegram Link & Drive Folder</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Device Limitations</span>
+                <span>Mobile, Tablet & Desktop via Telegram App/Browser</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Refund Rules</span>
+                <span className="font-medium text-right text-[11px]">Non-refundable once Telegram link generated; 100% refund if link is invalid within 24h</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Total Payable Amount</span>
+                <span className="font-black text-emerald-500">₹299 (Inclusive of all taxes)</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/40">
+                <span className="font-semibold text-muted-foreground">Last Verified</span>
+                <span>2026-07-31</span>
+              </div>
+              <div className="py-1">
+                <span className="font-semibold text-muted-foreground block mb-1">Institute Affiliation</span>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Independent Unaffiliated Reseller — This listing is supplied by an independent seller and is not affiliated with, endorsed by, or sponsored by any underlying coaching institute.
+                </p>
+              </div>
+            </Card>
+
+            <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
+              <a href="mailto:support@skillcart.shop?subject=Copyright%20Complaint" className="text-muted-foreground hover:text-foreground underline">
+                Copyright Complaint
+              </a>
+              <a href="mailto:support@skillcart.shop?subject=Grievance" className="text-muted-foreground hover:text-foreground underline">
+                Grievance Contact (support@skillcart.shop)
+              </a>
+            </div>
+          </div>
+        </Section>
+
         {/* Report service */}
         {!isOwn && (
           <div className="pt-2">

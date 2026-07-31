@@ -28,6 +28,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'trending' | 'newest' | 'popular' | 'featured'>('trending')
+  const [activeSection, setActiveSection] = useState<string>('telegram-services')
   const [searchQuery, setSearchQuery] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
@@ -166,6 +167,66 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
           <CheckCircle2 className="h-4 w-4 text-blue-500" />
           <span>Razorpay Instant Top-Up</span>
         </div>
+      </section>
+
+      {/* 2.5 TEN MARKETPLACE SECTIONS (1 ACTIVE + 9 PLACEHOLDERS) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Explore Marketplace</span>
+            <h2 className="text-2xl font-black tracking-tight">Marketplace Sections</h2>
+          </div>
+          <span className="text-xs font-bold text-muted-foreground">Fixed ₹299 Pricing on Telegram Services</span>
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {[
+            { id: 'telegram-services', label: '✈️ Telegram Services', count: 'ACTIVE' },
+            { id: 'software-scripts', label: '💻 Software & Scripts', count: '0' },
+            { id: 'ai-prompts-models', label: '🤖 AI Prompts & Models', count: '0' },
+            { id: 'ui-ux-design-kits', label: '🎨 UI/UX Design Kits', count: '0' },
+            { id: 'e-books-guides', label: '📚 E-Books & Guides', count: '0' },
+            { id: 'video-tutorials-courses', label: '🎥 Video Tutorials', count: '0' },
+            { id: 'templates-themes', label: '🚀 Templates & Themes', count: '0' },
+            { id: 'audio-music-assets', label: '🎵 Audio & Music Assets', count: '0' },
+            { id: 'memberships-subscriptions', label: '⭐ Memberships', count: '0' },
+            { id: 'data-analytics-datasets', label: '📊 Datasets & Reports', count: '0' },
+          ].map((sec) => (
+            <button
+              key={sec.id}
+              onClick={() => setActiveSection(sec.id)}
+              className={clsx(
+                'px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2',
+                activeSection === sec.id
+                  ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+                  : 'bg-card text-foreground border-border/60 hover:border-emerald-500/50'
+              )}
+            >
+              <span>{sec.label}</span>
+              <span className={clsx('px-1.5 py-0.5 rounded-full text-[10px] font-mono', activeSection === sec.id ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground')}>
+                {sec.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {activeSection !== 'telegram-services' && (
+          <Card className="p-8 text-center space-y-3 rounded-3xl border-dashed border-border/80 bg-muted/20">
+            <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold">Section Coming Soon</h3>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              This marketplace section is currently accepting seller applications. Independent third-party creators will list digital assets here soon.
+            </p>
+            <button
+              onClick={() => onRequireAuth?.(() => {})}
+              className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs shadow-md"
+            >
+              Apply as Seller
+            </button>
+          </Card>
+        )}
       </section>
 
       {/* 3. FEATURED EDITORIAL COLLECTIONS SHOWCASE */}

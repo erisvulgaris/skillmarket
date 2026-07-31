@@ -148,6 +148,23 @@ export function HelpView() {
           )}
         </div>
 
+        {/* Platform Role Notice */}
+        <Card className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-2 text-xs">
+          <div className="flex items-center gap-2 text-primary font-bold">
+            <Shield className="h-4 w-4" />
+            <span>Platform Role & Terms Notice</span>
+          </div>
+          <ul className="space-y-1.5 text-muted-foreground text-[11px] leading-relaxed list-disc pl-4">
+            <li>Listings on SkillCart are created and supplied by independent third-party sellers.</li>
+            <li>Sellers are solely responsible for their content, course descriptions, and fulfillment.</li>
+            <li>The platform reserves the right to review, suspend, or remove listings at its discretion.</li>
+            <li>The platform responds promptly to lawful complaints and intellectual property takedown requests.</li>
+            <li>The platform may freeze payments and escrow balances during dispute investigations.</li>
+            <li>The platform does not guarantee examination success or academic outcomes.</li>
+            <li>Nothing in these terms limits or removes non-waivable consumer rights or legal obligations imposed on the platform by applicable law.</li>
+          </ul>
+        </Card>
+
         {/* Contact support */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
