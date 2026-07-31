@@ -10,6 +10,29 @@ export async function GET() {
       })
     }
 
+    // 10 Sections
+    const sectionCategories = [
+      { name: 'Telegram Services', slug: 'telegram-services', icon: 'telegram' },
+      { name: 'Software & Scripts', slug: 'software-scripts', icon: 'code' },
+      { name: 'AI Prompts & Models', slug: 'ai-prompts-models', icon: 'bot' },
+      { name: 'UI/UX Design Kits', slug: 'ui-ux-design-kits', icon: 'palette' },
+      { name: 'E-Books & Guides', slug: 'e-books-guides', icon: 'book' },
+      { name: 'Video Tutorials & Courses', slug: 'video-tutorials-courses', icon: 'video' },
+      { name: 'Templates & Themes', slug: 'templates-themes', icon: 'layout' },
+      { name: 'Audio & Music Assets', slug: 'audio-music-assets', icon: 'music' },
+      { name: 'Memberships & Subscriptions', slug: 'memberships-subscriptions', icon: 'star' },
+      { name: 'Data & Analytics Datasets', slug: 'data-analytics-datasets', icon: 'bar-chart' },
+    ]
+
+    for (const cat of sectionCategories) {
+      const exists = await db.category.findUnique({ where: { slug: cat.slug } })
+      if (!exists) {
+        await db.category.create({
+          data: { name: cat.name, slug: cat.slug, icon: cat.icon }
+        })
+      }
+    }
+
     // Sellers
     const passwordHash = '$2a$10$w095j8.Wv0M1/R48E33s..v2Qf034.W86a45.'
     const pinHash = '$2a$10$w095j8.Wv0M1/R48E33s..'
@@ -48,6 +71,8 @@ export async function GET() {
                 bio: `Independent UPSC Content Creator & Telegram Educator (@${s.username})`,
                 isVerified: true,
                 location: 'Delhi, India',
+                languages: '["English", "Hindi"]',
+                skills: '["GS", "UPSC", "Telegram"]',
               },
             },
             wallet: { create: { availableBalance: 5000 } },
@@ -73,43 +98,51 @@ export async function GET() {
       { name: 'History Optional Ancient, Medieval & Modern Notes', institute: 'Baliyan Sir IAS', mode: 'Online Telegram', year: '2026' },
     ]
 
-    for (let i = 0; i < upscListings.length; i++) {
-      const l = upscListings[i]
-      const seller = createdSellers[i % createdSellers.length]
-      const sellerName = sellersData[i % sellersData.length].name
-      const title = `${l.name} — ${l.mode} — UPSC ${l.year} — Sold by ${sellerName}`
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 75) + `-v2-${i}`
+    let inserted = 0
+    let errors: string[] = []
 
-      const exists = await db.service.findFirst({ where: { title } })
-      if (!exists) {
-        await db.service.create({
-          data: {
-            sellerId: seller.id,
-            categoryId: telegramCat.id,
-            title,
-            slug,
-            description: `Independent third-party listing for ${l.name} (${l.institute}). Includes lecture PDFs, Telegram channel access, current affairs updates, and test series PDFs. Listed by independent seller ${sellerName}.`,
-            price: 299,
-            deliveryDays: 1,
-            status: 'active',
-            featured: i % 3 === 0,
-            views: 250 + i * 15,
-            completedOrders: 40 + i * 3,
-            ratingAvg: 4.9,
-            ratingCount: 30 + i,
-            tags: JSON.stringify(["UPSC", "Telegram", "Notes"]),
-            skills: JSON.stringify(["GS", "Prelims", "Mains"]),
-            images: JSON.stringify(["https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&auto=format&fit=crop&q=80"]),
-            faqs: '[]',
-            availability: 'online',
-          },
-        })
+    for (let i = 0; i < upscListings.length; i++) {
+      try {
+        const l = upscListings[i]
+        const seller = createdSellers[i % createdSellers.length]
+        const sellerName = sellersData[i % sellersData.length].name
+        const title = `${l.name} — ${l.mode} — UPSC ${l.year} — Sold by ${sellerName}`
+        const slug = `upsc-${i}-${Date.now()}`
+
+        const exists = await db.service.findFirst({ where: { title } })
+        if (!exists) {
+          await db.service.create({
+            data: {
+              sellerId: seller.id,
+              categoryId: telegramCat.id,
+              title,
+              slug,
+              description: `Independent third-party listing for ${l.name} (${l.institute}). Includes lecture PDFs, Telegram channel access, current affairs updates, and test series PDFs. Listed by independent seller ${sellerName}.`,
+              price: 299,
+              deliveryDays: 1,
+              status: 'active',
+              featured: i % 3 === 0,
+              views: 250 + i * 15,
+              completedOrders: 40 + i * 3,
+              ratingAvg: 4.9,
+              ratingCount: 30 + i,
+              tags: '["UPSC", "Telegram", "Notes"]',
+              skills: '["GS", "Prelims", "Mains"]',
+              images: '["https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&auto=format&fit=crop&q=80"]',
+              faqs: '[]',
+              availability: 'available',
+            },
+          })
+          inserted++
+        }
+      } catch (err: any) {
+        errors.push(err?.message || String(err))
       }
     }
 
     const serviceCount = await db.service.count()
-    return ok({ message: 'Seeded successfully!', totalServices: serviceCount })
-  } catch (e) {
+    return ok({ message: 'Seeded successfully!', inserted, totalServices: serviceCount, errors })
+  } catch (e: any) {
     return handleError(e)
   }
 }
