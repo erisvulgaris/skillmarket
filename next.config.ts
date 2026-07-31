@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const withBundleAnalyzer = process.env.ANALYZE === 'true'
   ? require('@next/bundle-analyzer')({ enabled: true })
@@ -9,13 +10,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
-    turbopack: {
-      root: __dirname,
-    },
+  turbopack: {
+    root: path.resolve(__dirname),
   },
   reactStrictMode: true,
   allowedDevOrigins: ["*.space-z.ai", "*.chatglm.cn"],
