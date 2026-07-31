@@ -76,15 +76,3 @@ The platform enables users to register as buyers or sellers, browse digital serv
                ▼ (File Storage)
        [ SQLite Database (`/data/skillmarket.db`) ]
 ```
-
-### Database Schema Entity Relationship Overview
-- **`User`**: Account identity, credentials hash, status, referral code, 2FA settings.
-- **`Profile`**: Public display metadata, bio, avatar URL, skills, verification state.
-- **`Wallet`**: Available balance, reserved/escrow balance, lifetime earnings/spent metrics.
-- **`LedgerEntry`**: Immutable transaction log for double-entry financial accounting.
-- **`Service`**: Marketed listing details, category, pricing tiers, delivery days, media gallery.
-- **`Package`**: Tiered offerings per service (Basic, Standard, Premium).
-- **`Order`**: Service purchase instance, current state (`pending`, `in_progress`, `delivered`, `completed`, `disputed`), escrow amount.
-- **`Message`**: Real-time order workroom message with optional file attachment URL.
-- **`Review`**: Rating (1-5 stars) and feedback text left by buyers upon order completion.
-- **`RazorpayKey`**: Encrypted API credentials for live/test Razorpay payment processing.

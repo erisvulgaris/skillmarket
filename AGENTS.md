@@ -1,6 +1,6 @@
 # SkillMarket / SkillCart — Developer & Agent Instructions (`AGENTS.md`)
 
-Welcome to the **SkillMarket** project codebase. This file establishes operational standards, architectural patterns, deployment workflows, and coding directives for AI agents and human developers maintaining this application.
+Welcome to the **SkillMarket** project workspace. This file establishes operational standards, architectural patterns, deployment workflows, and coding directives for AI agents and human developers maintaining this application.
 
 ---
 
@@ -22,30 +22,19 @@ Welcome to the **SkillMarket** project codebase. This file establishes operation
 ## 2. Directory Structure
 
 ```
-temp_skillmarket/
-├── prisma/
-│   └── schema.prisma        # Database schema definitions
-├── public/
-│   ├── logo.svg             # Brand assets & icons
-│   └── uploads/             # Compressed user media & screenshots
-├── src/
-│   ├── app/                 # Next.js App Router endpoints & routes
-│   │   ├── api/             # RESTful API handlers (auth, wallet, orders, etc.)
-│   │   ├── admin/           # Admin panel view
-│   │   └── page.tsx         # Main marketplace single-page application router
-│   ├── components/          # React components
-│   │   ├── ui/              # Reusable UI primitives (buttons, dialogs, cards)
-│   │   └── views/           # Full view components (service detail, buy credits, chat, auth)
-│   ├── lib/                 # Shared utilities, database connection & middleware
-│   │   ├── api.ts           # Response wrappers (ok, err, validateBody, handleError)
-│   │   ├── auth.ts          # Password hashing, JWT creation & session guards
-│   │   ├── db.ts            # Prisma client instance & shutdown handlers
-│   │   ├── razorpay.ts      # Razorpay payment gateway integration
-│   │   └── rate-limit.ts    # In-memory sliding window rate limiters
-│   └── scripts/             # Administrative scripts
-├── start.sh                 # Docker container boot & DB sync script
-├── nixpacks.toml            # Nixpacks build dependencies (openssl)
-└── package.json             # Scripts & dependencies
+41.DrHuxon/
+├── temp_skillmarket/        # Next.js Application Source Code
+│   ├── prisma/              # Prisma DB schemas
+│   ├── public/              # Static assets & compressed uploads
+│   ├── src/                 # Next.js App Router code & API handlers
+│   ├── start.sh             # Container startup script
+│   └── package.json         # Project dependencies
+├── dokploy_agent_guide.md   # Dokploy infrastructure & API reference
+├── monitor_dokploy.py       # Automated deployment trigger & status monitor
+├── ssh_run.py               # Remote server SSH management tool
+├── AGENTS.md                # AI Agent guidelines (this file)
+├── PROJECT_OVERVIEW.md      # Comprehensive architecture & features overview
+└── PROJECT_STATE.md         # Live deployment state & operational status
 ```
 
 ---
@@ -56,10 +45,10 @@ temp_skillmarket/
 All API route handlers under `src/app/api/` **MUST** use standard helpers from `@/lib/api`:
 ```ts
 // Success:
-return ok({ key: value }, 200) // { success: true, data: { ... } }
+return ok({ key: value }, 200)
 
 // Error:
-return err('ERROR_CODE_OR_MESSAGE', 400) // { success: false, error: "..." }
+return err('ERROR_CODE_OR_MESSAGE', 400)
 
 // Automatic Error Handling:
 return handleError(error)
@@ -71,22 +60,18 @@ Always validate incoming request bodies using Zod schemas with `validateBody`:
 const { data, error } = await validateBody(mySchema, req)
 if (error) return err(error, 422)
 ```
-*Note: `validateBody` safely clones the Request object so stream reading never fails.*
 
 ### Rule 3: Session & Auth Guards
 Use server guards from `@/lib/auth`:
-- `getCurrentUser()` — Returns logged-in `User` with profile/wallet or `null`.
+- `getCurrentUser()` — Returns logged-in `User` or `null`.
 - `requireUser()` — Throws `UNAUTHORIZED` (401) if not logged in.
 - `requireAdmin()` — Throws `FORBIDDEN` (403) if user is not `admin`.
 
-### Rule 4: Storage & Image Handling
-All user-uploaded images/screenshots must pass through `src/app/api/uploads/route.ts` which uses `sharp` to convert and compress images to WebP format (`quality: 82`). Do not bypass this compression layer.
-
-### Rule 5: Docker Container Startup
+### Rule 4: Docker Container Startup
 When modifying `start.sh`:
-- **Never** use shell chaining operators (`&&`, `;`) inside Dokploy start commands directly.
-- Execute commands line-by-line inside `start.sh` with Unix `LF` line endings.
-- Do not run dev-dependency tools like `tsx` in `start.sh`; use standard compiled Node execution or API hooks.
+- **Never** use shell chaining operators (`&&`, `;`) directly in Dokploy Start Command fields.
+- Keep `start.sh` clean and executable with Unix `LF` line endings.
+- Do not run dev-dependency tools like `tsx` inside `start.sh`.
 
 ---
 
@@ -98,8 +83,3 @@ When modifying `start.sh`:
 - **Dokploy API Key:** `UIoOLzCywHozJQVxSkRSkCGxIgETYcxjfjGJBohBeolAVXaONCWvJtcLFVrInDxl`
 - **Nginx Proxy Manager:** `http://152.53.111.217:81`
 - **Live Domain:** `https://skillcart.shop` (SSL forced via Let's Encrypt)
-
-### Git & Deployment Workflow
-1. Commit changes to `main` branch on repository `https://github.com/erisvulgaris/skillmarket.git`.
-2. Run `python monitor_dokploy.py` from root workspace `c:\AppDev 2026\41.DrHuxon`.
-3. Verify live HTTP/HTTPS status using `curl -s -i https://skillcart.shop`.
