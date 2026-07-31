@@ -224,33 +224,85 @@ export function AdminView() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe">
-        <div className="max-w-md mx-auto px-3 h-14 flex items-center gap-2">
-          <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-accent active:scale-90 transition">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <p className="text-sm font-bold flex items-center gap-1.5 flex-1">
-            <Shield className="h-4 w-4 text-violet-500" /> Admin Console
-          </p>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Enterprise Top Banner / Status Bar */}
+      <div className="bg-slate-950 text-slate-200 border-b border-slate-800 text-xs px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 font-bold tracking-wider text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            SYSTEM OPERATIONAL
+          </div>
+          <span className="text-slate-600">|</span>
+          <span className="text-slate-400 font-mono">Node: 152.53.111.217 (Dokploy Swarm)</span>
+          <span className="text-slate-600">|</span>
+          <span className="text-slate-400 font-mono">DB: SQLite (/data/skillmarket.db)</span>
+          <span className="text-slate-600">|</span>
+          <span className="text-emerald-400 font-mono font-semibold">SSL: Forced (Let's Encrypt)</span>
         </div>
-        <div className="max-w-md mx-auto px-3 pb-2 flex gap-1 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-3">
+          <span className="text-slate-400 font-mono">Env: <span className="text-violet-400 font-bold">PRODUCTION</span></span>
+          <button
+            onClick={() => { loadDashboard(); toast.success('Platform metrics refreshed') }}
+            className="hover:text-white transition flex items-center gap-1 text-[11px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-700"
+          >
+            <Activity className="h-3 w-3 text-emerald-400" /> Refresh State
+          </button>
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-40 glass border-b border-border/40 pt-safe shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setView('profile')} aria-label="Go back" className="h-9 w-9 rounded-xl border border-border/60 bg-muted/40 flex items-center justify-center hover:bg-accent active:scale-95 transition shadow-xs">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div>
+              <p className="text-base font-black flex items-center gap-2 tracking-tight">
+                <Shield className="h-5 w-5 text-violet-500 fill-violet-500/20" /> Enterprise Operations Console
+              </p>
+              <p className="text-xs text-muted-foreground hidden sm:block">Real-time marketplace telemetry, user controls, disputes & financial ledger management</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="hidden sm:flex h-8 gap-1 text-xs" onClick={() => setView('marketplace')}>
+              Marketplace View
+            </Button>
+          </div>
+        </div>
+
+        {/* Enterprise Navigation Tabs Bar */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
           {TABS.map((t) => (
             <button
               key={t.k}
               onClick={() => setTab(t.k)}
               className={clsx(
-                'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition',
-                tab === t.k ? 'bg-violet-600 text-white' : 'bg-secondary text-muted-foreground'
+                'flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border',
+                tab === t.k
+                  ? 'bg-violet-600 text-white border-violet-500 shadow-sm shadow-violet-500/20'
+                  : 'bg-card/60 hover:bg-card text-muted-foreground hover:text-foreground border-border/40'
               )}
             >
               {t.label}
+              {t.k === 'disputes' && disputes.filter(d => d.status === 'open').length > 0 && (
+                <span className="h-4 min-w-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {disputes.filter(d => d.status === 'open').length}
+                </span>
+              )}
+              {t.k === 'fraud' && fraudAlerts?.summary?.high > 0 && (
+                <span className="h-4 min-w-4 px-1 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center">
+                  {fraudAlerts.summary.high}
+                </span>
+              )}
             </button>
           ))}
         </div>
       </header>
 
-      <div className="max-w-md mx-auto px-4 py-4 space-y-4 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-24">
         {tab === 'dashboard' && <EnterpriseDashboard onBack={() => setView('profile')} />}
 
         {tab === 'users' && (
@@ -443,18 +495,25 @@ export function AdminView() {
         )}
 
         {tab === 'settings' && (
-          <div className="space-y-2">
-            {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />) :
-              settings.map((s) => (
-                <Card key={s.id} className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <SettingsIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <p className="text-sm font-semibold font-mono">{s.key}</p>
-                    <span className="text-[10px] text-muted-foreground ml-auto uppercase">{s.type}</span>
-                  </div>
-                  <SettingEditor setting={s} onSave={updateSetting} />
-                </Card>
-              ))}
+          <div className="space-y-6">
+            <RazorpayEnterpriseSettingsCard />
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <SettingsIcon className="h-4 w-4 text-violet-500" /> Platform Configuration Settings
+              </h3>
+              {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />) :
+                settings.map((s) => (
+                  <Card key={s.id} className="p-3.5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <SettingsIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-sm font-semibold font-mono">{s.key}</p>
+                      <span className="text-[10px] text-muted-foreground ml-auto uppercase">{s.type}</span>
+                    </div>
+                    <SettingEditor setting={s} onSave={updateSetting} />
+                  </Card>
+                ))}
+            </div>
           </div>
         )}
 
@@ -481,6 +540,150 @@ export function AdminView() {
         )}
       </div>
     </div>
+  )
+}
+
+function RazorpayEnterpriseSettingsCard() {
+  const [keys, setKeys] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [label, setLabel] = useState('Production Live Key')
+  const [keyId, setKeyId] = useState('')
+  const [keySecret, setKeySecret] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [webhookSecret, setWebhookSecret] = useState('')
+
+  const loadKeys = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await api.get<{ keys: any[] }>('/api/payments/razorpay/key')
+      setKeys(res.keys || [])
+    } catch {
+      toast.error('Failed to load Razorpay keys')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadKeys() }, [loadKeys])
+
+  const saveKey = async () => {
+    if (!keyId.trim() || !keySecret.trim()) {
+      return toast.error('Razorpay Key ID and Key Secret are required')
+    }
+    setSaving(true)
+    try {
+      await api.post('/api/payments/razorpay/key', {
+        label,
+        keyId: keyId.trim(),
+        keySecret: keySecret.trim(),
+        active: true
+      })
+      toast.success('Razorpay API key saved and activated!')
+      setKeyId('')
+      setKeySecret('')
+      loadKeys()
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save Razorpay key')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteKey = async (id: string) => {
+    try {
+      await api.delete(`/api/payments/razorpay/key?id=${id}`)
+      toast.success('Key removed')
+      loadKeys()
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to remove key')
+    }
+  }
+
+  const saveWebhookSecret = async () => {
+    if (!webhookSecret.trim()) return toast.error('Enter a valid webhook secret')
+    try {
+      await api.patch('/api/admin/settings', {
+        key: 'razorpay_webhook_secret',
+        value: webhookSecret.trim(),
+        type: 'string'
+      })
+      toast.success('Razorpay Webhook Secret updated')
+      setWebhookSecret('')
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
+  return (
+    <Card className="p-5 border-violet-500/30 bg-card/80 backdrop-blur-md space-y-5 shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500 font-bold">
+            <Wallet className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold tracking-tight">Razorpay Enterprise Gateway Suite</h3>
+            <p className="text-xs text-muted-foreground">Manage payment gateway credentials, webhook secrets, and active merchant keys</p>
+          </div>
+        </div>
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Gateway Ready
+        </span>
+      </div>
+
+      {/* Webhook target endpoint banner */}
+      <div className="p-3 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 text-xs flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span className="font-bold text-violet-400">Webhook Listener Endpoint:</span>
+          <code className="ml-2 font-mono text-emerald-400 select-all">https://skillcart.shop/api/payments/razorpay/webhook</code>
+        </div>
+        <span className="text-[11px] text-slate-400">Event: <code className="text-amber-300">payment.captured</code></span>
+      </div>
+
+      {/* Add New Key Form */}
+      <div className="space-y-3 bg-muted/30 p-4 rounded-2xl border border-border/40">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Gateway Keys</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Key Label (e.g. Production Live)" className="h-9 text-xs" />
+          <Input value={keyId} onChange={(e) => setKeyId(e.target.value)} placeholder="Razorpay Key ID (rzp_live_...)" className="h-9 text-xs font-mono" />
+          <Input type="password" value={keySecret} onChange={(e) => setKeySecret(e.target.value)} placeholder="Razorpay Key Secret" className="h-9 text-xs font-mono" />
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={saveKey} disabled={saving} className="h-8 text-xs bg-violet-600 hover:bg-violet-700 text-white font-semibold">
+            {saving ? 'Saving…' : 'Save & Activate Key'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Webhook Secret Configurator */}
+      <div className="flex gap-2 items-center bg-muted/20 p-3 rounded-xl border border-border/30">
+        <Input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Enter Razorpay Webhook Secret (e.g. whsec_...)" className="h-9 text-xs font-mono flex-1" />
+        <Button size="sm" variant="outline" onClick={saveWebhookSecret} className="h-9 text-xs">Update Webhook Secret</Button>
+      </div>
+
+      {/* Configured Keys List */}
+      <div className="space-y-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Merchant Keys</p>
+        {loading ? <Skeleton className="h-16 w-full rounded-xl" /> : keys.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic py-2">No keys saved. Add your Razorpay Key ID and Secret above.</p>
+        ) : (
+          keys.map((k) => (
+            <div key={k.id} className="p-3 rounded-xl border border-border/50 bg-card flex items-center justify-between gap-3 text-xs">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm">{k.label}</span>
+                  {k.active && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600">ACTIVE</span>}
+                </div>
+                <p className="font-mono text-muted-foreground text-[11px] mt-0.5">{k.keyId}</p>
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10" onClick={() => deleteKey(k.id)}>
+                Delete
+              </Button>
+            </div>
+          ))
+        )}
+      </div>
+    </Card>
   )
 }
 
