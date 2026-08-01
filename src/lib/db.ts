@@ -17,8 +17,8 @@ export const db =
 
 // Enable SQLite WAL mode & busy timeout for high concurrency performance
 if (db) {
-  db.$executeRawUnsafe('PRAGMA journal_mode=WAL;').catch(() => {})
-  db.$executeRawUnsafe('PRAGMA busy_timeout=5000;').catch(() => {})
+  db.$queryRawUnsafe('PRAGMA journal_mode=WAL;').catch(() => {})
+  db.$queryRawUnsafe('PRAGMA busy_timeout=5000;').catch(() => {})
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

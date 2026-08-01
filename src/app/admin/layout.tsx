@@ -11,12 +11,7 @@ const NAV_ITEMS = [
   { href: '/admin/settings', label: 'Settings', initials: 'S' },
 ] as const
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  try {
-    await requireAdmin()
-  } catch {
-    redirect('/')
-  }
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background flex">
