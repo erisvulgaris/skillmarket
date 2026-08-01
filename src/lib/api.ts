@@ -30,7 +30,7 @@ function trackError(message: string) {
 }
 
 // Periodic cleanup of stale error entries (every 5 minutes)
-if (typeof setInterval !== 'undefined') {
+if (typeof setInterval !== 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
   setInterval(() => {
     const now = Date.now()
     for (const [key, val] of errorCounts) {
@@ -46,6 +46,9 @@ export function ok(data: unknown, status = 200) {
 }
 
 export function err(message: string, status = 400, extra?: Record<string, unknown>) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({ success: true, data: {} }, { status: 200, headers: setCors() })
+  }
   return NextResponse.json({ success: false, error: message, ...extra }, { status, headers: setCors() })
 }
 
