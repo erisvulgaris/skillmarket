@@ -1,3 +1,4 @@
+export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { ok, err, handleError } from '@/lib/api'

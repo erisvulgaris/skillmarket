@@ -4,15 +4,17 @@ import { ok, err, handleError, parseJsonBody } from '@/lib/api'
 import { clearCategoryCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: Request, ctx: any) {
   try {
     const user = await getCurrentUser()
     if (!user || user.role !== 'admin') {
       return err('UNAUTHORIZED', 401)
     }
 
-    const { id } = await params
+    const resolvedParams = await Promise.resolve(ctx?.params)
+    const id = resolvedParams?.id
     const body = await parseJsonBody(req)
 
     const updated = await db.category.update({
