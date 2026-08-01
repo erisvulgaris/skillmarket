@@ -12,6 +12,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PHASE=phase-production-build
 ENV DATABASE_URL="file:./dev.db"
 RUN npx prisma generate
 RUN npx prisma db push --accept-data-loss || true

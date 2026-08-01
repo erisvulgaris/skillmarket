@@ -1,90 +1,90 @@
+#14 4.963 
+#14 4.963 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#14 4.963 
+#14 4.963 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#14 4.963 
+#14 5.000 npm notice
+#14 5.000 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#14 5.000 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#14 5.000 npm notice To update run: npm install -g npm@12.0.2
+#14 5.000 npm notice
+#14 DONE 5.1s
 
 #15 [builder 5/6] RUN npx prisma db push --accept-data-loss || true
-#15 1.681 Prisma schema loaded from prisma/schema.prisma
-#15 1.689 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
-#15 1.713 
-#15 1.713 SQLite database dev.db created at file:./dev.db
-#15 1.959 
-#15 1.959 🚀  Your database is now in sync with your Prisma schema. Done in 246ms
-#15 1.959 
-#15 1.961 Running generate... (Use --skip-generate to skip the generators)
-#15 2.329 [2K[1A[2K[GRunning generate... - Prisma Client
-#15 2.715 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 385ms
-#15 2.719 ┌─────────────────────────────────────────────────────────┐
-#15 2.719 │  Update available 6.19.3 -> 7.9.1                       │
-#15 2.719 │                                                         │
-#15 2.719 │  This is a major update - please follow the guide at    │
-#15 2.719 │  https://pris.ly/d/major-version-upgrade                │
-#15 2.719 │                                                         │
-#15 2.719 │  Run the following to update                            │
-#15 2.719 │    npm i --save-dev prisma@latest                       │
-#15 2.719 │    npm i @prisma/client@latest                          │
-#15 2.719 └─────────────────────────────────────────────────────────┘
-#15 2.719 
+#15 1.775 Prisma schema loaded from prisma/schema.prisma
+#15 1.785 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+#15 1.816 
+#15 1.816 SQLite database dev.db created at file:./dev.db
+#15 2.089 
+#15 2.089 🚀  Your database is now in sync with your Prisma schema. Done in 273ms
+#15 2.089 
+#15 2.092 Running generate... (Use --skip-generate to skip the generators)
+#15 2.422 [2K[1A[2K[GRunning generate... - Prisma Client
+#15 2.782 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 358ms
+#15 2.785 ┌─────────────────────────────────────────────────────────┐
+#15 2.785 │  Update available 6.19.3 -> 7.9.1                       │
+#15 2.785 │                                                         │
+#15 2.785 │  This is a major update - please follow the guide at    │
+#15 2.785 │  https://pris.ly/d/major-version-upgrade                │
+#15 2.785 │                                                         │
+#15 2.785 │  Run the following to update                            │
+#15 2.785 │    npm i --save-dev prisma@latest                       │
+#15 2.785 │    npm i @prisma/client@latest                          │
+#15 2.785 └─────────────────────────────────────────────────────────┘
+#15 2.785 
 #15 DONE 2.8s
 
 #16 [builder 6/6] RUN npm run build
-#16 0.576 
-#16 0.576 > nextjs_tailwind_shadcn_ts@0.2.1 build
-#16 0.576 > npx prisma db push --accept-data-loss || true && next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
-#16 0.576 
-#16 1.933 Prisma schema loaded from prisma/schema.prisma
-#16 1.943 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
-#16 1.988 
-#16 1.988 The database is already in sync with the Prisma schema.
-#16 1.988 
-#16 1.990 Running generate... (Use --skip-generate to skip the generators)
-#16 2.314 [2K[1A[2K[GRunning generate... - Prisma Client
-#16 2.692 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 377ms
-#16 2.693 
-#16 3.245 ▲ Next.js 16.2.12 (Turbopack)
-#16 3.246 
-#16 3.280   Creating an optimized production build ...
-#16 11.88 ✓ Compiled successfully in 8.4s
-#16 11.88   Skipping validation of types
-#16 11.89   Finished TypeScript config validation in 7ms ...
-#16 11.90   Collecting page data using 3 workers ...
-#16 12.68 Error: SESSION_SECRET environment variable is required in production
-#16 12.68     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
-#16 12.68     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
-#16 12.68     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 12.68     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
-#16 12.68     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
-#16 12.68     at module evaluation (.next/server/chunks/[root-of-the-server]__0wir92g._.js:1:2216)
-#16 12.68     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 12.68     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
-#16 12.68     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
-#16 12.68     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
-#16 12.68 Error: SESSION_SECRET environment variable is required in production
-#16 12.68     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
-#16 12.68     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
-#16 12.68     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 12.68     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
-#16 12.68     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
-#16 12.68     at module evaluation (.next/server/chunks/[root-of-the-server]__05se-u5._.js:1:3255)
-#16 12.68     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 12.68     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
-#16 12.68     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
-#16 12.68     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
-#16 12.69 
-#16 12.70 > Build error occurred
-#16 12.70 Error: Failed to collect page data for /api/admin/categories
-#16 12.70     at ignore-listed frames {
-#16 12.70   type: 'Error'
-#16 12.70 }
+#16 0.383 
+#16 0.383 > nextjs_tailwind_shadcn_ts@0.2.1 build
+#16 0.383 > npx prisma db push --accept-data-loss || true && next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
+#16 0.383 
+#16 1.942 Prisma schema loaded from prisma/schema.prisma
+#16 1.958 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+#16 2.005 
+#16 2.005 The database is already in sync with the Prisma schema.
+#16 2.005 
+#16 2.007 Running generate... (Use --skip-generate to skip the generators)
+#16 2.466 [2K[1A[2K[GRunning generate... - Prisma Client
+#16 2.862 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 394ms
+#16 2.863 
+#16 3.438 ▲ Next.js 16.2.12 (Turbopack)
+#16 3.438 
+#16 3.480   Creating an optimized production build ...
+#16 12.65 ✓ Compiled successfully in 8.9s
+#16 12.65   Skipping validation of types
+#16 12.66   Finished TypeScript config validation in 8ms ...
+#16 12.67   Collecting page data using 3 workers ...
+#16 13.43 Error: SESSION_SECRET environment variable is required in production
+#16 13.43     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
+#16 13.43     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
+#16 13.43     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#16 13.43     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
+#16 13.43     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
+#16 13.43     at module evaluation (.next/server/chunks/[root-of-the-server]__11gkmjh._.js:1:3255)
+#16 13.43     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#16 13.43     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+#16 13.43     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+#16 13.43     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+#16 13.44 
+#16 13.44 > Build error occurred
+#16 13.44 Error: Failed to collect page data for /api/admin/audit
+#16 13.44     at ignore-listed frames {
+#16 13.44   type: 'Error'
+#16 13.44 }
 #16 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
 ------
  > [builder 6/6] RUN npm run build:
-12.68     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-12.68     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
-12.68     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
-12.68     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
-12.69 
-12.70 > Build error occurred
-12.70 Error: Failed to collect page data for /api/admin/categories
-12.70     at ignore-listed frames {
-12.70   type: 'Error'
-12.70 }
+13.43     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+13.43     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+13.43     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+13.43     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+13.44 
+13.44 > Build error occurred
+13.44 Error: Failed to collect page data for /api/admin/audit
+13.44     at ignore-listed frames {
+13.44   type: 'Error'
+13.44 }
 ------
 Dockerfile:18
 --------------------
