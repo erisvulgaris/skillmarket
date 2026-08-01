@@ -85,8 +85,12 @@ export async function clearSessionCookie() {
 }
 
 export async function getSessionToken(): Promise<string | undefined> {
-  const store = await cookies()
-  return store.get(SESSION_COOKIE)?.value
+  try {
+    const store = await cookies()
+    return store.get(SESSION_COOKIE)?.value
+  } catch {
+    return undefined
+  }
 }
 
 export async function getCurrentUser() {
