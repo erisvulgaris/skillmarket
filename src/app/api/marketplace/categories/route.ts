@@ -18,7 +18,7 @@ export async function GET() {
     const now = Date.now()
     if (cachedCategories && (now - lastFetchTime < CACHE_TTL_MS)) {
       const res = ok({ categories: cachedCategories })
-      res.headers.set('Cache-Control', 'public, max-age=10, s-maxage=30, stale-while-revalidate=60')
+      res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
       return res
     }
 
@@ -33,7 +33,7 @@ export async function GET() {
     lastFetchTime = now
 
     const res = ok({ categories: cats })
-    res.headers.set('Cache-Control', 'public, max-age=10, s-maxage=30, stale-while-revalidate=60')
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
     return res
   } catch (e) {
     if (cachedCategories) {
