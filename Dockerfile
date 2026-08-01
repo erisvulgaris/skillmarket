@@ -15,7 +15,7 @@ ENV NODE_ENV=production
 ENV NEXT_PHASE=phase-production-build
 ENV DATABASE_URL="file:./dev.db"
 RUN npx prisma generate
-RUN npx prisma db push --accept-data-loss || true
+RUN npx prisma db push --accept-data-loss
 RUN npm run build
 
 FROM base AS runner
