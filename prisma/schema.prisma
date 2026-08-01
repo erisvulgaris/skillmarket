@@ -3,8 +3,8 @@
 // Double-entry ledger, soft-delete where appropriate, audit trail.
 
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "wasm"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
