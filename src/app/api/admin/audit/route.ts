@@ -4,29 +4,31 @@ import { db } from '@/lib/db'
 import { ok, err, handleError, parsePagination } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
-export const GET = adminLimit(async function GET(req: Request) {
-  try {
-    await requireAdmin()
-    const { skip, limit, page } = parsePagination(req)
-    const url = new URL(req.url)
-    const action = url.searchParams.get('action')
+export async function GET(req: Request) {
+  return adminLimit(async (r: Request) => {
+    try {
+      await requireAdmin()
+      const { skip, limit, page } = parsePagination(r)
+      const url = new URL(r.url)
+      const action = url.searchParams.get('action')
 
-    const where: any = {}
-    if (action) where.action = { contains: action }
+      const where: any = {}
+      if (action) where.action = { contains: action }
 
-    const [items, total] = await Promise.all([
-      db.auditLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-        include: { actor: { select: { username: true } } },
-      }),
-      db.auditLog.count({ where }),
-    ])
+      const [items, total] = await Promise.all([
+        db.auditLog.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          include: { actor: { select: { username: true } } },
+        }),
+        db.auditLog.count({ where }),
+      ])
 
-    return ok({ items, total, page, limit })
-  } catch (e) {
-    return handleError(e)
-  }
-})
+      return ok({ items, total, page, limit })
+    } catch (e) {
+      return handleError(e)
+    }
+  })(req)
+}

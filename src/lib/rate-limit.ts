@@ -52,7 +52,7 @@ export function rateLimit(options: RateLimitOptions) {
 }
 
 // Cleanup old buckets periodically (every 5 minutes)
-if (typeof setInterval !== 'undefined') {
+if (typeof setInterval !== 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
   setInterval(() => {
     const now = Date.now()
     for (const [key, bucket] of buckets.entries()) {
