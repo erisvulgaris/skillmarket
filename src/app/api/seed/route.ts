@@ -207,6 +207,39 @@ export async function GET() {
       }
     }
 
+    // 4. Force update all existing services to custom WebP title thumbnails
+    const allServices = await db.service.findMany()
+    for (const s of allServices) {
+      let newImg = '/images/services/software_01.webp'
+      const t = s.title.toLowerCase()
+      if (t.includes('telegram') || t.includes('gs ') || t.includes('upsc') || t.includes('anthropology') || t.includes('psir') || t.includes('public admin') || t.includes('geography')) {
+        newImg = '/images/services/telegram_01.webp'
+      } else if (t.includes('saas') || t.includes('next.js') || t.includes('python') || t.includes('bot') || t.includes('script') || t.includes('react')) {
+        newImg = '/images/services/software_01.webp'
+      } else if (t.includes('midjourney') || t.includes('chatgpt') || t.includes('claude') || t.includes('ai') || t.includes('diffusion')) {
+        newImg = '/images/services/ai_01.webp'
+      } else if (t.includes('figma') || t.includes('ui') || t.includes('design') || t.includes('dashboard') || t.includes('kit')) {
+        newImg = '/images/services/ui_01.webp'
+      } else if (t.includes('system design') || t.includes('handbook') || t.includes('blueprint') || t.includes('book') || t.includes('guide') || t.includes('quant')) {
+        newImg = '/images/services/ebook_01.webp'
+      } else if (t.includes('course') || t.includes('bootcamp') || t.includes('masterclass') || t.includes('video') || t.includes('flutter')) {
+        newImg = '/images/services/video_01.webp'
+      } else if (t.includes('template') || t.includes('theme') || t.includes('portfolio') || t.includes('storefront') || t.includes('landing')) {
+        newImg = '/images/services/template_01.webp'
+      } else if (t.includes('lofi') || t.includes('sfx') || t.includes('audio') || t.includes('sound') || t.includes('beats')) {
+        newImg = '/images/services/audio_01.webp'
+      } else if (t.includes('membership') || t.includes('alpha') || t.includes('club') || t.includes('vip') || t.includes('freelance')) {
+        newImg = '/images/services/membership_01.webp'
+      } else if (t.includes('data') || t.includes('lead') || t.includes('ohlcv') || t.includes('database') || t.includes('analytics')) {
+        newImg = '/images/services/data_01.webp'
+      }
+
+      await db.service.update({
+        where: { id: s.id },
+        data: { images: JSON.stringify([newImg]) }
+      })
+    }
+
     clearCategoryCache()
     const serviceCount = await db.service.count()
 
