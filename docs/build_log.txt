@@ -1,95 +1,95 @@
-#14 4.102 
-#14 4.102 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-#14 4.102 
-#14 4.102 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
-#14 4.102 
-#14 4.138 npm notice
-#14 4.138 npm notice New major version of npm available! 10.8.2 -> 12.0.2
-#14 4.138 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
-#14 4.138 npm notice To update run: npm install -g npm@12.0.2
-#14 4.138 npm notice
-#14 DONE 4.2s
+#14 2.996 
+#14 2.996 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#14 2.996 
+#14 2.996 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#14 2.996 
+#14 3.028 npm notice
+#14 3.028 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#14 3.028 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#14 3.028 npm notice To update run: npm install -g npm@12.0.2
+#14 3.028 npm notice
+#14 DONE 3.1s
 
-#15 [builder 5/6] RUN npx prisma db push --accept-data-loss || true
-#15 1.790 Prisma schema loaded from prisma/schema.prisma
-#15 1.800 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
-#15 1.839 
-#15 1.839 SQLite database dev.db created at file:./dev.db
-#15 2.088 
-#15 2.088 🚀  Your database is now in sync with your Prisma schema. Done in 249ms
-#15 2.088 
-#15 2.091 Running generate... (Use --skip-generate to skip the generators)
-#15 2.452 [2K[1A[2K[GRunning generate... - Prisma Client
-#15 2.851 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 396ms
-#15 2.852 ┌─────────────────────────────────────────────────────────┐
-#15 2.852 │  Update available 6.19.3 -> 7.9.1                       │
-#15 2.852 │                                                         │
-#15 2.852 │  This is a major update - please follow the guide at    │
-#15 2.852 │  https://pris.ly/d/major-version-upgrade                │
-#15 2.852 │                                                         │
-#15 2.852 │  Run the following to update                            │
-#15 2.852 │    npm i --save-dev prisma@latest                       │
-#15 2.852 │    npm i @prisma/client@latest                          │
-#15 2.852 └─────────────────────────────────────────────────────────┘
-#15 2.852 
-#15 DONE 2.9s
+#15 [builder 5/6] RUN npx prisma db push --accept-data-loss
+#15 1.743 Prisma schema loaded from prisma/schema.prisma
+#15 1.759 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+#15 1.778 
+#15 1.778 SQLite database dev.db created at file:./dev.db
+#15 2.035 
+#15 2.035 🚀  Your database is now in sync with your Prisma schema. Done in 256ms
+#15 2.035 
+#15 2.038 Running generate... (Use --skip-generate to skip the generators)
+#15 2.368 [2K[1A[2K[GRunning generate... - Prisma Client
+#15 2.729 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 358ms
+#15 2.731 ┌─────────────────────────────────────────────────────────┐
+#15 2.731 │  Update available 6.19.3 -> 7.9.1                       │
+#15 2.731 │                                                         │
+#15 2.731 │  This is a major update - please follow the guide at    │
+#15 2.731 │  https://pris.ly/d/major-version-upgrade                │
+#15 2.731 │                                                         │
+#15 2.731 │  Run the following to update                            │
+#15 2.731 │    npm i --save-dev prisma@latest                       │
+#15 2.731 │    npm i @prisma/client@latest                          │
+#15 2.731 └─────────────────────────────────────────────────────────┘
+#15 2.731 
+#15 DONE 2.8s
 
 #16 [builder 6/6] RUN npm run build
-#16 0.369 
-#16 0.369 > nextjs_tailwind_shadcn_ts@0.2.1 build
-#16 0.369 > npx prisma db push --accept-data-loss || true && next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
-#16 0.369 
-#16 1.712 Prisma schema loaded from prisma/schema.prisma
-#16 1.721 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
-#16 1.761 
-#16 1.761 The database is already in sync with the Prisma schema.
-#16 1.761 
-#16 1.763 Running generate... (Use --skip-generate to skip the generators)
-#16 2.109 [2K[1A[2K[GRunning generate... - Prisma Client
-#16 2.489 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 378ms
-#16 2.490 
-#16 3.085 ▲ Next.js 16.2.12 (Turbopack)
-#16 3.085 
-#16 3.122   Creating an optimized production build ...
-#16 12.77 ✓ Compiled successfully in 9.4s
-#16 12.78   Skipping validation of types
-#16 12.80   Finished TypeScript config validation in 16ms ...
-#16 12.81   Collecting page data using 3 workers ...
-#16 13.52 Error: SESSION_SECRET environment variable is required in production
-#16 13.52     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
-#16 13.52     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
-#16 13.52     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 13.52     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
-#16 13.52     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
-#16 13.52     at module evaluation (.next/server/chunks/[root-of-the-server]__11gkmjh._.js:1:3255)
-#16 13.52     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-#16 13.52     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
-#16 13.52     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
-#16 13.52     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
-#16 13.53 
-#16 13.53 > Build error occurred
-#16 13.54 Error: Failed to collect page data for /api/admin/audit
-#16 13.54     at ignore-listed frames {
-#16 13.54   type: 'Error'
-#16 13.54 }
+#16 0.365 
+#16 0.365 > nextjs_tailwind_shadcn_ts@0.2.1 build
+#16 0.365 > npx prisma db push --accept-data-loss || true && next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
+#16 0.365 
+#16 1.824 Prisma schema loaded from prisma/schema.prisma
+#16 1.835 Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+#16 1.892 
+#16 1.892 The database is already in sync with the Prisma schema.
+#16 1.892 
+#16 1.894 Running generate... (Use --skip-generate to skip the generators)
+#16 2.498 [2K[1A[2K[GRunning generate... - Prisma Client
+#16 2.893 [2K[1A[2K[G✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 394ms
+#16 2.893 
+#16 3.424 ▲ Next.js 16.2.12 (Turbopack)
+#16 3.424 
+#16 3.466   Creating an optimized production build ...
+#16 13.54 ✓ Compiled successfully in 9.8s
+#16 13.54   Skipping validation of types
+#16 13.55   Finished TypeScript config validation in 11ms ...
+#16 13.56   Collecting page data using 3 workers ...
+#16 14.28 Error: SESSION_SECRET environment variable is required in production
+#16 14.28     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
+#16 14.28     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
+#16 14.28     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#16 14.28     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
+#16 14.28     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
+#16 14.28     at module evaluation (.next/server/chunks/[root-of-the-server]__05se-u5._.js:1:3255)
+#16 14.28     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#16 14.28     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+#16 14.28     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+#16 14.28     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+#16 14.29 
+#16 14.29 > Build error occurred
+#16 14.29 Error: Failed to collect page data for /api/admin/analytics
+#16 14.29     at ignore-listed frames {
+#16 14.29   type: 'Error'
+#16 14.29 }
 #16 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
 ------
  > [builder 6/6] RUN npm run build:
-13.52     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
-13.52     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
-13.52     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
-13.52     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
-13.53 
-13.53 > Build error occurred
-13.54 Error: Failed to collect page data for /api/admin/audit
-13.54     at ignore-listed frames {
-13.54   type: 'Error'
-13.54 }
+14.28     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+14.28     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+14.28     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+14.28     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+14.29 
+14.29 > Build error occurred
+14.29 Error: Failed to collect page data for /api/admin/analytics
+14.29     at ignore-listed frames {
+14.29   type: 'Error'
+14.29 }
 ------
 Dockerfile:19
 --------------------
   17 |     RUN npx prisma generate
-  18 |     RUN npx prisma db push --accept-data-loss || true
+  18 |     RUN npx prisma db push --accept-data-loss
   19 | >>> RUN npm run build
   20 |     
   21 |     FROM base AS runner

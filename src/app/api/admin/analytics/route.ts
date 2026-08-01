@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
-import { formatSC } from '@/components/sc-badge'
 import { adminLimit } from '@/lib/rate-limit'
 
 export const GET = adminLimit(async function GET() {
