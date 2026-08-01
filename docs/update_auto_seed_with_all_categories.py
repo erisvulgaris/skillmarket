@@ -1,4 +1,6 @@
-import { db } from '@/lib/db'
+import json
+
+auto_seed_code = '''import { db } from '@/lib/db'
 
 let isSeeding = false
 let isSeededCheckDone = false
@@ -52,3 +54,9 @@ export async function ensureTelegramServicesSeeded() {
     isSeeding = false
   }
 }
+'''
+
+with open("c:/AppDev 2026/41.DrHuxon/temp_skillmarket/src/lib/auto-seed.ts", "w", encoding="utf-8") as f:
+    f.write(auto_seed_code)
+
+print("Successfully updated src/lib/auto-seed.ts!")

@@ -1,4 +1,6 @@
-import { db } from '@/lib/db'
+import json
+
+seed_route_code = '''import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
 import { clearCategoryCache } from '@/app/api/marketplace/categories/route'
 
@@ -221,3 +223,9 @@ export async function GET() {
     return handleError(e)
   }
 }
+'''
+
+with open("c:/AppDev 2026/41.DrHuxon/temp_skillmarket/src/app/api/seed/route.ts", "w", encoding="utf-8") as f:
+    f.write(seed_route_code)
+
+print("Successfully updated src/app/api/seed/route.ts with 42 custom branded title thumbnails!")
