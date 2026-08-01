@@ -51,6 +51,12 @@ export function AppShell() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [pendingIntent, setPendingIntent] = useState<(() => void) | null>(null)
 
+  useEffect(() => {
+    const handleAuthReq = () => setIsAuthModalOpen(true)
+    window.addEventListener('sm_require_auth', handleAuthReq)
+    return () => window.removeEventListener('sm_require_auth', handleAuthReq)
+  }, [])
+
   const fullScreenViews = ['service-detail', 'order-detail', 'conversation', 'transfer', 'buy-credits', 'create-service', 'seller-profile', 'dispute', 'settings', 'activity', 'analytics', 'cms-page', 'help', 'my-services', 'compare']
   const isFullScreen = fullScreenViews.includes(view)
 

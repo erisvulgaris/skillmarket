@@ -25,6 +25,9 @@ async function request<T = any>(url: string, options?: RequestInit): Promise<T> 
     // not json
   }
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sm_require_auth'))
+    }
     const rawError = json?.error || `Request failed (${res.status})`
     // Map internal error codes to user-friendly messages
     const friendlyErrors: Record<string, string> = {

@@ -10,6 +10,7 @@ import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { clsx } from 'clsx'
+import { QuickAuthModal } from '@/components/quick-auth-modal'
 
 const PACKAGES = [
   { credits: 100, price: 100, bonus: 0, popular: false },
@@ -21,10 +22,11 @@ const PACKAGES = [
 ]
 
 export function BuyCreditsView() {
-  const { setView, refreshUser } = useApp()
+  const { setView, refreshUser, user } = useApp()
   const [selected, setSelected] = useState(2)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -38,6 +40,12 @@ export function BuyCreditsView() {
   }
 
   const buy = async () => {
+    // Zero-friction auth check: if user is guest, pop up auth modal right away!
+    if (!user) {
+      setShowAuthModal(true)
+      return
+    }
+
     const pkg = PACKAGES[selected]
     setLoading(true)
     try {
@@ -221,6 +229,16 @@ export function BuyCreditsView() {
           </>
         )}
       </div>
+      <QuickAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false)
+          setTimeout(() => buy(), 150)
+        }}
+        title="Quick Account Sign In"
+        subtitle="Enter your email ID or sign in with Google to accept payment"
+      />
     </div>
   )
 }
