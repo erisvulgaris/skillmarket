@@ -1,90 +1,90 @@
-#15 10.81 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-#15 10.81 
-#15 10.81 
-#15 10.81 ./src/app/api/wallet/razorpay/create-order/route.ts:3:1
-#15 10.81 Export parseJsonBody doesn't exist in target module
-#15 10.81   [90m1 |[0m [36mimport[0m { getCurrentUser } [36mfrom[0m [32m'@/lib/auth'[0m
-#15 10.81   [90m2 |[0m [36mimport[0m { createRazorpayOrder } [36mfrom[0m [32m'@/lib/razorpay'[0m
-#15 10.81 [31m[1m>[0m [90m3 |[0m [36mimport[0m { ok, err, handleError, parseJsonBody } [36mfrom[0m [32m'@/lib/api'[0m
-#15 10.81   [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-#15 10.81   [90m4 |[0m [36mimport[0m { setCors } [36mfrom[0m [32m'@/lib/cors'[0m
-#15 10.81   [90m5 |[0m [36mimport[0m { apiLimit } [36mfrom[0m [32m'@/lib/rate-limit'[0m
-#15 10.81   [90m6 |[0m
-#15 10.81 
-#15 10.81 The export parseJsonBody was not found in module [project]/src/lib/api.ts [app-route] (ecmascript).
-#15 10.81 Did you mean to import safeJsonParse?
-#15 10.81 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-#15 10.81 
-#15 10.81 
-#15 10.81 ./src/app/api/wallet/razorpay/verify-payment/route.ts:4:1
-#15 10.81 Export parseJsonBody doesn't exist in target module
-#15 10.81   [90m2 |[0m [36mimport[0m { verifyRazorpaySignature } [36mfrom[0m [32m'@/lib/razorpay'[0m
-#15 10.81   [90m3 |[0m [36mimport[0m { purchaseCredits } [36mfrom[0m [32m'@/lib/wallet'[0m
-#15 10.81 [31m[1m>[0m [90m4 |[0m [36mimport[0m { ok, err, handleError, parseJsonBody } [36mfrom[0m [32m'@/lib/api'[0m
-#15 10.81   [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-#15 10.81   [90m5 |[0m [36mimport[0m { setCors } [36mfrom[0m [32m'@/lib/cors'[0m
-#15 10.81   [90m6 |[0m [36mimport[0m { apiLimit } [36mfrom[0m [32m'@/lib/rate-limit'[0m
-#15 10.81   [90m7 |[0m
-#15 10.81 
-#15 10.81 The export parseJsonBody was not found in module [project]/src/lib/api.ts [app-route] (ecmascript).
-#15 10.81 Did you mean to import safeJsonParse?
-#15 10.81 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-#15 10.81 
-#15 10.81 
-#15 10.81 ./src/app/api/payments/razorpay/key/route.ts:5:1
-#15 10.81 Export saveRazorpayKey doesn't exist in target module
-#15 10.81   [90m3 |[0m [36mimport[0m { adminLimit } [36mfrom[0m [32m'@/lib/rate-limit'[0m
-#15 10.81   [90m4 |[0m [36mimport[0m { requireJson } [36mfrom[0m [32m'@/lib/content-type'[0m
-#15 10.81 [31m[1m>[0m [90m5 |[0m [36mimport[0m { listRazorpayKeys, saveRazorpayKey, deleteRazorpayKey } [36mfrom[0m [32m'@/lib/razorpay'[0m
-#15 10.81   [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-#15 10.81   [90m6 |[0m [36mimport[0m { writeAudit } [36mfrom[0m [32m'@/lib/audit'[0m
-#15 10.81   [90m7 |[0m [36mimport[0m { z } [36mfrom[0m [32m'zod'[0m
-#15 10.81   [90m8 |[0m
-#15 10.81 
-#15 10.81 The export saveRazorpayKey was not found in module [project]/src/lib/razorpay.ts [app-route] (ecmascript).
-#15 10.81 Did you mean to import verifyRazorpaySignature?
-#15 10.81 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-#15 10.81 
-#15 10.81 
-#15 10.81 ./src/app/api/payments/razorpay/webhook/route.ts:3:1
-#15 10.81 Export verifyWebhookSignature doesn't exist in target module
-#15 10.81   [90m1 |[0m [36mimport[0m { db } [36mfrom[0m [32m'@/lib/db'[0m
-#15 10.81   [90m2 |[0m [36mimport[0m { ok, safeJsonParse } [36mfrom[0m [32m'@/lib/api'[0m
-#15 10.81 [31m[1m>[0m [90m3 |[0m [36mimport[0m { verifyWebhookSignature } [36mfrom[0m [32m'@/lib/razorpay'[0m
-#15 10.81   [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-#15 10.81   [90m4 |[0m [36mimport[0m { purchaseCredits } [36mfrom[0m [32m'@/lib/wallet'[0m
-#15 10.81   [90m5 |[0m
-#15 10.81   [90m6 |[0m [36mexport[0m [36mconst[0m [33mPOST[0m = [36masync[0m [36mfunction[0m [33mPOST[0m(req: [33mRequest[0m) {
-#15 10.81 
-#15 10.81 The export verifyWebhookSignature was not found in module [project]/src/lib/razorpay.ts [app-route] (ecmascript).
-#15 10.81 Did you mean to import verifyRazorpaySignature?
-#15 10.81 All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-#15 10.81 
-#15 10.81 
-#15 10.81     at <unknown> (./src/components/views/admin-view.tsx:247:9)
-#15 10.81     at <unknown> (./src/app/api/auth/google/route.ts:3:1)
-#15 10.81     at <unknown> (./src/app/api/auth/google/route.ts:3:1)
-#15 10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-#15 10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-#15 10.81     at <unknown> (./src/app/api/admin/categories/[id]/route.ts:3:1)
-#15 10.81     at <unknown> (./src/app/api/auth/google/route.ts:2:1)
-#15 10.81     at <unknown> (./src/app/api/wallet/razorpay/create-order/route.ts:3:1)
-#15 10.81     at <unknown> (./src/app/api/wallet/razorpay/verify-payment/route.ts:4:1)
-#15 10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-#15 10.81     at <unknown> (./src/app/api/payments/razorpay/webhook/route.ts:3:1)
+#11 [deps 4/4] RUN npm ci --legacy-peer-deps
+#11 4.871 npm warn deprecated intersection-observer@0.10.0: The Intersection Observer polyfill is no longer needed and can safely be removed. Intersection Observer has been Baseline since 2019.
+#11 6.045 npm warn deprecated @types/bcryptjs@3.0.0: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+#11 10.82 npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+#11 21.59 
+#11 21.59 added 962 packages, and audited 963 packages in 21s
+#11 21.59 
+#11 21.59 300 packages are looking for funding
+#11 21.59   run `npm fund` for details
+#11 21.65 
+#11 21.65 9 vulnerabilities (4 moderate, 5 high)
+#11 21.65 
+#11 21.65 To address all issues (including breaking changes), run:
+#11 21.65   npm audit fix --force
+#11 21.65 
+#11 21.65 Run `npm audit` for details.
+#11 21.65 npm notice
+#11 21.65 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#11 21.65 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#11 21.65 npm notice To update run: npm install -g npm@12.0.2
+#11 21.65 npm notice
+#11 DONE 22.1s
+
+#12 [builder 2/5] COPY --from=deps /app/node_modules ./node_modules
+#12 DONE 9.9s
+
+#13 [builder 3/5] COPY . .
+#13 DONE 1.2s
+
+#14 [builder 4/5] RUN npx prisma generate
+#14 1.628 Prisma schema loaded from prisma/schema.prisma
+#14 4.079 
+#14 4.079 ✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 367ms
+#14 4.079 
+#14 4.079 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#14 4.079 
+#14 4.079 Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+#14 4.079 
+#14 4.112 npm notice
+#14 4.112 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#14 4.112 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#14 4.112 npm notice To update run: npm install -g npm@12.0.2
+#14 4.112 npm notice
+#14 DONE 4.1s
+
+#15 [builder 5/5] RUN npm run build
+#15 0.357 
+#15 0.357 > nextjs_tailwind_shadcn_ts@0.2.1 build
+#15 0.357 > next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/
+#15 0.357 
+#15 0.879 ▲ Next.js 16.2.12 (Turbopack)
+#15 0.879 
+#15 0.913   Creating an optimized production build ...
+#15 9.368 ✓ Compiled successfully in 8.2s
+#15 9.371   Skipping validation of types
+#15 9.380   Finished TypeScript config validation in 8ms ...
+#15 9.386   Collecting page data using 3 workers ...
+#15 10.01 Error: SESSION_SECRET environment variable is required in production
+#15 10.01     at <unknown> (.next/server/chunks/_0htkyro._.js:1:58876)
+#15 10.01     at module evaluation (.next/server/chunks/_0htkyro._.js:1:58957)
+#15 10.01     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#15 10.01     at getOrInstantiateModuleFromParent (.next/server/chunks/[turbopack]_runtime.js:877:12)
+#15 10.01     at Context.esmImport [as i] (.next/server/chunks/[turbopack]_runtime.js:281:20)
+#15 10.01     at module evaluation (.next/server/chunks/[root-of-the-server]__1q72r3g._.js:1:2236)
+#15 10.01     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+#15 10.01     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+#15 10.01     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+#15 10.01     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+#15 10.02 
+#15 10.02 > Build error occurred
+#15 10.02 Error: Failed to collect page data for /api/admin/categories/[id]
+#15 10.02     at ignore-listed frames {
+#15 10.02   type: 'Error'
+#15 10.02 }
 #15 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
 ------
  > [builder 5/5] RUN npm run build:
-10.81     at <unknown> (./src/app/api/auth/google/route.ts:3:1)
-10.81     at <unknown> (./src/app/api/auth/google/route.ts:3:1)
-10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-10.81     at <unknown> (./src/app/api/admin/categories/[id]/route.ts:3:1)
-10.81     at <unknown> (./src/app/api/auth/google/route.ts:2:1)
-10.81     at <unknown> (./src/app/api/wallet/razorpay/create-order/route.ts:3:1)
-10.81     at <unknown> (./src/app/api/wallet/razorpay/verify-payment/route.ts:4:1)
-10.81     at <unknown> (./src/app/api/payments/razorpay/key/route.ts:5:1)
-10.81     at <unknown> (./src/app/api/payments/razorpay/webhook/route.ts:3:1)
+10.01     at instantiateModule (.next/server/chunks/[turbopack]_runtime.js:853:9)
+10.01     at instantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:882:12)
+10.01     at getOrInstantiateRuntimeModule (.next/server/chunks/[turbopack]_runtime.js:895:12)
+10.01     at Object.m (.next/server/chunks/[turbopack]_runtime.js:898:18)
+10.02 
+10.02 > Build error occurred
+10.02 Error: Failed to collect page data for /api/admin/categories/[id]
+10.02     at ignore-listed frames {
+10.02   type: 'Error'
+10.02 }
 ------
 Dockerfile:16
 --------------------

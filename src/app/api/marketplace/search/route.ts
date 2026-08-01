@@ -1,6 +1,8 @@
 import { db } from '@/lib/db'
 import { ok, handleError, safeJsonParse } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)

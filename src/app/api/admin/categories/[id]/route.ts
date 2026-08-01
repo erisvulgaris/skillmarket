@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
 import { clearCategoryCache } from '@/lib/cache'
 
+export const dynamic = 'force-dynamic'
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser()
