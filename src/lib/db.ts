@@ -1,14 +1,8 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaBetterSqlite } from '@prisma/adapter-better-sqlite3'
-import Database from 'better-sqlite3'
 
 if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'file:/data/skillmarket.db'
 }
-
-const dbPath = (process.env.DATABASE_URL || 'file:/data/skillmarket.db').replace(/^file:/, '')
-const sqlite = new Database(dbPath)
-const adapter = new PrismaBetterSqlite(sqlite)
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -17,7 +11,6 @@ const globalForPrisma = globalThis as unknown as {
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter,
     log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
     transactionOptions: { timeout: 15000, maxWait: 10000 },
   })

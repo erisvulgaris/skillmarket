@@ -1,7 +1,7 @@
-FROM node:20-slim AS base
+FROM node:20-alpine AS base
 
 FROM base AS deps
-RUN apt-get update && apt-get install -y openssl ca-certificates sqlite3 python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache libc6-compat openssl sqlite
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
@@ -19,7 +19,7 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN apt-get update && apt-get install -y openssl ca-certificates sqlite3 && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl sqlite
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
