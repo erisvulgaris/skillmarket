@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'

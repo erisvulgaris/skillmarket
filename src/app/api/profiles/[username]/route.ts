@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { ok, err, handleError, safeJsonParse } from '@/lib/api'
 import { setCors } from '@/lib/cors'

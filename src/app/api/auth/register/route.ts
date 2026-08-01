@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { hashPassword, createSession, setSessionCookie, generateReferralCode, hashPin } from '@/lib/auth'
 import { ok, err, handleError, validateBody, getClientIp, getUserAgent } from '@/lib/api'

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { ok, err, handleError } from '@/lib/api'

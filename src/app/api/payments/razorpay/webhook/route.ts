@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { ok, safeJsonParse } from '@/lib/api'
 import { verifyWebhookSignature } from '@/lib/razorpay'

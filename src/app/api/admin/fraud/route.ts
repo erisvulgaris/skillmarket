@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { ok, handleError } from '@/lib/api'
 import { getPlatformFraudAlerts } from '@/lib/fraud'

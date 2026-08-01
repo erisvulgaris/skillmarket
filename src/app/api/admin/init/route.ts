@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { hashPassword, hashPin } from '@/lib/auth'
 import { ok, handleError } from '@/lib/api'

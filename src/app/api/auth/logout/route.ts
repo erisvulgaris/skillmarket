@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { destroySession, getCurrentUser, getSessionToken } from '@/lib/auth'
 import { ok, handleError } from '@/lib/api'
 

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { purchaseCredits } from '@/lib/wallet'
 import { ok, err, handleError, validateBody } from '@/lib/api'

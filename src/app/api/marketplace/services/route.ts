@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination, safeJsonParse } from '@/lib/api'
 import { ensureTelegramServicesSeeded } from '@/lib/auto-seed'

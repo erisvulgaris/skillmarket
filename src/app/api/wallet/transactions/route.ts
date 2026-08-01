@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError, parsePagination } from '@/lib/api'

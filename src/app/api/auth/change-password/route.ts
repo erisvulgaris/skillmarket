@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getCurrentUser, verifyPassword, hashPassword } from '@/lib/auth'
 import { ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'

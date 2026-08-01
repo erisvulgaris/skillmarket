@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getCurrentUser, verifyPin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { transferCredits } from '@/lib/wallet'
