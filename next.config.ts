@@ -10,9 +10,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  turbopack: {
-    root: path.resolve(__dirname),
-  },
   reactStrictMode: true,
   allowedDevOrigins: ["*.space-z.ai", "*.chatglm.cn"],
   images: {
