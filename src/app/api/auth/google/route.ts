@@ -26,7 +26,7 @@ export const POST = withCors(apiLimit(async function POST(req: Request) {
     }
 
     // Find or create user
-    let user = await db.user.findUnique({
+    let user: any = await db.user.findUnique({
       where: { email },
       include: { profile: true, wallet: true },
     })
@@ -51,6 +51,8 @@ export const POST = withCors(apiLimit(async function POST(req: Request) {
               avatarUrl,
               bio: 'SkillCart Marketplace Member',
               location: 'India',
+              languages: '[]',
+              skills: '[]',
             },
           },
           wallet: {

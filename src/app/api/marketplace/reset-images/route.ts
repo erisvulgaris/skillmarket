@@ -71,6 +71,8 @@ export async function GET() {
                 bio: `Verified Digital Product Creator (@${s.username})`,
                 isVerified: true,
                 location: 'Global / Remote',
+                languages: '[]',
+                skills: '[]',
               },
             },
             wallet: { create: { availableBalance: 10000 } },

@@ -81,6 +81,8 @@ export async function GET() {
                 bio: `Verified Content Creator & Digital Product Specialist (@${s.username})`,
                 isVerified: true,
                 location: 'Global / Remote',
+                languages: '[]',
+                skills: '[]',
               },
             },
             wallet: { create: { availableBalance: 10000 } },
