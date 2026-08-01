@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
+import { clearCategoryCache } from '@/app/api/marketplace/categories/route'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -20,6 +21,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         icon: body.icon || undefined,
       },
     })
+
+    clearCategoryCache()
 
     return ok({ category: updated })
   } catch (e) {

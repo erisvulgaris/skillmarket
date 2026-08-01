@@ -8,6 +8,11 @@ let cachedCategories: any = null
 let lastFetchTime = 0
 const CACHE_TTL_MS = 15000 // 15 seconds in-memory cache
 
+export function clearCategoryCache() {
+  cachedCategories = null
+  lastFetchTime = 0
+}
+
 export async function GET() {
   try {
     const now = Date.now()
