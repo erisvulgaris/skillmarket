@@ -38,7 +38,7 @@ const shutdown = async (signal: string) => {
   process.exit(0)
 }
 
-if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
+if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
   process.on('SIGTERM', () => shutdown('SIGTERM'))
   process.on('SIGINT', () => shutdown('SIGINT'))
 }
