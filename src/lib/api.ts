@@ -114,6 +114,14 @@ export function safeJsonParse<T = any>(raw: string | null | undefined, fallback:
   }
 }
 
+export async function parseJsonBody<T = any>(req: Request): Promise<T | null> {
+  try {
+    return await req.json()
+  } catch {
+    return null
+  }
+}
+
 export function getClientIp(req: Request): string | undefined {
   const fwd = req.headers.get('x-forwarded-for')
   if (fwd) return fwd.split(',')[0].trim()

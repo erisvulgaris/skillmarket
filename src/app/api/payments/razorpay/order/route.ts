@@ -29,15 +29,14 @@ export const POST = apiLimit(async function POST(req: Request) {
     }
 
     const rzpOrder = await createRazorpayOrder({
-      amount: amountPaise,
-      currency: data!.currency,
+      amountInRupees: data!.amount,
       receipt: `rcpt_${Date.now()}_${randomBytes(4).toString('hex')}`,
       notes,
     })
 
     await db.razorpayOrder.create({
       data: {
-        razorpayOrderId: rzpOrder.id,
+        razorpayOrderId: rzpOrder.orderId,
         amount: amountPaise,
         currency: data!.currency,
         status: 'created',
@@ -46,7 +45,7 @@ export const POST = apiLimit(async function POST(req: Request) {
       },
     })
 
-    return ok({ id: rzpOrder.id, amount: rzpOrder.amount, currency: rzpOrder.currency })
+    return ok({ id: rzpOrder.orderId, amount: rzpOrder.amount, currency: rzpOrder.currency })
   } catch (e) {
     return handleError(e)
   }

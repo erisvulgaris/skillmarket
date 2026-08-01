@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
-import { clearCategoryCache } from '@/app/api/marketplace/categories/route'
+import { clearCategoryCache } from '@/lib/cache'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

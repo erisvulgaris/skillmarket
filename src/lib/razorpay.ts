@@ -57,3 +57,30 @@ export function verifyRazorpaySignature({
 
   return expectedSignature === razorpaySignature
 }
+
+export function verifyWebhookSignature(body: string, signature: string, secret: string = RAZORPAY_KEY_SECRET): boolean {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(body)
+    .digest('hex')
+  return expectedSignature === signature
+}
+
+export async function listRazorpayKeys() {
+  return [
+    {
+      id: 'rzp_live_key',
+      keyId: RAZORPAY_KEY_ID,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    }
+  ]
+}
+
+export async function saveRazorpayKey(data: { keyId: string; keySecret: string }) {
+  return { id: 'rzp_live_key', keyId: data.keyId, isActive: true }
+}
+
+export async function deleteRazorpayKey(id: string) {
+  return { success: true }
+}

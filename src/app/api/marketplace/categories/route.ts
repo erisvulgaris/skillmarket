@@ -1,17 +1,13 @@
 import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
 import { ensureTelegramServicesSeeded } from '@/lib/auto-seed'
+import { clearCategoryCache as clearCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
 let cachedCategories: any = null
 let lastFetchTime = 0
 const CACHE_TTL_MS = 15000 // 15 seconds in-memory cache
-
-export function clearCategoryCache() {
-  cachedCategories = null
-  lastFetchTime = 0
-}
 
 export async function GET() {
   try {

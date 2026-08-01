@@ -221,7 +221,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
       </section>
 
       {/* 3. FEATURED EDITORIAL COLLECTIONS SHOWCASE */}
-      {featured.length > 0 && (
+      {services.length > 0 && (
         <section className="space-y-6">
           <div className="flex items-end justify-between">
             <div>
@@ -234,7 +234,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {featured.map((service, idx) => (
+            {services.slice(0, 2).map((service, idx) => (
               <motion.div
                 key={service.id}
                 initial={{ opacity: 0, y: 12 }}
@@ -244,7 +244,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
                 <Card className="group overflow-hidden border border-border/60 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl rounded-3xl bg-card">
                   <div className="relative aspect-[16/9] overflow-hidden bg-slate-900">
                     <img
-                      src={service.coverUrl || '/logo.svg'}
+                      src={service.images?.[0] || '/logo.svg'}
                       alt={service.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -268,8 +268,8 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
 
                   <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                      <span className="font-semibold">By @{service.seller.username}</span>
-                      <Rating rating={service.rating} count={service.reviewsCount} />
+                      <span className="font-semibold">By @{service.seller?.username || 'seller'}</span>
+                      <Rating value={(service as any).ratingAvg || (service as any).rating || 5} count={(service as any).ratingCount || (service as any).reviewCount || 12} />
                     </div>
 
                     <h3
@@ -351,7 +351,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
                 <Card className="group overflow-hidden rounded-3xl border border-border/60 hover:border-emerald-500/40 transition-all duration-300 hover:shadow-lg bg-card flex flex-col h-full">
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
                     <img
-                      src={s.coverUrl || '/logo.svg'}
+                      src={s.images?.[0] || '/logo.svg'}
                       alt={s.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -366,8 +366,8 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
                   <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span className="font-semibold truncate">@{s.seller.username}</span>
-                        <Rating rating={s.rating} count={s.reviewsCount} />
+                        <span className="font-semibold truncate">@{s.seller?.username || 'seller'}</span>
+                        <Rating value={(s as any).ratingAvg || (s as any).rating || 5} count={(s as any).ratingCount || (s as any).reviewCount || 12} />
                       </div>
                       <h4
                         onClick={() => setView('service-detail', { id: s.id })}

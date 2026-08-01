@@ -244,23 +244,6 @@ export function AdminView() {
     } catch (e: any) { toast.error(e.message) }
   }
 
-  const TABS: { k: Tab; label: string }[] = [
-    { k: 'dashboard', label: 'Dashboard' },
-    { k: 'users', label: 'Users' },
-    { k: 'wallets', label: 'Wallets' },
-    { k: 'services', label: 'Services' },
-    { k: 'orders', label: 'Orders' },
-    { k: 'disputes', label: 'Disputes' },
-    { k: 'reports', label: 'Reports' },
-    { k: 'fraud', label: 'Fraud' },
-    { k: 'support', label: 'Support' },
-    { k: 'flags', label: 'Flags' },
-    { k: 'settings', label: 'Settings' },
-    { k: 'cms', label: 'CMS' },
-    { k: 'broadcast', label: 'Broadcast' },
-    { k: 'audit', label: 'Audit' },
-  ]
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Enterprise Top Banner / Status Bar */}

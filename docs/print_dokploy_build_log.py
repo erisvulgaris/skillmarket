@@ -10,7 +10,13 @@ headers = {
     "Content-Type": "application/json"
 }
 
-url = f"{DOKPLOY_URL}/api/trpc/deployment.readLogs?input=" + json.dumps({"json": {"deploymentId": "1iPn85SMONJNRgWFkGK02"}})
+resp = requests.get(
+    f"{DOKPLOY_URL}/api/trpc/deployment.all?input=" + json.dumps({"json": {"applicationId": "D2WEVGcagZDHunlcBmc-U"}}),
+    headers=headers
+)
+latest_id = resp.json()['result']['data']['json'][0]['deploymentId']
+print("Latest deployment ID:", latest_id)
+url = f"{DOKPLOY_URL}/api/trpc/deployment.readLogs?input=" + json.dumps({"json": {"deploymentId": latest_id}})
 res = requests.get(url, headers=headers)
 log_text = res.json()['result']['data']['json']
 with open("c:/AppDev 2026/41.DrHuxon/temp_skillmarket/docs/build_log.txt", "w", encoding="utf-8") as f:

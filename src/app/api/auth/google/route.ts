@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
-import { createAuthToken, createAuthCookieHeader } from '@/lib/auth'
+import { createSession, setSessionCookie } from '@/lib/auth'
 import { setCors } from '@/lib/cors'
 import { apiLimit } from '@/lib/rate-limit'
 
@@ -63,10 +63,9 @@ export const POST = withCors(apiLimit(async function POST(req: Request) {
       })
     }
 
-    const token = await createAuthToken(user.id)
-    const res = ok({ user, success: true }, 200)
-    res.headers.set('Set-Cookie', createAuthCookieHeader(token))
-    return res
+    const sess = await createSession(user.id)
+    await setSessionCookie(sess.jwt, sess.expiresAt)
+    return ok({ user, success: true }, 200)
   } catch (e) {
     return handleError(e)
   }

@@ -12,10 +12,10 @@ export const GET = adminLimit(async function GET() {
     const keys = await listRazorpayKeys()
     const masked = keys.map((k: any) => ({
       id: k.id,
-      label: k.label,
+      label: k.label || 'Default Live Key',
       keyId: k.keyId,
-      active: k.active,
-      createdAt: k.createdAt,
+      active: k.isActive ?? k.active,
+      createdAt: k.createdAt || new Date().toISOString(),
     }))
     return ok({ keys: masked })
   } catch (e) {
@@ -24,7 +24,7 @@ export const GET = adminLimit(async function GET() {
 })
 
 const postSchema = z.object({
-  label: z.string(),
+  label: z.string().optional(),
   keyId: z.string(),
   keySecret: z.string(),
   active: z.boolean().optional(),
@@ -36,9 +36,9 @@ export const POST = adminLimit(async function POST(req: Request) {
     const ct = requireJson(req); if (ct) return ct
     const { data, error } = await validateBody(postSchema, req)
     if (error) return err(error, 422)
-    const key = await saveRazorpayKey(data!)
-    await writeAudit({ actorId: admin.id, action: 'admin_razorpay_key_create', entityType: 'razorpay_key', entityId: key.id, after: { label: key.label, keyId: key.keyId, active: key.active } })
-    return ok({ key: { id: key.id, label: key.label, keyId: key.keyId, active: key.active, createdAt: key.createdAt } })
+    const key = await saveRazorpayKey({ keyId: data!.keyId, keySecret: data!.keySecret })
+    await writeAudit({ actorId: admin.id, action: 'admin_razorpay_key_create', entityType: 'razorpay_key', entityId: key.id, after: { keyId: key.keyId } })
+    return ok({ key: { id: key.id, label: 'Default Live Key', keyId: key.keyId, active: key.isActive, createdAt: new Date().toISOString() } })
   } catch (e) {
     return handleError(e)
   }

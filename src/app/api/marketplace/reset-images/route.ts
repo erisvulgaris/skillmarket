@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
-import { clearCategoryCache } from '@/app/api/marketplace/categories/route'
+import { clearCategoryCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
