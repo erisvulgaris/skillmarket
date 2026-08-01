@@ -59,3 +59,8 @@ export const PATCH = adminLimit(async function PATCH(req: Request, { params }: {
     return handleError(e)
   }
 })
+
+
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}

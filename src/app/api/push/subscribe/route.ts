@@ -80,3 +80,8 @@ export async function DELETE(req: Request) {
     return err('Failed to unsubscribe', 500)
   }
 }
+
+
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}

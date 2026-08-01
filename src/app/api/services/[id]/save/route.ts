@@ -45,3 +45,8 @@ export const DELETE = withCors(apiLimit(async function DELETE(req: Request, { pa
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: setCors() })
 }
+
+
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}

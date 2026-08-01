@@ -6,6 +6,10 @@ import { clearCategoryCache } from '@/lib/cache'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}
+
 export async function PATCH(req: Request, ctx: any) {
   try {
     const user = await getCurrentUser()

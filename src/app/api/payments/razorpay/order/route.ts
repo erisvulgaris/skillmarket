@@ -51,3 +51,8 @@ export const POST = apiLimit(async function POST(req: Request) {
     return handleError(e)
   }
 })
+
+
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}

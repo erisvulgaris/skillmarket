@@ -159,3 +159,8 @@ export const POST = async function POST(req: Request) {
     return Response.json({ status: 'error' }, { status: 500 })
   }
 }
+
+
+export async function GET() {
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+}
