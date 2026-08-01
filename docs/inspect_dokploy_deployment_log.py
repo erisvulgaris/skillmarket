@@ -23,9 +23,8 @@ if deployments:
 
     # 2. Get deployment log
     log_resp = requests.get(
-        f"{DOKPLOY_URL}/api/trpc/deployment.byDeploymentId?input=" + json.dumps({"json": {"deploymentId": latest['deploymentId']}}),
+        f"{DOKPLOY_URL}/api/trpc/deployment.byDeploymentId?input=" + json.dumps({"json": {"deploymentId": "gXTpU9yWEnxSlddE6eTSX"}}),
         headers=headers
     )
     log_data = log_resp.json()
-    print("Deployment details:")
-    print(json.dumps(log_data, indent=2))
+    print("LOG:", log_data['result']['data']['json'].get('log'))

@@ -1,5 +1,6 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "openssl_3", "sqlite"]
+aptPkgs = ["openssl", "ca-certificates", "sqlite3"]
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps"]
