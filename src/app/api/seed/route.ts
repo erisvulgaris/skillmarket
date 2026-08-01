@@ -3,6 +3,7 @@ import { ok, handleError } from '@/lib/api'
 import { clearCategoryCache } from '@/app/api/marketplace/categories/route'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function GET() {
   try {

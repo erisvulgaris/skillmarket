@@ -50,8 +50,10 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
 
   useEffect(() => { load() }, [load])
 
-  const featured = services.filter((s) => s.featured).slice(0, 4)
-  const trending = [...services].sort((a, b) => b.views - a.views).slice(0, 8)
+  const filteredServices = services.filter((s) => {
+    if (activeSection === 'all') return true
+    return s.category?.slug === activeSection || s.categoryId === categories.find((c) => c.slug === activeSection)?.id
+  })
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -169,9 +171,9 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
         </div>
       </section>
 
-      {/* 2.5 TEN MARKETPLACE SECTIONS (1 ACTIVE + 9 PLACEHOLDERS) */}
+      {/* 2.5 TEN MARKETPLACE SECTIONS */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-end justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-500">Explore Marketplace</span>
             <h2 className="text-2xl font-black tracking-tight">Marketplace Sections</h2>
@@ -180,53 +182,42 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-          {[
-            { id: 'telegram-services', label: '✈️ Telegram Services', count: 'ACTIVE' },
-            { id: 'software-scripts', label: '💻 Software & Scripts', count: '0' },
-            { id: 'ai-prompts-models', label: '🤖 AI Prompts & Models', count: '0' },
-            { id: 'ui-ux-design-kits', label: '🎨 UI/UX Design Kits', count: '0' },
-            { id: 'e-books-guides', label: '📚 E-Books & Guides', count: '0' },
-            { id: 'video-tutorials-courses', label: '🎥 Video Tutorials', count: '0' },
-            { id: 'templates-themes', label: '🚀 Templates & Themes', count: '0' },
-            { id: 'audio-music-assets', label: '🎵 Audio & Music Assets', count: '0' },
-            { id: 'memberships-subscriptions', label: '⭐ Memberships', count: '0' },
-            { id: 'data-analytics-datasets', label: '📊 Datasets & Reports', count: '0' },
-          ].map((sec) => (
-            <button
-              key={sec.id}
-              onClick={() => setActiveSection(sec.id)}
-              className={clsx(
-                'px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2',
-                activeSection === sec.id
-                  ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
-                  : 'bg-card text-foreground border-border/60 hover:border-emerald-500/50'
-              )}
-            >
-              <span>{sec.label}</span>
-              <span className={clsx('px-1.5 py-0.5 rounded-full text-[10px] font-mono', activeSection === sec.id ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground')}>
-                {sec.count}
-              </span>
-            </button>
-          ))}
-        </div>
+          <button
+            onClick={() => setActiveSection('all')}
+            className={clsx(
+              'px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2',
+              activeSection === 'all'
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+                : 'bg-card text-foreground border-border/60 hover:border-emerald-500/50'
+            )}
+          >
+            <span>✨ All Marketplace Sections</span>
+            <span className={clsx('px-1.5 py-0.5 rounded-full text-[10px] font-mono', activeSection === 'all' ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground')}>
+              {services.length}
+            </span>
+          </button>
 
-        {activeSection !== 'telegram-services' && (
-          <Card className="p-8 text-center space-y-3 rounded-3xl border-dashed border-border/80 bg-muted/20">
-            <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-bold">Section Coming Soon</h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              This marketplace section is currently accepting seller applications. Independent third-party creators will list digital assets here soon.
-            </p>
-            <button
-              onClick={() => onRequireAuth?.(() => {})}
-              className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs shadow-md"
-            >
-              Apply as Seller
-            </button>
-          </Card>
-        )}
+          {categories.map((cat) => {
+            const count = services.filter((s) => s.categoryId === cat.id || s.category?.slug === cat.slug).length
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveSection(cat.slug)}
+                className={clsx(
+                  'px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2',
+                  activeSection === cat.slug
+                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+                    : 'bg-card text-foreground border-border/60 hover:border-emerald-500/50'
+                )}
+              >
+                <span>{cat.name}</span>
+                <span className={clsx('px-1.5 py-0.5 rounded-full text-[10px] font-mono', activeSection === cat.slug ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground')}>
+                  {count > 0 ? count : 'ACTIVE'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </section>
 
       {/* 3. FEATURED EDITORIAL COLLECTIONS SHOWCASE */}
@@ -350,7 +341,7 @@ export function MarketplaceView({ onRequireAuth }: { onRequireAuth?: (intent: ()
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {services.map((s, idx) => (
+            {filteredServices.map((s, idx) => (
               <motion.div
                 key={s.id}
                 initial={{ opacity: 0, y: 10 }}
