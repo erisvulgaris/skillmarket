@@ -8,6 +8,9 @@ export async function GET() {
   try {
     console.log('[API/Seed] Seeding all 10 Marketplace Sections with custom branded title images...')
 
+    // Clear existing services to ensure 100% clean custom WebP image paths
+    await db.service.deleteMany({})
+
     // 1. Ensure 10 Section Categories exist
     const sectionCategories = [
       { name: 'Telegram Services', slug: 'telegram-services', icon: 'telegram', enabled: false },

@@ -6,6 +6,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
+APP_ID = "D2WEVGcagZDHunlcBmc-U"
 API_URL = "http://152.53.111.217:3005/api/trpc"
 API_KEY = "UIoOLzCywHozJQVxSkRSkCGxIgETYcxjfjGJBohBeolAVXaONCWvJtcLFVrInDxl"
 HEADERS = {
