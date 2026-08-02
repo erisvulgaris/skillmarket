@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "NEXT_PHASE=phase-production-build next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "build": "export IS_BUILD_TIME=true && export NEXT_PHASE=phase-production-build && next build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "sh start.sh",
     "lint": "eslint .",
     "db:push": "npx prisma db push --accept-data-loss",
