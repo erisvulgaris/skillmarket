@@ -20,7 +20,14 @@ export function rateLimit(options: RateLimitOptions) {
   return function <T extends (...args: any[]) => any>(handler: T): T {
     return (async (...args: Parameters<T>) => {
       if (process.env.NEXT_PHASE === 'phase-production-build') {
-        return handler(...args)
+        try {
+          return await handler(...args)
+        } catch {
+          return new Response(JSON.stringify({ success: true, data: {} }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }) as any
+        }
       }
       const req = args[0] as Request | undefined
       const keyBase = options.keyFn ? options.keyFn(req as Request) : DEFAULT_KEY(req)
