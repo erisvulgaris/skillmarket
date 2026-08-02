@@ -35,7 +35,9 @@ COPY --from=builder /app/start.sh ./start.sh
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-RUN chmod +x start.sh && mkdir -p /data
+COPY --from=builder /data /data
+
+RUN chmod -R 777 /data && chmod +x start.sh
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"

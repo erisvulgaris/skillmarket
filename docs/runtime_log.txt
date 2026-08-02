@@ -1,0 +1,76 @@
+2026-08-02T15:17:57.391147659Z ▲ Next.js 16.2.12
+2026-08-02T15:17:57.391207909Z - Local:         http://localhost:3000
+2026-08-02T15:17:57.391212035Z - Network:       http://0.0.0.0:3000
+2026-08-02T15:17:57.391215380Z ✓ Ready in 0ms
+2026-08-02T15:18:06.078102632Z prisma:error 
+2026-08-02T15:18:06.078127409Z Invalid `prisma.category.findFirst()` invocation:
+2026-08-02T15:18:06.078131365Z 
+2026-08-02T15:18:06.078134640Z 
+2026-08-02T15:18:06.078137785Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.084785752Z [AutoSeed] Failed: Error [PrismaClientKnownRequestError]: 
+2026-08-02T15:18:06.084801566Z Invalid `prisma.category.findFirst()` invocation:
+2026-08-02T15:18:06.084814045Z 
+2026-08-02T15:18:06.084817781Z 
+2026-08-02T15:18:06.084821045Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.084824370Z     at async n (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:1968)
+2026-08-02T15:18:06.084827815Z     at async y (.next/server/chunks/[root-of-the-server]__0we2_p3._.js:1:3802)
+2026-08-02T15:18:06.084831001Z     at async l (.next/server/chunks/[root-of-the-server]__0we2_p3._.js:1:8481) {
+2026-08-02T15:18:06.084834185Z   code: 'P2022',
+2026-08-02T15:18:06.084837310Z   meta: { modelName: 'Category', column: 'main.Category.enabled' },
+2026-08-02T15:18:06.084840465Z   clientVersion: '6.19.3'
+2026-08-02T15:18:06.084843549Z }
+2026-08-02T15:18:06.088356711Z prisma:error 
+2026-08-02T15:18:06.088369430Z Invalid `prisma.service.count()` invocation:
+2026-08-02T15:18:06.088373376Z 
+2026-08-02T15:18:06.088376711Z 
+2026-08-02T15:18:06.088379896Z The column `j0.enabled` does not exist in the current database.
+2026-08-02T15:18:06.089206244Z [unhandled] Error [PrismaClientKnownRequestError]: 
+2026-08-02T15:18:06.089226986Z Invalid `prisma.service.count()` invocation:
+2026-08-02T15:18:06.089232234Z 
+2026-08-02T15:18:06.089236339Z 
+2026-08-02T15:18:06.089240546Z The column `j0.enabled` does not exist in the current database.
+2026-08-02T15:18:06.089253866Z     at async y (.next/server/chunks/[root-of-the-server]__0we2_p3._.js:1:4628)
+2026-08-02T15:18:06.089257782Z     at async l (.next/server/chunks/[root-of-the-server]__0we2_p3._.js:1:8481) {
+2026-08-02T15:18:06.089262028Z   code: 'P2022',
+2026-08-02T15:18:06.089266214Z   meta: { modelName: 'Service', column: 'j0.enabled' },
+2026-08-02T15:18:06.089270411Z   clientVersion: '6.19.3'
+2026-08-02T15:18:06.089274677Z }
+2026-08-02T15:18:06.101014982Z prisma:error 
+2026-08-02T15:18:06.101031767Z Invalid `prisma.service.findMany()` invocation:
+2026-08-02T15:18:06.101048182Z 
+2026-08-02T15:18:06.101051888Z 
+2026-08-02T15:18:06.101055052Z The column `j0.enabled` does not exist in the current database.
+2026-08-02T15:18:06.539760822Z prisma:error 
+2026-08-02T15:18:06.539789124Z Invalid `prisma.category.findFirst()` invocation:
+2026-08-02T15:18:06.539793100Z 
+2026-08-02T15:18:06.539796556Z 
+2026-08-02T15:18:06.539800371Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.540781220Z [AutoSeed] Failed: Error [PrismaClientKnownRequestError]: 
+2026-08-02T15:18:06.540792317Z Invalid `prisma.category.findFirst()` invocation:
+2026-08-02T15:18:06.540796513Z 
+2026-08-02T15:18:06.540799819Z 
+2026-08-02T15:18:06.540803163Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.540806448Z     at async n (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:1968)
+2026-08-02T15:18:06.540809874Z     at async A (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:3977)
+2026-08-02T15:18:06.540813038Z     at async l (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:7723) {
+2026-08-02T15:18:06.540816192Z   code: 'P2022',
+2026-08-02T15:18:06.540819298Z   meta: { modelName: 'Category', column: 'main.Category.enabled' },
+2026-08-02T15:18:06.540822452Z   clientVersion: '6.19.3'
+2026-08-02T15:18:06.540825547Z }
+2026-08-02T15:18:06.542367247Z prisma:error 
+2026-08-02T15:18:06.542376590Z Invalid `prisma.category.findMany()` invocation:
+2026-08-02T15:18:06.542380496Z 
+2026-08-02T15:18:06.542383661Z 
+2026-08-02T15:18:06.542386756Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.542983558Z [unhandled] Error [PrismaClientKnownRequestError]: 
+2026-08-02T15:18:06.542993774Z Invalid `prisma.category.findMany()` invocation:
+2026-08-02T15:18:06.542997871Z 
+2026-08-02T15:18:06.543001196Z 
+2026-08-02T15:18:06.543004400Z The column `main.Category.enabled` does not exist in the current database.
+2026-08-02T15:18:06.543007815Z     at async A (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:4026)
+2026-08-02T15:18:06.543011140Z     at async l (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:7723)
+2026-08-02T15:18:06.543014465Z     at async i (.next/server/chunks/[root-of-the-server]__0h96m7w._.js:1:8764) {
+2026-08-02T15:18:06.543017830Z   code: 'P2022',
+2026-08-02T15:18:06.543021005Z   meta: { modelName: 'Category', column: 'main.Category.enabled' },
+2026-08-02T15:18:06.543024280Z   clientVersion: '6.19.3'
+2026-08-02T15:18:06.543027414Z }
