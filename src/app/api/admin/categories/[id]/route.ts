@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+  return Response.json({ success: false, error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }
 
 export async function PATCH(req: Request, ctx: any) {

@@ -112,5 +112,5 @@ export const POST = adminLimit(async function POST(req: Request) {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

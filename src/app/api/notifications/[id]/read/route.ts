@@ -21,5 +21,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405 })
+  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }
