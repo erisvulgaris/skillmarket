@@ -19,6 +19,9 @@ const DEFAULT_KEY = (req: Request | undefined) => {
 export function rateLimit(options: RateLimitOptions) {
   return function <T extends (...args: any[]) => any>(handler: T): T {
     return (async (...args: Parameters<T>) => {
+      if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return handler(...args)
+      }
       const req = args[0] as Request | undefined
       const keyBase = options.keyFn ? options.keyFn(req as Request) : DEFAULT_KEY(req)
       const route = req ? new URL(req.url).pathname : 'unknown'
