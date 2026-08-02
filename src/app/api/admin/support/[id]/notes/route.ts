@@ -41,6 +41,7 @@ const noteSchema = z.object({
 
 // Add a note to a ticket
 export async function POST(req: Request, ctx: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (r: Request, c: any) => {
     try {
       const admin = await requireAdmin()

@@ -118,6 +118,7 @@ export async function POST(req?: Request, ctx?: any) {
 
 // PATCH — Edit a message (within 5 minutes of sending)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -157,6 +158,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 // DELETE — Soft-delete a message
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)

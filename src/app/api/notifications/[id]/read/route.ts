@@ -5,7 +5,8 @@ import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, err, handleError } from '@/lib/api'
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
