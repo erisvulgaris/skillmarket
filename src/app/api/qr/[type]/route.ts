@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { z } from 'zod'
@@ -9,7 +10,9 @@ import QRCode from 'qrcode'
 
 const idSchema = z.string().min(1)
 
-export const GET = apiLimit(async function GET(req: Request, { params }: { params: Promise<{ type: string }> }) {
+export async function GET(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (req: Request, { params }: { params: Promise<{ type: string }> }) => {
   try {
     const { type } = await params
     if (!['user', 'wallet', 'service'].includes(type)) return err('Invalid type', 400)
@@ -49,4 +52,5 @@ export const GET = apiLimit(async function GET(req: Request, { params }: { param
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}

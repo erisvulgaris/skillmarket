@@ -13,7 +13,9 @@ const schema = z.object({
   status: z.string(),
 })
 
-export const PATCH = adminLimit(async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const admin = await requireAdmin()
     const { id } = await params
@@ -27,7 +29,8 @@ export const PATCH = adminLimit(async function PATCH(req: Request, { params }: {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}
 
 
 export async function GET(req?: Request) {

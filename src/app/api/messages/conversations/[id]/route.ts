@@ -68,7 +68,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export const POST = messageLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return messageLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -111,7 +113,8 @@ export const POST = messageLimit(async function POST(req: Request, { params }: {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}
 
 // PATCH — Edit a message (within 5 minutes of sending)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

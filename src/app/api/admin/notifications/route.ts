@@ -13,7 +13,9 @@ const schema = z.object({
   type: z.enum(['info', 'warning', 'maintenance']).default('info'),
 })
 
-export const POST = adminLimit(async function POST(req: Request) {
+export async function POST(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request) => {
   try {
     const admin = await requireAdmin()
     const ct = requireJson(req); if (ct) return ct
@@ -40,7 +42,8 @@ export const POST = adminLimit(async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}
 
 
 export async function GET(req?: Request) {

@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { ok, err, handleError, validateBody } from '@/lib/api'
@@ -7,7 +8,9 @@ import { listRazorpayKeys, saveRazorpayKey, deleteRazorpayKey } from '@/lib/razo
 import { writeAudit } from '@/lib/audit'
 import { z } from 'zod'
 
-export const GET = adminLimit(async function GET() {
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async () => {
   try {
     await requireAdmin()
     const keys = await listRazorpayKeys()
@@ -22,7 +25,8 @@ export const GET = adminLimit(async function GET() {
   } catch (e) {
     return handleError(e)
   }
-})
+  })()
+}
 
 const postSchema = z.object({
   label: z.string().optional(),
@@ -31,7 +35,9 @@ const postSchema = z.object({
   active: z.boolean().optional(),
 })
 
-export const POST = adminLimit(async function POST(req: Request) {
+export async function POST(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request) => {
   try {
     const admin = await requireAdmin()
     const ct = requireJson(req); if (ct) return ct
@@ -43,9 +49,12 @@ export const POST = adminLimit(async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}
 
-export const DELETE = adminLimit(async function DELETE(req: Request) {
+export async function DELETE(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request) => {
   try {
     const admin = await requireAdmin()
     const _u = req.url || 'http://localhost'
@@ -63,4 +72,5 @@ export const DELETE = adminLimit(async function DELETE(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}

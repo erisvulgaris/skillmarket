@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -11,7 +12,9 @@ const blockSchema = z.object({
   type: z.enum(['block', 'unblock']),
 })
 
-export const GET = apiLimit(async function GET() {
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async () => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -25,9 +28,12 @@ export const GET = apiLimit(async function GET() {
   } catch (e) {
     return handleError(e)
   }
-})
+  })()
+}
 
-export const POST = apiLimit(async function POST(req: Request) {
+export async function POST(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (req: Request) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -55,9 +61,12 @@ export const POST = apiLimit(async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}
 
-export const DELETE = apiLimit(async function DELETE(req: Request) {
+export async function DELETE(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (req: Request) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -74,8 +83,9 @@ export const DELETE = apiLimit(async function DELETE(req: Request) {
       where: { blockerId: user.id, blockedId: targetId, type },
     })
 
-    return ok({ unblocked: true })
+    return ok({ unblocked: true, type })
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}

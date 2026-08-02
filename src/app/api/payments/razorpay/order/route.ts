@@ -15,7 +15,9 @@ const schema = z.object({
   type: z.enum(['credit_purchase']),
 })
 
-export const POST = apiLimit(async function POST(req: Request) {
+export async function POST(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (req: Request) => {
   try {
     const user = await requireUser()
     const ct = requireJson(req); if (ct) return ct
@@ -51,7 +53,8 @@ export const POST = apiLimit(async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}
 
 
 export async function GET(req?: Request) {

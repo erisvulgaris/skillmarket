@@ -13,7 +13,9 @@ const schema = z.object({
   reason: z.string().min(3).max(200),
 })
 
-export const POST = adminLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const admin = await requireAdmin()
     const { id } = await params
@@ -32,7 +34,8 @@ export const POST = adminLimit(async function POST(req: Request, { params }: { p
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}
 
 
 export async function GET(req?: Request) {

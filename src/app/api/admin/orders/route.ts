@@ -1,10 +1,13 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
-export const GET = adminLimit(async function GET(req: Request) {
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return adminLimit(async (req: Request) => {
   try {
     await requireAdmin()
     const { skip, limit, page } = parsePagination(req)
@@ -30,4 +33,5 @@ export const GET = adminLimit(async function GET(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}

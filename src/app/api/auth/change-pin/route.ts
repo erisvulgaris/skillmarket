@@ -11,7 +11,9 @@ const schema = z.object({
   newPin: z.string().length(4).regex(/^\d{4}$/, 'PIN must be 4 digits'),
 })
 
-export const POST = strictLimit(async function POST(req: Request) {
+export async function POST(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return strictLimit(async (req: Request) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -32,7 +34,8 @@ export const POST = strictLimit(async function POST(req: Request) {
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request)
+}
 
 
 export async function GET(req?: Request) {

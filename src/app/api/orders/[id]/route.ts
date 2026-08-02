@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
@@ -23,7 +24,9 @@ async function getOrder(id: string) {
   })
 }
 
-export const GET = apiLimit(async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -49,10 +52,13 @@ export const GET = apiLimit(async function GET(_req: Request, { params }: { para
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}
 
 // Accept order (seller)
-export const POST = apiLimit(async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req?: Request, ctx?: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  return apiLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -144,4 +150,5 @@ export const POST = apiLimit(async function POST(req: Request, { params }: { par
   } catch (e) {
     return handleError(e)
   }
-})
+  })(req as Request, ctx as any)
+}
