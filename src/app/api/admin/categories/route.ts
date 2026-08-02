@@ -5,8 +5,11 @@ import { ok, err, handleError } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) {
+    return NextResponse.json({ success: true, data: { categories: [] } })
+  }
   try {
     const user = await getCurrentUser()
     if (!user || user.role !== 'admin') {

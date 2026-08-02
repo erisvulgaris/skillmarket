@@ -11,6 +11,7 @@ import { z } from 'zod'
 
 // Get ticket with notes
 export async function GET(req: Request, ctx: any) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (r: Request, c: any) => {
     try {

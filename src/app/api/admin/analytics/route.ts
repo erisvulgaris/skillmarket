@@ -5,8 +5,9 @@ import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET() {
-  if (process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE === 'phase-production-build') {
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) {
     return NextResponse.json({ success: true, data: {} })
   }
   return adminLimit(async () => {

@@ -5,8 +5,11 @@ import { db } from '@/lib/db'
 import { ok, err, handleError, parsePagination } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
-export async function GET(req: Request) {
-  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
+export async function GET(req?: Request) {
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) {
+    return NextResponse.json({ success: true, data: { items: [], total: 0 } })
+  }
   return adminLimit(async (r: Request) => {
     try {
       await requireAdmin()
