@@ -56,7 +56,8 @@ export const GET = withCors(transferLimit(async function GET(req: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const q = url.searchParams.get('recipient')
     if (!q) return err('recipient query required', 400)
 

@@ -48,7 +48,8 @@ export const POST = adminLimit(async function POST(req: Request) {
 export const DELETE = adminLimit(async function DELETE(req: Request) {
   try {
     const admin = await requireAdmin()
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const id = url.searchParams.get('id')
     if (!id) return err('Missing id query parameter', 400)
     try {

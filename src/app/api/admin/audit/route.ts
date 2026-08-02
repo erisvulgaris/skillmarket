@@ -9,7 +9,8 @@ export async function GET(req: Request) {
     try {
       await requireAdmin()
       const { skip, limit, page } = parsePagination(r)
-      const url = new URL(r.url)
+      const urlStr = r?.url || 'http://localhost'
+      const url = urlStr.startsWith('http') ? new URL(urlStr) : new URL(urlStr, 'http://localhost')
       const action = url.searchParams.get('action')
 
       const where: any = {}

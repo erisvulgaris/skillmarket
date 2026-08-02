@@ -5,7 +5,8 @@ import { ok, err, handleError, safeJsonParse } from '@/lib/api'
 // Compare multiple services side by side
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const ids = url.searchParams.get('ids')?.split(',').filter(Boolean) || []
     if (ids.length < 2) return err('Provide at least 2 service IDs', 400)
     if (ids.length > 4) return err('Maximum 4 services to compare', 400)

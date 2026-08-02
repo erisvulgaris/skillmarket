@@ -7,7 +7,8 @@ export async function GET(req: Request) {
   try {
     await ensureTelegramServicesSeeded()
     const { skip, limit, page } = parsePagination(req)
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const categoryId = url.searchParams.get('categoryId')
     const sort = url.searchParams.get('sort') || 'newest' // newest | popular | trending | price_low | price_high | rating
     const minPrice = url.searchParams.get('minPrice')

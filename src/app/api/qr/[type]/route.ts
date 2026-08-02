@@ -14,7 +14,8 @@ export const GET = apiLimit(async function GET(req: Request, { params }: { param
     const { type } = await params
     if (!['user', 'wallet', 'service'].includes(type)) return err('Invalid type', 400)
 
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const idParsed = idSchema.safeParse(url.searchParams.get('id'))
     if (!idParsed.success) return err('id required', 400)
     const id = idParsed.data

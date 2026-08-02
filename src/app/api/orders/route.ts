@@ -17,7 +17,8 @@ export async function GET(req: Request) {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
     const { skip, limit, page } = parsePagination(req)
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const role = url.searchParams.get('role') || 'all' // buyer | seller | all
     const status = url.searchParams.get('status')
 

@@ -8,7 +8,8 @@ export const GET = adminLimit(async function GET(req: Request) {
   try {
     await requireAdmin()
     const { skip, limit, page } = parsePagination(req)
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const search = url.searchParams.get('search')
     const status = url.searchParams.get('status')
     const role = url.searchParams.get('role')

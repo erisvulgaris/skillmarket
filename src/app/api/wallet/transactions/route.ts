@@ -30,7 +30,8 @@ export const GET = withCors(apiLimit(async function GET(req: Request) {
     const wallet = user.wallet
     if (!wallet) return err('WALLET_NOT_FOUND', 404)
 
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams))
     if (!parsed.success) return err('Invalid query parameters: ' + parsed.error.issues.map(i => i.path.join('.') + ': ' + i.message).join('; '), 422)
 

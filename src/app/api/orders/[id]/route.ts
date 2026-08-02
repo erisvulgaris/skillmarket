@@ -57,7 +57,8 @@ export const POST = apiLimit(async function POST(req: Request, { params }: { par
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
     const { id } = await params
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const action = url.searchParams.get('action') // accept | deliver | complete | cancel
 
     const order = await getOrder(id)

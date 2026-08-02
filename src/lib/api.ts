@@ -101,8 +101,9 @@ export function handleError(e: unknown) {
   return err('Internal server error', 500)
 }
 
-export function parsePagination(req: Request) {
-  const url = new URL(req.url)
+export function parsePagination(req: Request | undefined) {
+  const urlStr = req?.url || 'http://localhost'
+  const url = urlStr.startsWith('http') ? new URL(urlStr) : new URL(urlStr, 'http://localhost')
   const page = Math.max(1, Number(url.searchParams.get('page') || '1'))
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || '20')))
   return { page, limit, skip: (page - 1) * limit }

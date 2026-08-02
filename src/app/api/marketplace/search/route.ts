@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const q = url.searchParams.get('q') || ''
     if (!q.trim()) return ok({ services: [], users: [], categories: [] })
 

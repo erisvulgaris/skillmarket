@@ -161,7 +161,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     })
     if (!member) return err('FORBIDDEN', 403)
 
-    const url = new URL(req.url)
+    const _u = req.url || 'http://localhost'
+    const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const messageId = url.searchParams.get('messageId')
     if (!messageId) return err('messageId is required', 422)
 
