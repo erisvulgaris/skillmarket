@@ -19,7 +19,7 @@ const DEFAULT_KEY = (req: Request | undefined) => {
 export function rateLimit(options: RateLimitOptions) {
   return function <T extends (...args: any[]) => any>(handler: T): T {
     return (async (...args: Parameters<T>) => {
-      if (process.env.NEXT_PHASE === 'phase-production-build') {
+      if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.IS_BUILD_TIME === 'true') {
         try {
           return await handler(...args)
         } catch {

@@ -94,7 +94,7 @@ export async function getSessionToken(): Promise<string | undefined> {
 }
 
 export async function getCurrentUser() {
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.IS_BUILD_TIME === 'true') {
     return {
       id: 'build-user',
       role: 'admin',
@@ -130,7 +130,7 @@ export async function getCurrentUser() {
 }
 
 export async function requireUser() {
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.IS_BUILD_TIME === 'true') {
     return getCurrentUser()
   }
   const user = await getCurrentUser()
@@ -139,7 +139,7 @@ export async function requireUser() {
 }
 
 export async function requireAdmin() {
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.IS_BUILD_TIME === 'true') {
     return getCurrentUser()
   }
   const user = await requireUser()

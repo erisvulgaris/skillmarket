@@ -12,6 +12,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV IS_BUILD_TIME=true
 ENV NEXT_PHASE=phase-production-build
 ENV DATABASE_URL="file:/data/skillmarket.db"
 RUN mkdir -p /data && npx prisma generate
