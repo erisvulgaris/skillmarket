@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
@@ -35,5 +36,5 @@ export const POST = adminLimit(async function POST(req: Request, { params }: { p
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

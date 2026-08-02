@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireUser } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -54,5 +55,5 @@ export const POST = apiLimit(async function POST(req: Request) {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

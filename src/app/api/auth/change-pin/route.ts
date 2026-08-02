@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { getCurrentUser, verifyPin, hashPin, verifyPassword } from '@/lib/auth'
 import { ok, err, handleError, validateBody } from '@/lib/api'
@@ -35,5 +36,5 @@ export const POST = strictLimit(async function POST(req: Request) {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

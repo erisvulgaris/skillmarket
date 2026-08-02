@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { purchaseCredits } from '@/lib/wallet'
@@ -55,5 +56,5 @@ export async function OPTIONS() {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

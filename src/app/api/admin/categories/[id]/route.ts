@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  return Response.json({ success: false, error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ success: false, error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }
 
 export async function PATCH(req: Request, ctx: any) {

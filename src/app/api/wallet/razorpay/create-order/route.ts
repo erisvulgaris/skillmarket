@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { createRazorpayOrder } from '@/lib/razorpay'
 import { ok, err, handleError, parseJsonBody } from '@/lib/api'
@@ -50,5 +51,5 @@ export async function OPTIONS() {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

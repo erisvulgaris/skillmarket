@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { verifyRazorpaySignature } from '@/lib/razorpay'
 import { purchaseCredits } from '@/lib/wallet'
@@ -65,5 +66,5 @@ export async function OPTIONS() {
 
 
 export async function GET() {
-  return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
+  return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }
