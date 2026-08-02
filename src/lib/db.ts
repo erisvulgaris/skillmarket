@@ -19,6 +19,7 @@ export const db =
 if (db) {
   db.$queryRawUnsafe('PRAGMA journal_mode=WAL;').catch(() => {})
   db.$queryRawUnsafe('PRAGMA busy_timeout=5000;').catch(() => {})
+  db.$executeRawUnsafe('ALTER TABLE Category ADD COLUMN enabled BOOLEAN DEFAULT 1;').catch(() => {})
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
