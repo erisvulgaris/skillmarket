@@ -1,9 +1,11 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { ok, handleError, parsePagination, safeJsonParse } from '@/lib/api'
 import { ensureTelegramServicesSeeded } from '@/lib/auto-seed'
 
 export async function GET(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     await ensureTelegramServicesSeeded()
     const { skip, limit, page } = parsePagination(req)

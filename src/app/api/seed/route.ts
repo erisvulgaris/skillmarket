@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ok, handleError } from '@/lib/api'
 import { clearCategoryCache } from '@/lib/cache'
@@ -6,6 +7,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     console.log('[API/Seed] Seeding all 10 Marketplace Sections with custom branded title images...')
 

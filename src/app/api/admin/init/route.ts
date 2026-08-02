@@ -1,9 +1,11 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { hashPassword, hashPin } from '@/lib/auth'
 import { ok, handleError } from '@/lib/api'
 
 export async function GET() {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     const existing = await db.user.findFirst({
       where: { OR: [{ email: 'admin@skillcart.shop' }, { username: 'admin' }, { role: 'admin' }] }

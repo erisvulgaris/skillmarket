@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -5,6 +6,7 @@ import { ok, err, handleError, parsePagination } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
 export async function GET(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (r: Request) => {
     try {
       await requireAdmin()

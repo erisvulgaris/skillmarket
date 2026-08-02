@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -13,6 +14,7 @@ const createSchema = z.object({
 })
 
 export async function GET(req: Request) {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)

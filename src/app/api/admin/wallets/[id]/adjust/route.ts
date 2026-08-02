@@ -36,5 +36,6 @@ export const POST = adminLimit(async function POST(req: Request, { params }: { p
 
 
 export async function GET() {
+  if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }
