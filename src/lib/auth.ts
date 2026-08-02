@@ -9,10 +9,9 @@ const SESSION_SECRET = new TextEncoder().encode(
   (() => {
     const secret = process.env.SESSION_SECRET
     if (!secret) {
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === 'production' && process.env.IS_BUILD_TIME !== 'true' && !process.env.NEXT_PHASE) {
         throw new Error('SESSION_SECRET environment variable is required in production')
       }
-      console.warn('[auth] No SESSION_SECRET set — using insecure dev fallback')
       return 'skillcart-dev-secret-change-me-in-production-please'
     }
     return secret
