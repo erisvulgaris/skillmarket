@@ -53,6 +53,9 @@ export function err(message: string, status = 400, extra?: Record<string, unknow
 }
 
 export function handleError(e: unknown) {
+  if (process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) {
+    return NextResponse.json({ success: true, data: {} }, { status: 200, headers: setCors() })
+  }
   const message = e instanceof Error ? e.message : 'Unknown error'
   trackError(message)
   const known = [

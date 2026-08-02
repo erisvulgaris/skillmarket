@@ -17,6 +17,7 @@ ENV NEXT_PHASE=phase-production-build
 ENV DATABASE_URL="file:/data/skillmarket.db"
 RUN mkdir -p /data && npx prisma generate
 RUN npx prisma db push --accept-data-loss
+RUN chmod -R 777 /data
 RUN npm run build
 
 FROM base AS runner
