@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { setCors } from '@/lib/cors'
 
+export function isBuildOrWorker(req?: Request): boolean {
+  if (process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return true
+  if (!req || !req.url) return true
+  if (!req.headers || !req.headers.get('host')) return true
+  return false
+}
+
 // Error rate monitoring (CHANGELOG 088)
 const errorCounts = new Map<string, { count: number; lastReset: number }>()
 const ERROR_WINDOW_MS = 60_000 // 1 minute window

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { ok, handleError } from '@/lib/api'
+import { isBuildOrWorker, ok, handleError } from '@/lib/api'
 import { clearCategoryCache } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     // 1. Delete all old services

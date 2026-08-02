@@ -3,7 +3,7 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { ok, err, handleError } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError } from '@/lib/api'
 import { getCurrentUser } from '@/lib/auth'
 import { apiLimit } from '@/lib/rate-limit'
 import QRCode from 'qrcode'
@@ -11,7 +11,7 @@ import QRCode from 'qrcode'
 const idSchema = z.string().min(1)
 
 export async function GET(req?: Request, ctx?: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return apiLimit(async (req: Request, { params }: { params: Promise<{ type: string }> }) => {
   try {
     const { type } = await params

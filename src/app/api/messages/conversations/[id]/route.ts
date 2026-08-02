@@ -3,7 +3,7 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody, parsePagination } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody, parsePagination } from '@/lib/api'
 import { pushNotification } from '@/lib/audit'
 import { messageLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
@@ -21,7 +21,7 @@ const editSchema = z.object({
 })
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
@@ -69,7 +69,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 }
 
 export async function POST(req?: Request, ctx?: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return messageLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()
@@ -118,7 +118,7 @@ export async function POST(req?: Request, ctx?: any) {
 
 // PATCH — Edit a message (within 5 minutes of sending)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
@@ -158,7 +158,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 // DELETE — Soft-delete a message
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)

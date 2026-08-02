@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody } from '@/lib/api'
 import { apiLimit } from '@/lib/rate-limit'
 import { requireJson } from '@/lib/content-type'
 import { createRazorpayOrder } from '@/lib/razorpay'
@@ -16,7 +16,7 @@ const schema = z.object({
 })
 
 export async function POST(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return apiLimit(async (req: Request) => {
   try {
     const user = await requireUser()
@@ -58,7 +58,7 @@ export async function POST(req?: Request) {
 
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

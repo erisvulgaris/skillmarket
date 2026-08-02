@@ -2,11 +2,11 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, handleError } from '@/lib/api'
+import { ok, handleError, isBuildOrWorker } from '@/lib/api'
 import { adminLimit } from '@/lib/rate-limit'
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) {
     return NextResponse.json({ success: true, data: {} })
   }

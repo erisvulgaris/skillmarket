@@ -3,7 +3,7 @@ export const revalidate = 0
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody } from '@/lib/api'
 import { releaseEscrow, refundEscrow } from '@/lib/wallet'
 import { pushNotification } from '@/lib/audit'
 import { apiLimit } from '@/lib/rate-limit'
@@ -25,7 +25,7 @@ async function getOrder(id: string) {
 }
 
 export async function GET(req?: Request, ctx?: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return apiLimit(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()
@@ -57,7 +57,7 @@ export async function GET(req?: Request, ctx?: any) {
 
 // Accept order (seller)
 export async function POST(req?: Request, ctx?: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return apiLimit(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const user = await getCurrentUser()

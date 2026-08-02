@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { db } from '@/lib/db'
 import { verifyPassword, createSession, setSessionCookie } from '@/lib/auth'
-import { ok, err, handleError, validateBody, getClientIp, getUserAgent } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody, getClientIp, getUserAgent } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
 import { strictLimit } from '@/lib/rate-limit'
 import * as OTPAuth from 'otpauth'
@@ -15,7 +15,7 @@ const loginSchema = z.object({
 })
 
 export async function POST(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return strictLimit(async (req: Request) => {
   try {
     const { data, error } = await validateBody(loginSchema, req)
@@ -104,7 +104,7 @@ export async function POST(req?: Request) {
 
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

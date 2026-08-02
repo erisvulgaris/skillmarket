@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
 import { adminLimit } from '@/lib/rate-limit'
 import { requireJson } from '@/lib/content-type'
@@ -16,7 +16,7 @@ const schema = z.object({
 })
 
 export async function GET(req: Request, ctx: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (r: Request, c: any) => {
     try {
@@ -42,7 +42,7 @@ export async function GET(req: Request, ctx: any) {
 }
 
 export async function PATCH(req: Request, ctx: any) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (r: Request, c: any) => {
     try {
       const admin = await requireAdmin()

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { createRazorpayOrder } from '@/lib/razorpay'
-import { ok, err, handleError, parseJsonBody } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, parseJsonBody } from '@/lib/api'
 import { setCors } from '@/lib/cors'
 import { apiLimit } from '@/lib/rate-limit'
 
@@ -51,7 +51,7 @@ export async function OPTIONS() {
 
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   return NextResponse.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 200 })
 }

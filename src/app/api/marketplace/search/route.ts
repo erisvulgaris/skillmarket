@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { ok, handleError, safeJsonParse } from '@/lib/api'
+import { isBuildOrWorker, ok, handleError, safeJsonParse } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
-    const _u = req.url || 'http://localhost'
+    const _u = req?.url || 'http://localhost'
     const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const q = url.searchParams.get('q') || ''
     if (!q.trim()) return ok({ services: [], users: [], categories: [] })

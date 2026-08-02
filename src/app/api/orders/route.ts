@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { getCurrentUser } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody, parsePagination } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody, parsePagination } from '@/lib/api'
 import { genOrderNo } from '@/lib/wallet'
 import { writeAudit, pushNotification } from '@/lib/audit'
 import { z } from 'zod'
@@ -14,13 +14,13 @@ const createSchema = z.object({
 })
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   if (process.env.NEXT_PHASE === 'phase-production-build') return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)
     const { skip, limit, page } = parsePagination(req)
-    const _u = req.url || 'http://localhost'
+    const _u = req?.url || 'http://localhost'
     const url = _u.startsWith('http') ? new URL(_u) : new URL(_u, 'http://localhost')
     const role = url.searchParams.get('role') || 'all' // buyer | seller | all
     const status = url.searchParams.get('status')
@@ -72,7 +72,7 @@ export async function GET(req?: Request) {
 }
 
 export async function POST(req: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   try {
     const user = await getCurrentUser()
     if (!user) return err('UNAUTHORIZED', 401)

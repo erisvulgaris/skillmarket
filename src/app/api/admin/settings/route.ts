@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { ok, err, handleError, validateBody } from '@/lib/api'
+import { isBuildOrWorker, ok, err, handleError, validateBody } from '@/lib/api'
 import { writeAudit } from '@/lib/audit'
 import { adminLimit } from '@/lib/rate-limit'
 import { requireJson } from '@/lib/content-type'
 import { z } from 'zod'
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return adminLimit(async () => {
   try {
     await requireAdmin()
@@ -28,7 +28,7 @@ const schema = z.object({
 })
 
 export async function PATCH(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return adminLimit(async (req: Request) => {
   try {
     const admin = await requireAdmin()

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 import { requireAdmin } from '@/lib/auth'
-import { ok, handleError } from '@/lib/api'
+import { isBuildOrWorker, ok, handleError } from '@/lib/api'
 import { getPlatformFraudAlerts } from '@/lib/fraud'
 import { adminLimit } from '@/lib/rate-limit'
 
 export async function GET(req?: Request) {
-  if (!req || !req.url || process.env.IS_BUILD_TIME === 'true' || process.env.NEXT_PHASE) return NextResponse.json({ success: true, data: {} })
+  if (isBuildOrWorker(req)) return NextResponse.json({ success: true, data: {} })
   return adminLimit(async () => {
   try {
     await requireAdmin()
