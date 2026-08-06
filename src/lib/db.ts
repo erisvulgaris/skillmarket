@@ -19,7 +19,48 @@ export const db =
 if (db) {
   db.$queryRawUnsafe('PRAGMA journal_mode=WAL;').catch(() => {})
   db.$queryRawUnsafe('PRAGMA busy_timeout=5000;').catch(() => {})
-  db.$executeRawUnsafe('ALTER TABLE Category ADD COLUMN enabled BOOLEAN DEFAULT 1;').catch(() => {})
+  db.$queryRawUnsafe('PRAGMA table_info(Category);').then((info: any) => {
+    if (Array.isArray(info) && !info.some((c: any) => c.name === 'enabled')) {
+      db.$executeRawUnsafe('ALTER TABLE Category ADD COLUMN enabled BOOLEAN DEFAULT 1;').catch(() => {})
+    }
+  }).catch(() => {})
+  db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "PaymentLink" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "sellerId" TEXT NOT NULL,
+      "serviceId" TEXT,
+      "title" TEXT NOT NULL,
+      "description" TEXT,
+      "amountCredits" INTEGER NOT NULL,
+      "amountFiat" REAL NOT NULL DEFAULT 0,
+      "slug" TEXT NOT NULL,
+      "active" BOOLEAN NOT NULL DEFAULT 1,
+      "usageLimit" INTEGER,
+      "usesCount" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "PaymentLink_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "PaymentLink_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    );
+  `).catch(() => {})
+  db.$executeRawUnsafe(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "PaymentLink_slug_key" ON "PaymentLink"("slug");
+  `).catch(() => {})
+  db.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "PaymentLinkTransaction" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "paymentLinkId" TEXT NOT NULL,
+      "payerEmail" TEXT NOT NULL,
+      "payerUserId" TEXT,
+      "amountCredits" INTEGER NOT NULL,
+      "amountFiat" REAL NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'pending',
+      "razorpayOrderId" TEXT,
+      "razorpayPaymentId" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "completedAt" DATETIME,
+      CONSTRAINT "PaymentLinkTransaction_paymentLinkId_fkey" FOREIGN KEY ("paymentLinkId") REFERENCES "PaymentLink" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `).catch(() => {})
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

@@ -7,10 +7,11 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
-import { ArrowDownLeft, ArrowUpLeft, Send, Plus, QrCode, Download, Filter, Search, TrendingUp, TrendingDown, Lock, Wallet as WalletIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpLeft, Send, Plus, QrCode, Download, Filter, Search, TrendingUp, TrendingDown, Lock, Wallet as WalletIcon, Link as LinkIcon, Copy, ExternalLink, Sparkles } from 'lucide-react'
 import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { CreatePaymentLinkModal } from '@/components/create-payment-link-modal'
 
 type Tx = {
   id: string
@@ -42,6 +43,7 @@ export function WalletView() {
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [amountFilter, setAmountFilter] = useState<string>('all')
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -112,7 +114,7 @@ export function WalletView() {
           <div className="grid grid-cols-4 gap-2 mt-5">
             <ActionBtn icon={<Send className="h-4 w-4" />} label="Send" onClick={() => setView('transfer')} />
             <ActionBtn icon={<Plus className="h-4 w-4" />} label="Buy" onClick={() => setView('buy-credits')} />
-            <ActionBtn icon={<QrCode className="h-4 w-4" />} label="Receive" onClick={() => setView('transfer', { tab: 'receive' })} />
+            <ActionBtn icon={<LinkIcon className="h-4 w-4" />} label="Pay Link" onClick={() => setIsLinkModalOpen(true)} />
             <ActionBtn icon={<Download className="h-4 w-4" />} label="Export" onClick={exportCsv} />
           </div>
         </div>
@@ -209,6 +211,7 @@ export function WalletView() {
             : txs.map((tx) => <TxRow key={tx.id} tx={tx} />)}
         </div>
       </div>
+      <CreatePaymentLinkModal isOpen={isLinkModalOpen} onClose={() => setIsLinkModalOpen(false)} />
     </div>
   )
 }

@@ -8,16 +8,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { SkillCredits, formatSC } from '@/components/sc-badge'
 import { Rating } from '@/components/rating'
-import { ArrowLeft, Plus, Package, RotateCcw, Archive, Eye, MoreVertical, Star } from 'lucide-react'
+import { ArrowLeft, Plus, Package, RotateCcw, Archive, Eye, MoreVertical, Star, Link as LinkIcon } from 'lucide-react'
 import { clsx } from 'clsx'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { CreatePaymentLinkModal } from '@/components/create-payment-link-modal'
 
 export function MyServicesView() {
   const { setView } = useApp()
   const [services, setServices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'archived'>('all')
+  const [selectedServiceForLink, setSelectedServiceForLink] = useState<{ id: string; title: string; price: number } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -170,6 +172,14 @@ export function MyServicesView() {
                       >
                         <Eye className="h-3 w-3 mr-1" /> View
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs flex-1 text-emerald-500 font-semibold"
+                        onClick={() => setSelectedServiceForLink({ id: s.id, title: s.title, price: s.price })}
+                      >
+                        <LinkIcon className="h-3 w-3 mr-1" /> Link
+                      </Button>
                       {isArchived ? (
                         <Button
                           size="sm"
@@ -197,6 +207,14 @@ export function MyServicesView() {
           </div>
         )}
       </div>
+
+      <CreatePaymentLinkModal
+        isOpen={!!selectedServiceForLink}
+        onClose={() => setSelectedServiceForLink(null)}
+        initialServiceId={selectedServiceForLink?.id}
+        initialTitle={selectedServiceForLink?.title}
+        initialAmount={selectedServiceForLink?.price}
+      />
     </div>
   )
 }
